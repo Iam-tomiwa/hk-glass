@@ -103,7 +103,6 @@ const columns: ColumnDef[] = [
             badgeClasses,
           )}
         >
-          <span className={cn("h-1.5 w-1.5 rounded-full", dotClasses)} />
           {row.status}
         </Badge>
       );

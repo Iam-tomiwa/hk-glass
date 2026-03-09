@@ -1,7 +1,9 @@
+import useConfirmations from "@/app/confirmations-provider/use-confirmations";
 import { cn } from "@/lib/utils";
 import { Bell, LogOut } from "lucide-react";
 
-export const Navbar = ({ fullWidth }: { fullWidth?: Boolean }) => {
+export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
+  const { openConfirmModal } = useConfirmations();
   return (
     <nav className="bg-white border-b">
       <div
@@ -21,7 +23,20 @@ export const Navbar = ({ fullWidth }: { fullWidth?: Boolean }) => {
           <button className="h-10 w-10 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition-colors">
             <Bell size={20} />
           </button>
-          <button className="h-10 w-10 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition-colors">
+          <button
+            onClick={() => {
+              openConfirmModal(
+                "Are you sure you want to log out from this device? ",
+                () => {},
+                {
+                  title: "Log Out",
+                  isDelete: true,
+                  confirmText: "Confirm",
+                },
+              );
+            }}
+            className="h-10 w-10 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition-colors"
+          >
             <LogOut size={20} />
           </button>
           <div className="relative">

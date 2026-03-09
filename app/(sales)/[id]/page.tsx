@@ -15,8 +15,6 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 export default function OrderDetailsPage() {
-  const { openConfirmModal } = useConfirmations();
-
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
       <Header title="Order Details" description="Order ID: ORD-2026-001">

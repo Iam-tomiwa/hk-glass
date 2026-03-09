@@ -43,7 +43,6 @@ export function ConfirmationStep() {
                 variant="secondary"
                 className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full bg-[#FEF3C7] text-[#92400E]"
               >
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]"></span>
                 Paid
               </Badge>
               <h3 className="text-3xl font-bold tracking-tight text-[#1E202E]">

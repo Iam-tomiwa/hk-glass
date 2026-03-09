@@ -21,7 +21,7 @@ export default function TwoFactorAuth() {
   return (
     <div className="max-w-[700px] mx-auto py-10 w-full min-h-[500px] flex flex-col gap-6">
       {/* Settings Card */}
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 ">
         {/* Row 1 - Status */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-start gap-4">
@@ -78,7 +78,7 @@ export default function TwoFactorAuth() {
       {isEnabled && (
         <>
           {/* Authenticator App Card */}
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 ">
             <h3 className="text-[15px] font-semibold text-[#111827] mb-1">
               Authenticator App
             </h3>
@@ -88,7 +88,7 @@ export default function TwoFactorAuth() {
 
             <div className="rounded-lg border border-[#E5E7EB] p-6 bg-[#FAFAFA] flex flex-col md:flex-row gap-8 mb-6">
               {/* QR Code Container */}
-              <div className="shrink-0 bg-white border border-[#E5E7EB] rounded-lg p-2 w-[160px] h-[160px] flex items-center justify-center shadow-sm">
+              <div className="shrink-0 bg-white border border-[#E5E7EB] rounded-lg p-2 w-[160px] h-[160px] flex items-center justify-center ">
                 <QrCode className="w-[140px] h-[140px] text-black stroke-[1]" />
               </div>
 
@@ -114,7 +114,7 @@ export default function TwoFactorAuth() {
                   <p className="text-sm text-[#4B5563]">
                     Use manual entry key:
                   </p>
-                  <div className="w-full bg-white border border-[#E5E7EB] rounded-md px-4 py-3 text-center font-mono font-medium tracking-widest text-[#111827] shadow-sm text-sm">
+                  <div className="w-full bg-white border border-[#E5E7EB] rounded-md px-4 py-3 text-center font-mono font-medium tracking-widest text-[#111827]  text-sm">
                     JBSWY3DPEHPK3PXP
                   </div>
                 </div>
@@ -124,7 +124,7 @@ export default function TwoFactorAuth() {
             <Button
               variant="outline"
               size="sm"
-              className="px-4 text-[13px] border-[#E5E7EB] shadow-sm"
+              className="px-4 text-[13px] border-[#E5E7EB] "
             >
               <RefreshCw className="w-3.5 h-3.5 mr-2 text-gray-500" />
               Reset Authenticator
@@ -132,7 +132,7 @@ export default function TwoFactorAuth() {
           </div>
 
           {/* Recovery Codes Card */}
-          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 ">
             <h3 className="text-[15px] font-semibold text-[#111827] mb-1">
               Recovery Codes
             </h3>
@@ -159,14 +159,14 @@ export default function TwoFactorAuth() {
               <Button
                 variant="outline"
                 size="sm"
-                className="px-4 text-[13px] border-[#E5E7EB] shadow-sm text-[#374151]"
+                className="px-4 text-[13px] border-[#E5E7EB]  text-[#374151]"
               >
                 View Recovery Codes
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="px-4 text-[13px] border-[#E5E7EB] shadow-sm text-[#374151]"
+                className="px-4 text-[13px] border-[#E5E7EB]  text-[#374151]"
                 onClick={() => setRecoveryModalOpen(true)}
               >
                 Generate New Codes

@@ -114,7 +114,7 @@ function NewOrderForm() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <Header title="New Order Placement">
+      <Header title="New Order Placement" className="border-b">
         <Link href="/">
           <Button
             variant="ghost"

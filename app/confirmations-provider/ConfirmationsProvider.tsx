@@ -147,7 +147,7 @@ const ConfirmationsProvider: React.FC<React.PropsWithChildren> = (props) => {
             <DialogDescription className="text-center text-base md:text-left p-4">
               {confirmation.message}
             </DialogDescription>
-            <DialogFooter className="justify-start! p-4">
+            <DialogFooter className="justify-start! px-4 pb-4">
               <Button
                 className={cn(
                   "min-w-[100px]",
@@ -158,7 +158,7 @@ const ConfirmationsProvider: React.FC<React.PropsWithChildren> = (props) => {
               >
                 {confirmation.loading
                   ? "Loading..."
-                  : confirmation?.confirmText || "Ok"}
+                  : confirmation?.confirmText || "Confirm"}
               </Button>
               <Button
                 className={cn("min-w-[100px]")}

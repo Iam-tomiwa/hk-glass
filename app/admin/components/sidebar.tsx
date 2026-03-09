@@ -39,10 +39,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="px-4 py-6">
-          <div className="flex items-center justify-between mb-8">
-            {/* Placeholder for optional app logo/name */}
-            <div className="h-6" />
-
+          <div className="flex items-center justify-between">
             {/* Mobile close button */}
             <button
               onClick={onClose}

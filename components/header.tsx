@@ -4,7 +4,7 @@ export const Header = ({
   title,
   description,
   children,
-  className = "",
+  className = "mb-6",
 }: {
   title: string;
   description?: string;
@@ -13,7 +13,7 @@ export const Header = ({
 }) => {
   return (
     <div className={cn("bg-background", className)}>
-      <div className="container flex items-center justify-between py-6">
+      <div className="px-6 flex items-center justify-between py-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1E202E] tracking-tight">
             {title}

@@ -120,12 +120,6 @@ function StockBadge({ status }: { status: StockStatus }) {
           : "bg-[#FEF3C7] text-[#92400E]",
       )}
     >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          isInStock ? "bg-[#10B981]" : "bg-[#D97706]",
-        )}
-      />
       {status}
     </Badge>
   );
@@ -229,7 +223,7 @@ export default function InventoryPage() {
         </Button>
       </Header>
 
-      <div className="container py-10">
+      <div className="container">
         <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden">
           <DataGrid
             isPaginated

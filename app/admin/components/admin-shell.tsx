@@ -31,7 +31,7 @@ export default function AdminShell({
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        <main className="flex-1 overflow-auto bg-[#FAFAFA]/50">{children}</main>
+        <main className="flex-1 overflow-auto bg-[#F8F9FA]">{children}</main>
       </div>
     </div>
   );

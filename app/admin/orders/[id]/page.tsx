@@ -108,12 +108,6 @@ export default function OrderDetailsPage() {
                     <Badge
                       className={cn(getBadgeClassName("Paid").badgeClasses)}
                     >
-                      <span
-                        className={cn(
-                          getBadgeClassName("Paid").dotClasses,
-                          "h-1.5 w-1.5 rounded-full ",
-                        )}
-                      ></span>
                       Paid
                     </Badge>
                   ),
