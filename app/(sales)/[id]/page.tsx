@@ -10,23 +10,26 @@ import useConfirmations from "@/app/confirmations-provider/use-confirmations";
 import { addOns, customerInfo, glassSpecs, timeline } from "@/lib/constant";
 import { Badge } from "@/components/ui/badge";
 import { cn, getBadgeClassName } from "@/lib/utils";
+import { Header } from "@/components/header";
+import Link from "next/link";
+import { X } from "lucide-react";
 
 export default function OrderDetailsPage() {
   const { openConfirmModal } = useConfirmations();
 
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      {/* Header */}
-      <div className="bg-background border-b">
-        <div className="container py-6">
-          <h1 className="text-2xl font-bold tracking-tight text-[#1E202E]">
-            Order Details
-          </h1>
-          <p className="text-sm text-neutral-500 mt-1">
-            Order ID: ORD-2026-001
-          </p>
-        </div>
-      </div>
+      <Header title="Order Details" description="Order ID: ORD-2026-001">
+        <Link href="/">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-neutral-500 rounded-full h-10 w-10"
+          >
+            <X className="size-5" />
+          </Button>
+        </Link>
+      </Header>
 
       <div className="w-full max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 py-6">
         {/* ── Left card: Glass Specifications ── */}
