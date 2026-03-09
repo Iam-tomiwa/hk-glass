@@ -88,13 +88,15 @@ export default function OrdersPage() {
       align: "right",
       renderCell: () => (
         <div className="flex justify-end pr-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 font-medium rounded-md px-3 border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
-          >
-            View Order
-          </Button>
+          <Link href={"/123"}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 font-medium rounded-md px-3 border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+            >
+              View Order
+            </Button>
+          </Link>
         </div>
       ),
     },

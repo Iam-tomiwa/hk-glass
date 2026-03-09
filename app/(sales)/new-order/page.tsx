@@ -132,7 +132,7 @@ function NewOrderForm() {
           value={activeTab}
           onValueChange={setActiveTab}
           orientation="vertical"
-          className="flex flex-1 flex-col md:flex-row w-full data-[orientation=vertical]:flex-col md:data-[orientation=vertical]:flex-row"
+          className="flex  flex-1 flex-col md:flex-row w-full data-[orientation=vertical]:flex-col md:data-[orientation=vertical]:flex-row"
         >
           {/* Sidebar / Top Nav */}
           <div className="md:w-[240px] sticky top-0 max-h-[calc(100vh-10rem)] overflow-y-auto md:shrink-0 border-b md:border-b-0 md:border-r bg-white flex flex-col px-4">
