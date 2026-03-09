@@ -1,3 +1,5 @@
+"use client";
+
 import useConfirmations from "@/app/confirmations-provider/use-confirmations";
 import { cn } from "@/lib/utils";
 import { Bell, LogOut } from "lucide-react";
