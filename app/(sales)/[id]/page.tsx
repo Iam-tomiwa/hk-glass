@@ -101,8 +101,11 @@ export default function OrderDetailsPage() {
             <SpecTable
               rows={[
                 { label: "Order ID", value: "ORD-2026-9334" },
-                { label: "Created On", value: "ORD-2026-9334" },
-                { label: "Created By", value: "ORD-2026-9334" },
+                {
+                  label: "Created On",
+                  value: "Wednesday, Feb 20, 2026 at 3:30PM",
+                },
+                { label: "Created By", value: "sales@glassco.com" },
                 {
                   label: "Status",
                   value: (
