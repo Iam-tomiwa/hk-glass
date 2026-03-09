@@ -104,8 +104,8 @@ export default function OrdersPage() {
     <div className="bg-[#F8F9FA]">
       <div className="mx-auto">
         <Header
-          title="Pricing"
-          description="Manage pricing for glass and services"
+          title="Orders"
+          description="Manage and track all glass manufacturing orders"
         >
           <Link href="/new-order" passHref>
             <Button className="gap-2 bg-[#00AE4D] text-white hover:bg-[#009b44] rounded-md h-10 px-4 border-none">
@@ -114,7 +114,7 @@ export default function OrdersPage() {
             </Button>
           </Link>
         </Header>
-        <div className="container space-y-4">
+        <div className="container space-y-4 mt-10">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 rounded-xl border bg-white overflow-hidden">
             {/* Box 1 */}
