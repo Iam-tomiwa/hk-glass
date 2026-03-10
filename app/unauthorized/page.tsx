@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { setupAdminDevice } from "@/services/api/admin";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/error-handler";
 
-export default function UnauthorizedPage() {
+function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") || "/";
 
@@ -68,5 +68,13 @@ export default function UnauthorizedPage() {
         {isLoading ? "Verifying..." : "Submit"}
       </Button>
     </div>
+  );
+}
+
+export default function UnauthorizedPage() {
+  return (
+    <Suspense>
+      <UnauthorizedContent />
+    </Suspense>
   );
 }
