@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OrderFormValues } from "../schema";
+import { useListAddons } from "@/services/queries/orders";
+import { Loader2 } from "lucide-react";
 
 export function AddOnsStep({
   form,
@@ -28,6 +30,8 @@ export function AddOnsStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const { data: addons, isLoading: isLoadingAddons } = useListAddons();
+
   const drillHoles = useWatch({
     control: form.control,
     name: "drillHoles",
@@ -56,101 +60,74 @@ export function AddOnsStep({
         </div>
 
         <div className="space-y-6 bg-card p-6 rounded-lg">
-          {/* Edge & Surface */}
+          {/* Edge & Surface (Dynamic Addons) */}
           <div>
             <h3 className="text-lg font-bold text-[#1E202E] mb-2">
-              Edge & Surface
+              Available Add-ons
             </h3>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="edging"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-[#1E202E] font-medium text-sm">
-                        Edging
-                      </FormLabel>
-                      <p className="text-sm text-neutral-500">
-                        Smooth and polish glass edges
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="glazing"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-[#1E202E] font-medium text-sm">
-                        Glazing
-                      </FormLabel>
-                      <p className="text-sm text-neutral-500">
-                        Apply protective glazing coat
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="warping"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-[#1E202E] font-medium text-sm">
-                        Warping
-                      </FormLabel>
-                      <p className="text-sm text-neutral-500">
-                        Custom glass warping/bending
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="waxing"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-[#1E202E] font-medium text-sm">
-                        Waxing
-                      </FormLabel>
-                      <p className="text-sm text-neutral-500">
-                        Protective wax coating
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+            {isLoadingAddons ? (
+              <div className="flex items-center gap-2 py-4 text-neutral-500 text-sm">
+                <Loader2 className="animate-spin size-4" /> Loading add-ons...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="selectedAddons"
+                  render={() => (
+                    <FormItem>
+                      {addons?.map((addon) => (
+                        <FormField
+                          key={addon.id}
+                          control={form.control}
+                          name="selectedAddons"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={addon.id}
+                                className="flex flex-row items-center justify-between rounded-lg p-0 py-2"
+                              >
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-[#1E202E] font-medium text-sm">
+                                    {addon.name}
+                                  </FormLabel>
+                                  <p className="text-sm text-neutral-500 capitalize">
+                                    {String(addon.category)
+                                      .toLowerCase()
+                                      .replace("_", " ")}{" "}
+                                    - ${addon.price}
+                                  </p>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={
+                                      field.value?.includes(addon.id) || false
+                                    }
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([
+                                            ...(field.value || []),
+                                            addon.id,
+                                          ])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== addon.id,
+                                            ),
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </div>
 
           <hr className="border-neutral-100" />
@@ -254,28 +231,6 @@ export function AddOnsStep({
               Thermal & Film
             </h3>
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="temperGlass"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-[#1E202E] font-medium text-sm">
-                        Temper Glass
-                      </FormLabel>
-                      <p className="text-sm text-neutral-500">
-                        Heat-treated for extra strength
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="addTintFilm"

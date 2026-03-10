@@ -9,9 +9,14 @@ import {
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem,
-  adjustInventoryItem
+  adjustInventoryItem,
 } from "../api/inventory";
-import { InventoryItemResponse, InventoryItemCreate, InventoryItemUpdate, InventoryAdjustRequest } from "../types/openapi";
+import {
+  InventoryItemResponse,
+  InventoryItemCreate,
+  InventoryItemUpdate,
+  InventoryAdjustRequest,
+} from "../types/openapi";
 
 export function useListInventory() {
   return useQuery<InventoryItemResponse[]>({
@@ -23,13 +28,10 @@ export function useListInventory() {
 export function useCreateInventoryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: InventoryItemCreate }) => createInventoryItem(data),
+    mutationFn: ({ data }: { data: InventoryItemCreate }) =>
+      createInventoryItem(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
-      toast.success("Action successful.");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
 }
@@ -37,7 +39,13 @@ export function useCreateInventoryItem() {
 export function useUpdateInventoryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ item_id, data }: { item_id: string; data: InventoryItemUpdate }) => updateInventoryItem(item_id, data),
+    mutationFn: ({
+      item_id,
+      data,
+    }: {
+      item_id: string;
+      data: InventoryItemUpdate;
+    }) => updateInventoryItem(item_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
@@ -51,7 +59,8 @@ export function useUpdateInventoryItem() {
 export function useDeleteInventoryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ item_id }: { item_id: string }) => deleteInventoryItem(item_id),
+    mutationFn: ({ item_id }: { item_id: string }) =>
+      deleteInventoryItem(item_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
@@ -65,7 +74,13 @@ export function useDeleteInventoryItem() {
 export function useAdjustInventoryItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ item_id, data }: { item_id: string; data: InventoryAdjustRequest }) => adjustInventoryItem(item_id, data),
+    mutationFn: ({
+      item_id,
+      data,
+    }: {
+      item_id: string;
+      data: InventoryAdjustRequest;
+    }) => adjustInventoryItem(item_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
@@ -75,4 +90,3 @@ export function useAdjustInventoryItem() {
     },
   });
 }
-

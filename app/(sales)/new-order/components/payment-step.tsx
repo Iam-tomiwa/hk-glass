@@ -7,13 +7,16 @@ import { Separator } from "@/components/ui/separator";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 export function PaymentStep({
   form,
   onBack,
+  isLoading,
 }: {
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
+  isLoading?: boolean;
 }) {
   const values = form.getValues();
   const subtotal = 760.0;
@@ -121,9 +124,17 @@ export function PaymentStep({
         <div className="pt-6 flex items-center gap-3">
           <Button
             type="submit"
-            className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] px-8 h-10 rounded-md font-medium"
+            disabled={isLoading}
+            className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] px-8 h-10 rounded-md font-medium min-w-[160px]"
           >
-            Confirm Payment
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              "Confirm Payment"
+            )}
           </Button>
           <Button
             variant="outline"

@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { APIErrorTypeWrapper } from "./types";
 
 export interface ApiErrorResponse {
   message?: string;
@@ -6,47 +7,24 @@ export interface ApiErrorResponse {
   errors?: Record<string, string[]>;
 }
 
-export function getErrorMessage(
-  error: unknown,
-  fallbackMessage = "An error occurred. Please try again.",
-): string {
-  if (error instanceof AxiosError) {
-    const data = error.response?.data as ApiErrorResponse;
+export const getErrorMessage = (error: unknown, fallback?: string): string => {
+  const axiosError = error as APIErrorTypeWrapper;
+  const data = axiosError?.response?.data;
 
-    if (data?.message) {
-      return data.message;
+  if (data?.detail) {
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((e: { msg: string }) => e.msg).join("; ");
     }
-
-    if (data?.error) {
-      return data.error;
-    }
-
-    if (data?.errors) {
-      const firstError = Object.values(data.errors)[0];
-      if (Array.isArray(firstError) && firstError.length > 0) {
-        return firstError[0];
-      }
-    }
-
-    if (!error.response) {
-      return "Network error. Please check your connection.";
-    }
-
-    if (error.response.status === 500) {
-      return "Server error. Please try again later.";
-    }
-
-    if (error.response.status === 404) {
-      return "Resource not found.";
-    }
+    return data.detail;
   }
+  if (data?.message) return data.message;
 
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
+  return (
+    axiosError?.message ??
+    fallback ??
+    "Something went wrong! Please try again later."
+  );
+};
 
 // Optional: Helper for logging errors in development
 export function logError(error: unknown, context?: string) {

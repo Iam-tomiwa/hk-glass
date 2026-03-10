@@ -1,5 +1,15 @@
-import { get, post, put, patch, del } from "@/lib/axios-setup";
-import { UserCreate, UserResponse, LoginRequest, TokenResponse, AdminRecoveryRequest, TotpSetupResponse, TotpConfirmRequest, RecoveryCodeGenerateResponse, RecoveryCodeStatusResponse } from "../types/openapi";
+import { get, post, del } from "@/lib/axios-setup";
+import {
+  UserCreate,
+  UserResponse,
+  TokenResponse,
+  AdminRecoveryRequest,
+  TotpSetupResponse,
+  TotpConfirmRequest,
+  RecoveryCodeGenerateResponse,
+  RecoveryCodeStatusResponse,
+} from "../types/openapi";
+import { LoginFormValues } from "@/app/admin/login/page";
 
 // Register
 export async function register(data: UserCreate): Promise<UserResponse> {
@@ -7,12 +17,14 @@ export async function register(data: UserCreate): Promise<UserResponse> {
 }
 
 // Login
-export async function login(data: LoginRequest): Promise<TokenResponse> {
+export async function login(data: LoginFormValues): Promise<TokenResponse> {
   return await post<TokenResponse>(`/api/auth/login`, data);
 }
 
 // Recover Device
-export async function recoverDevice(data: AdminRecoveryRequest): Promise<TokenResponse> {
+export async function recoverDevice(
+  data: AdminRecoveryRequest,
+): Promise<TokenResponse> {
   return await post<TokenResponse>(`/api/auth/recover-device`, data);
 }
 
@@ -27,8 +39,13 @@ export async function confirmTotp(data: TotpConfirmRequest): Promise<any> {
 }
 
 // Generate Recovery Codes
-export async function generateRecoveryCodes(data?: any): Promise<RecoveryCodeGenerateResponse> {
-  return await post<RecoveryCodeGenerateResponse>(`/api/auth/recovery-codes`, data);
+export async function generateRecoveryCodes(
+  data?: any,
+): Promise<RecoveryCodeGenerateResponse> {
+  return await post<RecoveryCodeGenerateResponse>(
+    `/api/auth/recovery-codes`,
+    data,
+  );
 }
 
 // List Recovery Codes
@@ -36,3 +53,12 @@ export async function listRecoveryCodes(): Promise<RecoveryCodeStatusResponse> {
   return await get<RecoveryCodeStatusResponse>(`/api/auth/recovery-codes`);
 }
 
+// Get Current User
+export async function getCurrentUser(): Promise<UserResponse> {
+  return await get<UserResponse>(`/api/auth/me`);
+}
+
+// Disable 2FA
+export async function disableTotp(): Promise<any> {
+  return await del<any>(`/api/auth/2fa`);
+}

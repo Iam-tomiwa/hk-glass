@@ -5,23 +5,20 @@ import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ComboBox } from "@/components/ui/combo-box-2";
 import { Search, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getBadgeClassName } from "@/lib/utils";
+import { getBadgeVariant } from "@/lib/utils";
 import { order_data } from "@/lib/constant";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScanOrderPage from "./scan-order";
 import Link from "next/link";
+import { useListFactoryQueue } from "@/services/queries/factory";
+import { Header } from "@/components/header";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const columns: ColumnDef[] = [
     {
@@ -50,12 +47,17 @@ export default function OrdersPage() {
       renderCell: (row) => (
         <div className="flex gap-1 flex-wrap">
           {row.addons.slice(0, 3).map((el: string) => (
-            <Badge key={el} hideDot variant="secondary" className="...">
+            <Badge
+              key={el}
+              hideDot
+              variant="secondary"
+              className="bg-[#F1F5F9] rounded"
+            >
               {el}
             </Badge>
           ))}
 
-          <Badge variant="secondary" hideDot className="...">
+          <Badge variant="secondary" hideDot className="bg-[#F1F5F9] rounded">
             +{row.addons.slice(3).length}
           </Badge>
         </div>
@@ -67,8 +69,8 @@ export default function OrdersPage() {
       renderCell: (row) => {
         return (
           <Badge
-            variant="secondary"
-            className={`flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full ${getBadgeClassName(row.status).badgeClasses}`}
+            variant={getBadgeVariant(row.status)}
+            className="flex w-fit items-center gap-1.5 px-3 py-3 font-medium border-transparent shadow-none rounded-full"
           >
             {row.status}
           </Badge>
@@ -82,37 +84,27 @@ export default function OrdersPage() {
       renderCell: () => (
         <div className="flex justify-end pr-4">
           <Link href={"/factory/123"}>
-            <Button variant="outline" size="sm">
-              View Order
-            </Button>
+            <Button variant="outline">View Order</Button>
           </Link>
         </div>
       ),
     },
   ];
 
+  const { data, isLoading, isError } = useListFactoryQueue();
   return (
     <div className="bg-[#F8F9FA]">
       <div className="mx-auto">
-        {/* Header */}
-        <div className="bg-background border-b">
-          <div className="container py-6">
-            <h1 className="text-2xl font-bold tracking-tight text-[#1E202E]">
-              Orders
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1">
-              Manage and track all glass manufacturing orders
-            </p>
-          </div>
-        </div>
+        <Header
+          title="Orders"
+          description="Manage and track all glass manufacturing orders"
+          className="mb-0"
+        />
 
-        <Tabs orientation="horizontal">
+        <Tabs defaultValue={"order-queue"} orientation="horizontal">
           {/* Sidebar / Top Nav */}
           <div className="bg-background mb-6 border-b">
-            <TabsList
-              defaultValue={"order-queue"}
-              className="p-0 flex container h-auto w-full justify-start items-start space-x-4 bg-transparent overflow-x-auto rounded-none border-none"
-            >
+            <TabsList className="px-6 py-0 flex h-auto w-full justify-start items-start space-x-4 bg-transparent overflow-x-auto rounded-none border-none">
               <TabsTrigger
                 className="shadow-none! pt-4 pb-3 bg-none data-[state=active]:border-b rounded-none data-[state=active]:border-b-black h-full"
                 value={"scan"}
@@ -129,7 +121,7 @@ export default function OrdersPage() {
           </div>
 
           <TabsContent value="order-queue">
-            <div className="container space-y-4">
+            <div className="container space-y-4 pb-10">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 rounded-xl border bg-white overflow-hidden">
                 {/* Box 1 */}
@@ -191,25 +183,39 @@ export default function OrdersPage() {
                       />
                     </div>
 
-                    <Select defaultValue="all">
-                      <SelectTrigger className="max-w-[140px] h-10 rounded-md bg-white font-medium text-sm text-neutral-700">
-                        <SelectValue placeholder="All statuses" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All statuses</SelectItem>
-                        <SelectItem value="production">
-                          In Production
-                        </SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="ready">Ready Pickup</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <ComboBox
+                      value={statusFilter}
+                      onValueChange={(v) => setStatusFilter(v)}
+                      options={[
+                        { value: "all", label: "All statuses" },
+                        { value: "production", label: "In Production" },
+                        { value: "paid", label: "Paid" },
+                        { value: "completed", label: "Completed" },
+                        { value: "ready", label: "Ready Pickup" },
+                      ]}
+                      placeholder="All statuses"
+                      className="w-[140px]"
+                    />
                   </div>
                 </div>
 
                 <DataGrid
-                  rows={order_data}
+                  rows={
+                    data?.map((order) => ({
+                      id: order.order_reference || order.id,
+                      // date: new Date(order.).toLocaleDateString(),
+                      dimensions: `${order.width} x ${order.height}`,
+                      thickness: order.thickness ?? "-",
+                      addons: [
+                        order.tint_type,
+                        order.engraving_text,
+                        order.drill_holes_count
+                          ? `${order.drill_holes_count} Holes`
+                          : null,
+                      ].filter(Boolean),
+                      status: order.order_status,
+                    })) ?? []
+                  }
                   columns={columns}
                   page={page}
                   setPage={setPage}

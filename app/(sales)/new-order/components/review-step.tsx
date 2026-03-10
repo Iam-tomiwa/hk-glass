@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useListAddons } from "@/services/queries/orders";
 
 export function ReviewStep({
   form,
@@ -16,6 +17,7 @@ export function ReviewStep({
   onNext: () => void;
 }) {
   const values = form.getValues();
+  const { data: addonsList } = useListAddons();
 
   // area
   const area =
@@ -26,16 +28,15 @@ export function ReviewStep({
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
-  const addOns = [
-    { key: "edging", label: "edging" },
-    { key: "glazing", label: "glazing" },
-    { key: "warping", label: "warping" },
-    { key: "waxing", label: "waxing" },
+  const basicAddons = [
     { key: "drillHoles", label: "drill Holes" },
-    { key: "temperGlass", label: "temper" },
     { key: "addTintFilm", label: "tint" },
     { key: "engraving", label: "engraving" },
   ].filter((addon) => values[addon.key as keyof OrderFormValues]);
+
+  const dynamicAddons = (values.selectedAddons || [])
+    .map((id) => addonsList?.find((a) => a.id === id))
+    .filter(Boolean);
 
   return (
     <TabsContent value="review" className="mt-0 outline-none max-w-5xl mx-auto">
@@ -51,10 +52,10 @@ export function ReviewStep({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {/* Left Column - Details */}
-          <Card className="border rounded-xl py-2">
+          <Card className="border rounded-xl py-2 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-medium text-[#1E202E]">
-                Order Review
+                Order Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -122,16 +123,27 @@ export function ReviewStep({
                   Add-ons & Services
                 </h3>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {addOns.length > 0 ? (
-                    addOns.map((addon) => (
-                      <Badge
-                        key={addon.key}
-                        variant="secondary"
-                        className="bg-neutral-100 text-neutral-700 hover:bg-neutral-200 font-normal shadow-none border-none pb-[2px]"
-                      >
-                        {addon.label}
-                      </Badge>
-                    ))
+                  {basicAddons.length > 0 || dynamicAddons.length > 0 ? (
+                    <>
+                      {basicAddons.map((addon) => (
+                        <Badge
+                          key={addon.key}
+                          variant="secondary"
+                          className="bg-neutral-100 text-neutral-700 hover:bg-neutral-200 font-normal shadow-none border-none pb-[2px] capitalize"
+                        >
+                          {addon.label}
+                        </Badge>
+                      ))}
+                      {dynamicAddons.map((addon) => (
+                        <Badge
+                          key={addon?.id}
+                          variant="secondary"
+                          className="bg-neutral-100 text-neutral-700 hover:bg-neutral-200 font-normal shadow-none border-none pb-[2px] capitalize"
+                        >
+                          {addon?.name}
+                        </Badge>
+                      ))}
+                    </>
                   ) : (
                     <span className="text-sm text-neutral-500">
                       No add-ons selected
@@ -182,7 +194,7 @@ export function ReviewStep({
           </Card>
 
           {/* Right Column - Price */}
-          <Card className="border rounded-xl py-2">
+          <Card className="border rounded-xl py-2 shadow-none">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-bold text-[#1E202E]">
                 Price Breakdown

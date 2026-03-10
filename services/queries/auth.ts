@@ -11,9 +11,18 @@ import {
   setupTotp,
   confirmTotp,
   generateRecoveryCodes,
-  listRecoveryCodes
+  listRecoveryCodes,
+  getCurrentUser,
+  disableTotp,
 } from "../api/auth";
-import { UserCreate, UserResponse, LoginRequest, TokenResponse, AdminRecoveryRequest, TotpSetupResponse, TotpConfirmRequest, RecoveryCodeGenerateResponse, RecoveryCodeStatusResponse } from "../types/openapi";
+import {
+  UserCreate,
+  AdminRecoveryRequest,
+  TotpConfirmRequest,
+  RecoveryCodeStatusResponse,
+  UserResponse,
+} from "../types/openapi";
+import { LoginFormValues } from "@/app/admin/login/page";
 
 export function useRegister() {
   const queryClient = useQueryClient();
@@ -32,13 +41,9 @@ export function useRegister() {
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: LoginRequest }) => login(data),
+    mutationFn: ({ data }: { data: LoginFormValues }) => login(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
-      toast.success("Action successful.");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
 }
@@ -46,7 +51,8 @@ export function useLogin() {
 export function useRecoverDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: AdminRecoveryRequest }) => recoverDevice(data),
+    mutationFn: ({ data }: { data: AdminRecoveryRequest }) =>
+      recoverDevice(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
       toast.success("Action successful.");
@@ -106,3 +112,23 @@ export function useListRecoveryCodes() {
   });
 }
 
+export function useGetCurrentUser() {
+  return useQuery<UserResponse>({
+    queryKey: queryKeys.auth.detail("me"),
+    queryFn: () => getCurrentUser(),
+  });
+}
+
+export function useDisableTotp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => disableTotp(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
+      toast.success("Two-factor authentication disabled.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}

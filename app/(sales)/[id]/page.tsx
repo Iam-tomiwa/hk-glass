@@ -1,15 +1,12 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { QRCodeSVG } from "qrcode.react";
-import TimelineItem from "@/components/timeline-item";
 import SpecTable from "@/components/spec-item";
-import useConfirmations from "@/app/confirmations-provider/use-confirmations";
-import { addOns, customerInfo, glassSpecs, timeline } from "@/lib/constant";
+import { addOns, customerInfo, glassSpecs } from "@/lib/constant";
 import { Badge } from "@/components/ui/badge";
-import { cn, getBadgeClassName } from "@/lib/utils";
+import { cn, getBadgeVariant } from "@/lib/utils";
 import { Header } from "@/components/header";
 import Link from "next/link";
 import { X } from "lucide-react";
@@ -109,9 +106,7 @@ export default function OrderDetailsPage() {
                 {
                   label: "Status",
                   value: (
-                    <Badge
-                      className={cn(getBadgeClassName("Paid").badgeClasses)}
-                    >
+                    <Badge variant={getBadgeVariant("Paid")}>
                       Paid
                     </Badge>
                   ),

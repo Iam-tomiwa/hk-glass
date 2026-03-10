@@ -1,6 +1,4 @@
-export interface AddonCategory {
-
-}
+export interface AddonCategory {}
 
 export interface AddonCreate {
   name: string;
@@ -10,9 +8,7 @@ export interface AddonCreate {
   is_active?: boolean;
 }
 
-export interface AddonPriceType {
-
-}
+export interface AddonPriceType {}
 
 export interface AddonResponse {
   id: string;
@@ -146,12 +142,6 @@ export interface InventoryItemUpdate {
   low_stock_threshold?: number | any | null;
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-  otp_code?: string | any | null;
-}
-
 export interface OrderAddonResponse {
   addon: AddonResponse;
   calculated_price: string;
@@ -233,9 +223,7 @@ export interface OrderResponse {
   created_by_user?: UserResponse | any | null;
 }
 
-export interface OrderStatus {
-
-}
+export interface OrderStatus {}
 
 export interface OrderStatusUpdate {
   order_status: string;
@@ -274,11 +262,10 @@ export interface PaymentResponse {
   paystack_reference: string;
   amount: string;
   status: string;
+  created_at: string;
 }
 
-export interface PaymentStatus {
-
-}
+export interface PaymentStatus {}
 
 export interface PaystackCallback {
   reference: string;
@@ -344,6 +331,4 @@ export interface UserResponse {
   is_2fa_enabled: boolean;
 }
 
-export interface UserRole {
-
-}
+export interface UserRole {}

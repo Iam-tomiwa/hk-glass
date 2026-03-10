@@ -6,19 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import QrCodeScanner from "@/components/qr-code-scanner";
+import { useGetOrderByQr } from "@/services/queries/qr";
 
 export default function ScanOrderPage() {
-  const [orderId, setOrderId] = useState("");
   const [scannedResult, setScannedResult] = useState<string | null>(null);
+
+  const [orderId, setOrderId] = useState("");
+  const [qrToken, setQrToken] = useState<string | null>(null);
+
+  const { data, isLoading, isError } = useGetOrderByQr(qrToken || undefined);
 
   const handleScanResult = useCallback((result: string) => {
     setScannedResult(result);
     setOrderId(result);
+    setQrToken(result);
   }, []);
 
   const handleLookupOrder = () => {
     if (!orderId.trim()) return;
-    console.log("Looking up order:", orderId);
+    setQrToken(orderId);
   };
 
   return (

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QRCodeSVG } from "qrcode.react";
 import TimelineItem from "@/components/timeline-item";
 import SpecTable from "@/components/spec-item";
-import useConfirmations from "@/app/confirmations-provider/use-confirmations";
+import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import { addOns, glassSpecs, timeline } from "@/lib/constant";
 import { Header } from "@/components/header";
 import Link from "next/link";

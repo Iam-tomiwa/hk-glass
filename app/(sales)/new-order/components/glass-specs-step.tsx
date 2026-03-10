@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { OrderFormValues } from "../schema";
+import { useListGlassTypes } from "@/services/queries/orders";
+import { Loader2 } from "lucide-react";
 
 export function GlassSpecsStep({
   form,
@@ -27,6 +29,9 @@ export function GlassSpecsStep({
   onBack: () => void;
   onNext: () => void;
 }) {
+  const { data: glassTypes, isLoading: isLoadingGlassTypes } =
+    useListGlassTypes();
+
   const length = useWatch({
     control: form.control,
     name: "length",
@@ -56,6 +61,42 @@ export function GlassSpecsStep({
         </div>
 
         <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="glassTypeId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Glass Type <span className="text-red-500">*</span>
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
+                      {isLoadingGlassTypes ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="animate-spin size-4" /> Loading...
+                        </div>
+                      ) : (
+                        <SelectValue placeholder="Select glass type" />
+                      )}
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {glassTypes?.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="length"

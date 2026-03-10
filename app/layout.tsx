@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import ConfirmationsProvider from "./confirmations-provider";
+import ConfirmationsProvider from "../providers/confirmations-provider";
 import { Toaster } from "@/components/ui/sonner";
+import ClientProviders from "@/providers/client-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -31,7 +32,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConfirmationsProvider>{children}</ConfirmationsProvider>
+        <ClientProviders>
+          <ConfirmationsProvider>{children}</ConfirmationsProvider>
+        </ClientProviders>
         <Toaster />
       </body>
     </html>

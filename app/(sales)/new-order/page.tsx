@@ -19,6 +19,9 @@ import { ReviewStep } from "./components/review-step";
 import { PaymentStep } from "./components/payment-step";
 import { ConfirmationStep } from "./components/confirmation-step";
 import { Header } from "@/components/header";
+import { useCreateOrder } from "@/services/queries/orders";
+import { useInitializePayment } from "@/services/queries/payments";
+import { Loader2 } from "lucide-react";
 
 const steps = [
   { id: "customer", label: "Customer" },
@@ -64,18 +67,15 @@ function NewOrderForm() {
       customerName: "",
       email: "",
       phone: "",
+      glassTypeId: "",
       length: "",
       width: "",
       sheetSize: "",
       thickness: "",
-      edging: false,
-      glazing: false,
-      warping: false,
-      waxing: false,
+      selectedAddons: [],
       drillHoles: false,
       numberOfHoles: "",
       holeDiameter: "",
-      temperGlass: false,
       addTintFilm: false,
       tintType: "",
       engraving: false,
@@ -97,15 +97,54 @@ function NewOrderForm() {
     }
   };
 
-  function onSubmit(data: OrderFormValues) {
-    console.log(data);
-    // Move to next step or submit based on current step
-    const currentIndex = steps.findIndex((step) => step.id === activeTab);
-    if (currentIndex < steps.length - 1) {
-      setActiveTab(steps[currentIndex + 1].id);
+  const { mutateAsync: createOrder, isPending: isCreatingOrder } =
+    useCreateOrder();
+  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
+    useInitializePayment();
+
+  async function onSubmit(data: OrderFormValues) {
+    if (activeTab === "payment") {
+      try {
+        const orderRes = await createOrder({
+          data: {
+            customer_name: data.customerName,
+            customer_email: data.email,
+            customer_phone: data.phone || "",
+            width: Number(data.width),
+            height: Number(data.length),
+            sheet_size: data.sheetSize,
+            thickness: data.thickness,
+            drill_holes_count: data.drillHoles ? Number(data.numberOfHoles) : 0,
+            hole_diameter: data.drillHoles ? data.holeDiameter : "",
+            tint_type: data.addTintFilm ? data.tintType : "",
+            engraving_text: data.engraving ? data.engravingText : "",
+            glass_type_id: data.glassTypeId,
+            addon_ids: data.selectedAddons,
+            insurance_selected: data.insuranceCoverage,
+          },
+        });
+
+        if (orderRes?.id) {
+          const paymentRes = await initializePayment({
+            data: {
+              order_id: orderRes.id,
+            },
+          });
+
+          if (paymentRes?.authorization_url) {
+            window.location.href = paymentRes.authorization_url;
+          } else {
+            setActiveTab("confirmation");
+          }
+        }
+      } catch (e) {
+        console.error("Order processing failed", e);
+      }
     } else {
-      // Final submission
-      console.log("Submit Order", data);
+      const currentIndex = steps.findIndex((step) => step.id === activeTab);
+      if (currentIndex < steps.length - 1) {
+        setActiveTab(steps[currentIndex + 1].id);
+      }
     }
   }
 
@@ -166,7 +205,13 @@ function NewOrderForm() {
                   form={form}
                   onBack={handleCancel}
                   onNext={() =>
-                    handleNextTab(["length", "width", "sheetSize", "thickness"])
+                    handleNextTab([
+                      "glassTypeId",
+                      "length",
+                      "width",
+                      "sheetSize",
+                      "thickness",
+                    ])
                   }
                 />
                 <AddOnsStep
@@ -174,14 +219,10 @@ function NewOrderForm() {
                   onBack={handleCancel}
                   onNext={() =>
                     handleNextTab([
-                      "edging",
-                      "glazing",
-                      "warping",
-                      "waxing",
+                      "selectedAddons",
                       "drillHoles",
                       "numberOfHoles",
                       "holeDiameter",
-                      "temperGlass",
                       "addTintFilm",
                       "tintType",
                       "engraving",
@@ -197,6 +238,7 @@ function NewOrderForm() {
                 <PaymentStep
                   form={form}
                   onBack={() => setActiveTab("review")}
+                  isLoading={isCreatingOrder || isInitializingPayment}
                 />
 
                 <TabsContent value="confirmation" className="mt-0 outline-none">

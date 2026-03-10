@@ -1,11 +1,31 @@
 "use client";
 
-import useConfirmations from "@/app/confirmations-provider/use-confirmations";
+import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import { cn } from "@/lib/utils";
 import { Bell, LogOut } from "lucide-react";
+import Cookies from "js-cookie";
+import { useGetCurrentUser } from "@/services/queries/auth";
 
 export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
   const { openConfirmModal } = useConfirmations();
+  const { data: user } = useGetCurrentUser();
+
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+    : "—";
+
+  const handleLogout = () => {
+    Cookies.remove("access_token");
+    Cookies.remove("admin_device_token");
+    Cookies.remove("device_token");
+    window.location.href = "/admin/login";
+  };
+
   return (
     <nav className="bg-white border-b">
       <div
@@ -28,12 +48,12 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
           <button
             onClick={() => {
               openConfirmModal(
-                "Are you sure you want to log out from this device? ",
-                () => {},
+                "Are you sure you want to log out from this device?",
+                handleLogout,
                 {
                   title: "Log Out",
                   isDelete: true,
-                  confirmText: "Confirm",
+                  confirmText: "Log Out",
                 },
               );
             }}
@@ -43,7 +63,7 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
           </button>
           <div className="relative">
             <div className="h-10 w-10 rounded-full bg-[#F3E8E3] text-[#1E202E] font-semibold flex items-center justify-center text-sm">
-              OM
+              {initials}
             </div>
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#00AE4D]"></span>
           </div>

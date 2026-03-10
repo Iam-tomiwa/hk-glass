@@ -5,21 +5,19 @@ export const orderFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
 
-  length: z.string().min(1, "Length is required"),
+  glassTypeId: z.string().min(1, "Glass type is required"),
+  length: z.string().min(1, "Length/Height is required"),
   width: z.string().min(1, "Width is required"),
-  sheetSize: z.string().min(1, "Sheet Size is required"),
-  thickness: z.string().min(1, "Thickness is required"),
+  sheetSize: z.string().optional(),
+  thickness: z.string().optional(),
 
-  edging: z.boolean(),
-  glazing: z.boolean(),
-  warping: z.boolean(),
-  waxing: z.boolean(),
+  // Addons and services
+  selectedAddons: z.array(z.string()),
 
   drillHoles: z.boolean(),
   numberOfHoles: z.string().optional(),
   holeDiameter: z.string().optional(),
 
-  temperGlass: z.boolean(),
   addTintFilm: z.boolean(),
   tintType: z.string().optional(),
 

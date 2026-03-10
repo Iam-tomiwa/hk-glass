@@ -14,11 +14,10 @@ export type IPaginatedResponse<T> = {
 };
 
 export type ErrorResponseType = {
-  status: "fail" | "success";
-  message: string;
-  data?: unknown;
-  errors?: Record<string, string[]>;
   detail?: string;
+  message?: string;
+  errors?: Record<string, string[]>;
+  data?: unknown;
 };
 
 export type APIErrorTypeWrapper = AxiosError<

@@ -5,22 +5,17 @@ import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ComboBox } from "@/components/ui/combo-box-2";
 import { Search, Plus, Info } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { getBadgeClassName } from "@/lib/utils";
+import { getBadgeVariant } from "@/lib/utils";
 import { order_data } from "@/lib/constant";
 import { Header } from "@/components/header";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const columns: ColumnDef[] = [
     {
@@ -74,8 +69,8 @@ export default function OrdersPage() {
       renderCell: (row) => {
         return (
           <Badge
-            variant="secondary"
-            className={`flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full ${getBadgeClassName(row.status).badgeClasses}`}
+            variant={getBadgeVariant(row.status)}
+            className="flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full"
           >
             {row.status}
           </Badge>
@@ -178,18 +173,19 @@ export default function OrdersPage() {
                   />
                 </div>
 
-                <Select defaultValue="all">
-                  <SelectTrigger className="max-w-[140px] h-10 rounded-md bg-white font-medium text-sm text-neutral-700">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="production">In Production</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="ready">Ready Pickup</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ComboBox
+                  value={statusFilter}
+                  onValueChange={(v) => setStatusFilter(v)}
+                  options={[
+                    { value: "all", label: "All statuses" },
+                    { value: "production", label: "In Production" },
+                    { value: "paid", label: "Paid" },
+                    { value: "completed", label: "Completed" },
+                    { value: "ready", label: "Ready Pickup" },
+                  ]}
+                  placeholder="All statuses"
+                  className="w-[140px]"
+                />
               </div>
             </div>
 

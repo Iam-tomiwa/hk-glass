@@ -25,9 +25,27 @@ import {
   listPayments,
   getSummary,
   listRecentOrders,
-  setupAdminDevice
+  setupAdminDevice,
 } from "../api/admin";
-import { GlassTypeCreate, GlassTypeResponse, GlassTypeUpdate, AddonCreate, AddonResponse, AddonUpdate, PricingSettingsResponse, PricingSettingsUpdate, AdminDeviceCreate, DeviceSetupResponse, DeviceResponse, StaffDeviceCreate, CombinedDeviceResponse, UserResponse, OrderResponse, PaymentResponse, DashboardSummaryResponse, DashboardOrderResponse } from "../types/openapi";
+import {
+  GlassTypeCreate,
+  GlassTypeResponse,
+  GlassTypeUpdate,
+  AddonCreate,
+  AddonResponse,
+  AddonUpdate,
+  PricingSettingsResponse,
+  PricingSettingsUpdate,
+  AdminDeviceCreate,
+  DeviceResponse,
+  StaffDeviceCreate,
+  CombinedDeviceResponse,
+  UserResponse,
+  OrderResponse,
+  PaymentResponse,
+  DashboardSummaryResponse,
+  DashboardOrderResponse,
+} from "../types/openapi";
 
 export function useCreateGlassType() {
   const queryClient = useQueryClient();
@@ -45,7 +63,7 @@ export function useCreateGlassType() {
 
 export function useListGlassTypes() {
   return useQuery<GlassTypeResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("glass-types"),
     queryFn: () => listGlassTypes(),
   });
 }
@@ -53,10 +71,16 @@ export function useListGlassTypes() {
 export function useUpdateGlassType() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ glass_type_id, data }: { glass_type_id: string; data: GlassTypeUpdate }) => updateGlassType(glass_type_id, data),
+    mutationFn: ({
+      glass_type_id,
+      data,
+    }: {
+      glass_type_id: string;
+      data: GlassTypeUpdate;
+    }) => updateGlassType(glass_type_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Glass type updated successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -70,7 +94,7 @@ export function useCreateAddon() {
     mutationFn: ({ data }: { data: AddonCreate }) => createAddon(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Addon created successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -80,7 +104,7 @@ export function useCreateAddon() {
 
 export function useListAddons() {
   return useQuery<AddonResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("addons"),
     queryFn: () => listAddons(),
   });
 }
@@ -88,10 +112,11 @@ export function useListAddons() {
 export function useUpdateAddon() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ addon_id, data }: { addon_id: string; data: AddonUpdate }) => updateAddon(addon_id, data),
+    mutationFn: ({ addon_id, data }: { addon_id: string; data: AddonUpdate }) =>
+      updateAddon(addon_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Addon updated successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -101,7 +126,7 @@ export function useUpdateAddon() {
 
 export function useGetPricingSettings() {
   return useQuery<PricingSettingsResponse>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("pricing-settings"),
     queryFn: () => getPricingSettings(),
   });
 }
@@ -109,10 +134,11 @@ export function useGetPricingSettings() {
 export function useUpdatePricingSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: PricingSettingsUpdate }) => updatePricingSettings(data),
+    mutationFn: ({ data }: { data: PricingSettingsUpdate }) =>
+      updatePricingSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Pricing settings updated successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -123,10 +149,11 @@ export function useUpdatePricingSettings() {
 export function useRegisterAdminDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: AdminDeviceCreate }) => registerAdminDevice(data),
+    mutationFn: ({ data }: { data: AdminDeviceCreate }) =>
+      registerAdminDevice(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Admin device registered successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -136,7 +163,7 @@ export function useRegisterAdminDevice() {
 
 export function useListAdminDevices() {
   return useQuery<DeviceResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("admin-devices"),
     queryFn: () => listAdminDevices(),
   });
 }
@@ -144,10 +171,11 @@ export function useListAdminDevices() {
 export function useDeactivateAdminDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) => deactivateAdminDevice(device_id, data),
+    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) =>
+      deactivateAdminDevice(device_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
-      toast.success("Action successful.");
+      toast.success("Admin device deactivated successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -158,7 +186,8 @@ export function useDeactivateAdminDevice() {
 export function useRegisterStaffDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ data }: { data: StaffDeviceCreate }) => registerStaffDevice(data),
+    mutationFn: ({ data }: { data: StaffDeviceCreate }) =>
+      registerStaffDevice(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
@@ -171,14 +200,14 @@ export function useRegisterStaffDevice() {
 
 export function useListStaffDevices() {
   return useQuery<DeviceResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("staff-devices"),
     queryFn: () => listStaffDevices(),
   });
 }
 
 export function useListCombinedDevices() {
   return useQuery<CombinedDeviceResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("combined-devices"),
     queryFn: () => listCombinedDevices(),
   });
 }
@@ -186,7 +215,8 @@ export function useListCombinedDevices() {
 export function useDeactivateStaffDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) => deactivateStaffDevice(device_id, data),
+    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) =>
+      deactivateStaffDevice(device_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
@@ -199,28 +229,28 @@ export function useDeactivateStaffDevice() {
 
 export function useListStaff() {
   return useQuery<UserResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("staff"),
     queryFn: () => listStaff(),
   });
 }
 
 export function useListOrders() {
   return useQuery<OrderResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("orders"),
     queryFn: () => listOrders(),
   });
 }
 
 export function useListPayments() {
   return useQuery<PaymentResponse[]>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("payments"),
     queryFn: () => listPayments(),
   });
 }
 
 export function useGetSummary() {
   return useQuery<DashboardSummaryResponse>({
-    queryKey: queryKeys.admin.list(undefined),
+    queryKey: queryKeys.admin.list("summary"),
     queryFn: () => getSummary(),
   });
 }
@@ -232,10 +262,12 @@ export function useListRecentOrders(params?: { limit?: number }) {
   });
 }
 
-export function useSetupAdminDevice(params?: { token?: string | any | null; code?: string | any | null }) {
+export function useGetDevices(params?: {
+  token?: string | any | null;
+  code?: string | any | null;
+}) {
   return useQuery<any>({
     queryKey: queryKeys.admin.list(params),
     queryFn: () => setupAdminDevice(params),
   });
 }
-

@@ -1,8 +1,9 @@
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import { toast } from "sonner";
+import Cookies from "js-cookie";
 
 export const axiosInstance = axios.create({
-  baseURL: "hk.planetal.app",
+  baseURL: "/",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -10,15 +11,19 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Separate axios instance for guest user creation (no interceptors to avoid circular dependency)
-const axiosGuestInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/api",
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
+// Request interceptor to add auth token (admin endpoints)
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
-  withCredentials: true,
-});
+  (error) => {
+    return Promise.reject(error);
+  },
+);
 
 // Response interceptor for handling errors globally
 axiosInstance.interceptors.response.use(
@@ -27,6 +32,21 @@ axiosInstance.interceptors.response.use(
     if (!error.response && error.code === "ECONNABORTED") {
       // Handle timeout errors
       toast.error("Request timed out. Please try again.");
+    }
+
+    if (error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        const from = window.location.pathname + window.location.search;
+        Cookies.remove("access_token");
+        Cookies.remove("admin_device_token");
+        Cookies.remove("device_token");
+        localStorage.setItem("session_expired", "1");
+        if (window.location.pathname.startsWith("/admin")) {
+          window.location.href = `/admin/login?redirectTo=${encodeURIComponent(from)}`;
+        } else {
+          window.location.href = `/unauthorized?redirectTo=${encodeURIComponent(from)}`;
+        }
+      }
     }
 
     return Promise.reject(error);

@@ -6,7 +6,30 @@ import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
 
-const Select = SelectPrimitive.Root;
+type LabelsContextValue = {
+  register: (value: string, label: string) => void;
+};
+
+const LabelsContext = React.createContext<LabelsContextValue | null>(null);
+const LabelsMapContext = React.createContext<Map<string, string>>(new Map());
+
+function Select({ children, ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  const [labelsMap] = React.useState(() => new Map<string, string>());
+  const register = React.useCallback(
+    (value: string, label: string) => {
+      labelsMap.set(value, label);
+    },
+    [labelsMap],
+  );
+
+  return (
+    <LabelsMapContext.Provider value={labelsMap}>
+      <LabelsContext.Provider value={{ register }}>
+        <SelectPrimitive.Root {...props}>{children}</SelectPrimitive.Root>
+      </LabelsContext.Provider>
+    </LabelsMapContext.Provider>
+  );
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
@@ -19,12 +42,15 @@ function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
 }
 
 function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
+  const labelsMap = React.useContext(LabelsMapContext);
   return (
     <SelectPrimitive.Value
       data-slot="select-value"
       className={cn("flex flex-1 text-left", className)}
       {...props}
-    />
+    >
+      {(value: string) => labelsMap.get(value) ?? value}
+    </SelectPrimitive.Value>
   );
 }
 
@@ -114,11 +140,21 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  value,
   ...props
 }: SelectPrimitive.Item.Props) {
+  const ctx = React.useContext(LabelsContext);
+
+  // Register the label for this value so SelectValue can look it up
+  if (ctx && value !== undefined) {
+    const label = typeof children === "string" ? children : undefined;
+    if (label) ctx.register(String(value), label);
+  }
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      value={value}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 relative flex w-full cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
