@@ -36,15 +36,24 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        const from = window.location.pathname + window.location.search;
-        Cookies.remove("access_token");
-        Cookies.remove("admin_device_token");
-        Cookies.remove("device_token");
-        localStorage.setItem("session_expired", "1");
-        if (window.location.pathname.startsWith("/admin")) {
-          window.location.href = `/admin/login?redirectTo=${encodeURIComponent(from)}`;
-        } else {
-          window.location.href = `/unauthorized?redirectTo=${encodeURIComponent(from)}`;
+        const { pathname } = window.location;
+
+        // Let the login / unauthorized pages handle their own 401s
+        // (e.g. recover-device flow). Redirecting here would prevent that.
+        const isAuthPage =
+          pathname === "/admin/login" || pathname === "/unauthorized";
+
+        if (!isAuthPage) {
+          const from = pathname + window.location.search;
+          Cookies.remove("access_token");
+          Cookies.remove("admin_device_token");
+          Cookies.remove("device_token");
+          localStorage.setItem("session_expired", "1");
+          if (pathname.startsWith("/admin")) {
+            window.location.href = `/admin/login?redirectTo=${encodeURIComponent(from)}`;
+          } else {
+            window.location.href = `/unauthorized?redirectTo=${encodeURIComponent(from)}`;
+          }
         }
       }
     }
