@@ -18,8 +18,7 @@ import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/search-input";
 import { Inbox, Info, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { cn, getBadgeVariant } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import SuspenseContainer from "@/components/custom-suspense";
 import {
@@ -109,7 +108,7 @@ export default function AdminDashboardPage() {
   const { data: payments } = useListPayments();
 
   const chartData = Object.entries(
-    (payments ?? []).reduce<Record<string, number>>((acc, p) => {
+    (payments ?? [])?.reduce<Record<string, number>>((acc, p) => {
       const month = format(new Date(p.created_at), "MMM");
       acc[month] = (acc[month] ?? 0) + 1;
       return acc;
