@@ -43,6 +43,9 @@ export function usePaystackCallbackRedirect(params?: { reference?: string | any 
   return useQuery<PaymentResponse>({
     queryKey: queryKeys.payments.list(params),
     queryFn: () => paystackCallbackRedirect(params),
+    enabled: !!(params?.reference || params?.trxref),
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 }
 

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { setupAdminDevice } from "@/services/api/admin";
+import { setupDevice } from "@/services/api/admin";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/error-handler";
 
@@ -27,7 +27,7 @@ function UnauthorizedContent() {
 
     setIsLoading(true);
     try {
-      await setupAdminDevice({ code: code.trim() });
+      await setupDevice({ code: code.trim() });
       window.location.href = redirectTo;
     } catch (error) {
       toast.error(getErrorMessage(error, "Invalid code. Please try again."));

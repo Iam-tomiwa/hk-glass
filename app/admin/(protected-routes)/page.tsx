@@ -27,6 +27,8 @@ import {
   useListRecentOrders,
   useListPayments,
 } from "@/services/queries/admin";
+import DateTag from "@/components/date-tag";
+import OrderStatusBadge from "@/components/order-status-badge";
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
@@ -53,11 +55,7 @@ const columns: ColumnDef[] = [
   {
     field: "date",
     headerName: "Date Initiated",
-    renderCell: (row) => (
-      <span className="text-[#4B5563] text-[14px]">
-        {row.created_at ? format(new Date(row.created_at), "MMM d, yyyy") : "—"}
-      </span>
-    ),
+    renderCell: (row) => <DateTag date={row.created_at} />,
   },
   {
     field: "total",
@@ -69,14 +67,7 @@ const columns: ColumnDef[] = [
   {
     field: "status",
     headerName: "Status",
-    renderCell: (row) => (
-      <Badge
-        variant={getBadgeVariant(row.order_status)}
-        className="flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full"
-      >
-        {row.order_status}
-      </Badge>
-    ),
+    renderCell: (row) => <OrderStatusBadge status={row.order_status} />,
   },
   {
     field: "actions",

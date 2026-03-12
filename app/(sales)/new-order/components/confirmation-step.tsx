@@ -1,37 +1,87 @@
-import { QRCodeSVG } from "qrcode.react";
 import { useSearchParams } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { useGetOrder } from "@/services/queries/orders";
+import { getBadgeVariant } from "@/lib/utils";
 
 export function ConfirmationStep() {
   const searchParams = useSearchParams();
-  const rawReference = searchParams.get("reference");
 
-  // Clean up order ID or provide a fallback
-  const orderId = rawReference
-    ? rawReference.startsWith("ORD-")
-      ? rawReference
-      : `ORD-${rawReference.substring(0, 9).toUpperCase()}`
-    : "ORD-2026-9334";
+  // Paystack redirects back with these params after payment
+  const reference = searchParams.get("reference") || searchParams.get("trxref");
+  const status = searchParams.get("status"); // "success" | "failed" | undefined
+  const orderId = searchParams.get("order_id");
 
+  // Fetch order if order_id is in URL (backend may include it in callback URL)
+  const { data: order } = useGetOrder(orderId ?? "");
+
+  const isSuccess = status === "success" || (!status && !!reference);
+  const isFailed = status === "failed" || status === "cancelled";
+
+  const displayOrderId =
+    order?.order_reference ?? order?.id ?? orderId ?? reference ?? "—";
+
+  const qrValue =
+    order?.qr_code_token ?? order?.id ?? orderId ?? reference ?? displayOrderId;
+
+  const customerEmail = order?.customer_email;
+
+  // ── Failed / Cancelled state ──
+  if (isFailed) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-neutral-500 max-w-sm mx-auto text-center">
+        <AlertCircle className="size-10 text-red-500" />
+        <h2 className="text-xl font-bold text-[#1E202E]">Payment Failed</h2>
+        <p className="text-sm text-neutral-500">
+          Your payment could not be processed. You can retry or contact support.
+        </p>
+        <p className="text-xs font-mono text-neutral-400">
+          Reference: {reference ?? "—"}
+        </p>
+        <div className="flex gap-3 mt-2">
+          <Link href="/new-order">
+            <Button className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] rounded-md h-10 px-6">
+              Try Again
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button
+              variant="outline"
+              className="h-10 px-6 rounded-md border-neutral-200"
+            >
+              Back to Orders
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Success state ──
   return (
     <div className="flex flex-col md:max-w-max mx-auto py-8 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-[#1E202E] tracking-tight mb-2">
-          Confirmation
-        </h2>
-        <p className="text-neutral-500 font-medium text-[15px]">
-          Your order has been confirmed and is ready for production
-        </p>
+      <div className="mb-8 flex items-start gap-3">
+        <CheckCircle2 className="size-8 text-[#00AE4D] mt-0.5 shrink-0" />
+        <div>
+          <h2 className="text-3xl font-bold text-[#1E202E] tracking-tight mb-1">
+            Confirmation
+          </h2>
+          <p className="text-neutral-500 font-medium text-[15px]">
+            Your order has been confirmed and is ready for production
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 items-start w-full">
+        {/* Left: QR + order badge */}
         <div className="flex flex-col gap-4 w-full md:w-[50%] shrink-0">
           <div className="bg-white rounded-xl border border-neutral-100 p-6 flex flex-col gap-4">
             <div className="w-full aspect-square flex items-center justify-center bg-white rounded-lg">
               <QRCodeSVG
-                value={orderId}
+                value={qrValue}
                 size={350}
                 level="M"
                 className="w-full h-auto"
@@ -40,29 +90,40 @@ export function ConfirmationStep() {
 
             <div className="flex flex-col gap-3">
               <Badge
-                variant="secondary"
-                className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full bg-[#FEF3C7] text-[#92400E]"
+                variant={getBadgeVariant("Paid")}
+                className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full"
               >
                 Paid
               </Badge>
               <h3 className="text-3xl font-bold tracking-tight text-[#1E202E]">
-                {orderId}
+                {displayOrderId}
               </h3>
-              <p className="text-[15px] text-neutral-500 font-medium">
-                A confirmation email has been sent to{" "}
-                <span className="font-bold text-neutral-700">tk@gmail.com</span>
-                .
-              </p>
+              {reference && (
+                <p className="text-xs font-mono text-neutral-400">
+                  Payment ref: {reference}
+                </p>
+              )}
+              {customerEmail && (
+                <p className="text-[15px] text-neutral-500 font-medium">
+                  A confirmation email has been sent to{" "}
+                  <span className="font-bold text-neutral-700">
+                    {customerEmail}
+                  </span>
+                  .
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href={`/sales/orders/${orderId}`} passHref>
-              <Button className="bg-[#00AE4D] hover:bg-[#009b44] text-white rounded-md font-medium h-10 px-6">
-                View Order Details
-              </Button>
-            </Link>
-            <Link href="/sales/new-order" passHref>
+            {(order?.id || orderId) && (
+              <Link href={`/${order?.id ?? orderId}`} passHref>
+                <Button className="bg-[#00AE4D] hover:bg-[#009b44] text-white rounded-md font-medium h-10 px-6">
+                  View Order Details
+                </Button>
+              </Link>
+            )}
+            <Link href="/new-order" passHref>
               <Button
                 variant="outline"
                 className="h-10 px-6 rounded-md font-medium bg-white border-neutral-200 text-[#1E202E] hover:bg-neutral-50"
@@ -73,13 +134,14 @@ export function ConfirmationStep() {
           </div>
         </div>
 
+        {/* Right: Next steps */}
         <div className="bg-white rounded-xl border border-neutral-100 p-6 w-full max-w-[420px]">
           <h3 className="text-[17px] font-bold text-[#1E202E] mb-4">
             Next Steps
           </h3>
           <p className="text-[15px] text-neutral-600 font-medium leading-relaxed mb-6">
             The production team will receive this order via QR code scan and the
-            customer will be notified when order is ready for pickup.
+            customer will be notified when the order is ready for pickup.
           </p>
           <p className="text-[15px] text-[#1E202E] font-semibold">
             Estimated production time: 3-5 business days

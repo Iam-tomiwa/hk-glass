@@ -8,16 +8,16 @@ import { useGetCurrentUser } from "@/services/queries/auth";
 
 export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
   const { openConfirmModal } = useConfirmations();
-  const { data: user } = useGetCurrentUser();
+  // const { data: user } = useGetCurrentUser();
 
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-    : "—";
+  // const initials = user?.name
+  //   ? user.name
+  //       .split(" ")
+  //       .slice(0, 2)
+  //       .map((w) => w[0])
+  //       .join("")
+  //       .toUpperCase()
+  //   : "—";
 
   const handleLogout = () => {
     Cookies.remove("access_token");
@@ -63,7 +63,7 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
           </button>
           <div className="relative">
             <div className="h-10 w-10 rounded-full bg-[#F3E8E3] text-[#1E202E] font-semibold flex items-center justify-center text-sm">
-              {initials}
+              {"HK"}
             </div>
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-[#00AE4D]"></span>
           </div>

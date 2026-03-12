@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useListAddons } from "@/services/queries/orders";
+import { useListAddons, useListGlassTypes } from "@/services/queries/orders";
+import { formatNaira } from "@/lib/utils";
 
 export function ReviewStep({
   form,
@@ -18,13 +19,25 @@ export function ReviewStep({
 }) {
   const values = form.getValues();
   const { data: addonsList } = useListAddons();
+  const { data: glassTypes } = useListGlassTypes();
 
-  // area
+  // area in sq ft, convert to sq m for pricing
   const area =
     ((Number(values.length) || 0) * (Number(values.width) || 0)) / 144;
+  const areaSqm = area * 0.0929;
 
-  // mock price calculation
-  const subtotal = 760.0;
+  const selectedGlassType = glassTypes?.find(
+    (t) => t.id === values.glassTypeId,
+  );
+  const glassPrice = Number(selectedGlassType?.price_per_sqm || 0) * areaSqm;
+  const selectedAddonObjects = (values.selectedAddons || [])
+    .map((id) => addonsList?.find((a) => a.id === id))
+    .filter(Boolean);
+  const addonTotal = selectedAddonObjects.reduce(
+    (sum, a) => sum + Number(a?.price || 0),
+    0,
+  );
+  const subtotal = glassPrice + addonTotal;
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
@@ -88,6 +101,12 @@ export function ReviewStep({
                   Glass Specifications
                 </h3>
                 <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">Glass Type:</span>
+                    <span className="font-medium text-neutral-800">
+                      {selectedGlassType?.name || "-"}
+                    </span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Dimensions:</span>
                     <span className="font-medium text-neutral-800">
@@ -202,16 +221,34 @@ export function ReviewStep({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3 text-sm">
+                {selectedGlassType && (
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">
+                      Glass ({selectedGlassType.name}):
+                    </span>
+                    <span className="font-medium text-neutral-800">
+                      {formatNaira(glassPrice)}
+                    </span>
+                  </div>
+                )}
+                {selectedAddonObjects.map((addon) => (
+                  <div key={addon?.id} className="flex justify-between">
+                    <span className="text-neutral-500">{addon?.name}:</span>
+                    <span className="font-medium text-neutral-800">
+                      {formatNaira(addon?.price)}
+                    </span>
+                  </div>
+                ))}
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Subtotal:</span>
                   <span className="font-medium text-neutral-800">
-                    ${subtotal.toFixed(2)}
+                    {formatNaira(subtotal)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Tax (8%):</span>
                   <span className="font-medium text-neutral-800">
-                    ${tax.toFixed(2)}
+                    {formatNaira(tax)}
                   </span>
                 </div>
               </div>
@@ -221,7 +258,7 @@ export function ReviewStep({
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-[#1E202E]">Total:</span>
                 <span className="font-bold text-blue-600 text-base">
-                  ${total.toFixed(2)}
+                  {formatNaira(total)}
                 </span>
               </div>
             </CardContent>

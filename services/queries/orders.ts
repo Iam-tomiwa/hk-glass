@@ -31,14 +31,14 @@ export function useCreateOrder() {
 
 export function useListGlassTypes() {
   return useQuery<GlassTypeResponse[]>({
-    queryKey: queryKeys.orders.list(undefined),
+    queryKey: [...queryKeys.orders.all, "glass-types"],
     queryFn: () => listGlassTypes(),
   });
 }
 
 export function useListAddons() {
   return useQuery<AddonResponse[]>({
-    queryKey: queryKeys.orders.list(undefined),
+    queryKey: [...queryKeys.orders.all, "addons"],
     queryFn: () => listAddons(),
   });
 }
@@ -54,6 +54,7 @@ export function useGetOrder(order_id: string) {
   return useQuery<OrderResponse>({
     queryKey: queryKeys.orders.detail(order_id),
     queryFn: () => getOrder(order_id),
+    enabled: !!order_id,
   });
 }
 

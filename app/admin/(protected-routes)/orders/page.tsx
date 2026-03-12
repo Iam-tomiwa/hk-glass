@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { useListOrders } from "@/services/queries/admin";
 import { Inbox } from "lucide-react";
+import OrderStatusBadge from "@/components/order-status-badge";
 
 const statusStyles: Record<string, string> = {
   "In Production": "bg-blue-100 text-blue-700",
@@ -37,10 +38,10 @@ export default function OrdersPage() {
       renderCell: (row) => (
         <div className="flex flex-col">
           <span className="font-medium text-[#111827]">
-            {row.customer.name}
+            {row.customer_name}
           </span>
           <span className="text-[13px] text-[#6B7280]">
-            {row.customer.email}
+            {row.customer_email}
           </span>
         </div>
       ),
@@ -49,27 +50,20 @@ export default function OrdersPage() {
       field: "date",
       headerName: "Date Created",
       renderCell: (row) => (
-        <span className="text-[#4B5563] text-[14px]">{row.date}</span>
+        <span className="text-[#4B5563] text-[14px]">{row.created_at}</span>
       ),
     },
     {
       field: "total",
       headerName: "Total",
       renderCell: (row) => (
-        <span className="font-semibold text-[#111827]">{row.total}</span>
+        <span className="font-semibold text-[#111827]">{row.total_amount}</span>
       ),
     },
     {
       field: "status",
       headerName: "Status",
-      renderCell: (row) => (
-        <Badge
-          variant="secondary"
-          className={`flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full ${statusStyles[row.status]}`}
-        >
-          {row.status}
-        </Badge>
-      ),
+      renderCell: (row) => <OrderStatusBadge status={row.order_status} />,
     },
     {
       field: "actions",

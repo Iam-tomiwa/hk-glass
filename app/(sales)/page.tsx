@@ -1,89 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ComboBox } from "@/components/ui/combo-box-2";
 import { Search, Plus, Info } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { getBadgeVariant } from "@/lib/utils";
-import { order_data } from "@/lib/constant";
+import { formatNaira } from "@/lib/utils";
 import { Header } from "@/components/header";
+import { useSearchOrders } from "@/services/queries/orders";
+import { OrderResponse } from "@/services/types/openapi";
+import OrderStatusBadge from "@/components/order-status-badge";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const getStatusParams = () => {
+    switch (statusFilter) {
+      case "production":
+        return { order_status: "in_production" };
+      case "paid":
+        return { payment_status: "paid" };
+      case "completed":
+        return { order_status: "completed" };
+      case "ready":
+        return { order_status: "ready_for_pickup" };
+      default:
+        return {};
+    }
+  };
+
+  const {
+    data: orders,
+    isLoading,
+    error,
+    isError,
+  } = useSearchOrders({
+    customer_name: debouncedSearch || null,
+    ...getStatusParams(),
+  });
+
+  const inProductionCount =
+    orders?.filter((o) => o.order_status === "in_production").length ?? 0;
+  const completedCount =
+    orders?.filter((o) => o.order_status === "completed").length ?? 0;
+  const readyCount =
+    orders?.filter((o) => o.order_status === "ready_for_pickup").length ?? 0;
 
   const columns: ColumnDef[] = [
     {
-      field: "id",
+      field: "order_reference",
       headerName: "Order ID",
-      renderCell: (row) => (
+      renderCell: (row: OrderResponse) => (
         <span className="text-sm font-medium text-[#4B5563] whitespace-nowrap">
-          {row.id}
+          {row.order_reference || row.id}
         </span>
       ),
     },
     {
-      field: "customerName",
+      field: "customer_name",
       headerName: "Customer",
-      renderCell: (row) => (
+      renderCell: (row: OrderResponse) => (
         <span className="text-sm text-[#4B5563] whitespace-nowrap">
-          {row.customerName}
+          {row.customer_name}
         </span>
       ),
     },
     {
-      field: "customerEmail",
+      field: "customer_email",
       headerName: "Customer's Email",
-      renderCell: (row) => (
+      renderCell: (row: OrderResponse) => (
         <span className="text-sm text-[#4B5563] whitespace-nowrap">
-          {row.customerEmail}
+          {row.customer_email}
         </span>
       ),
     },
     {
-      field: "date",
-      headerName: "Date Inititated",
-      renderCell: (row) => (
-        <span className="text-sm text-[#4B5563] whitespace-nowrap">
-          {row.date}
-        </span>
-      ),
-    },
-    {
-      field: "total",
+      field: "total_amount",
       headerName: "Total",
-      renderCell: (row) => (
+      renderCell: (row: OrderResponse) => (
         <span className="text-sm font-semibold text-[#1E202E] whitespace-nowrap">
-          ${row.total.toFixed(2)}
+          {formatNaira(row.total_amount)}
         </span>
       ),
     },
     {
-      field: "status",
+      field: "order_status",
       headerName: "Status",
-      renderCell: (row) => {
-        return (
-          <Badge
-            variant={getBadgeVariant(row.status)}
-            className="flex w-fit items-center gap-1.5 px-3 py-1 font-medium border-transparent shadow-none rounded-full"
-          >
-            {row.status}
-          </Badge>
-        );
-      },
+      renderCell: (row: OrderResponse) => (
+        <OrderStatusBadge status={row.order_status} />
+      ),
     },
     {
       field: "actions",
       headerName: " ",
       align: "right",
-      renderCell: () => (
+      renderCell: (row: OrderResponse) => (
         <div className="flex justify-end pr-4">
-          <Link href={"/123"}>
+          <Link href={`/${row.id}`}>
             <Button
               variant="outline"
               size="sm"
@@ -114,7 +138,6 @@ export default function OrdersPage() {
         <div className="container space-y-4 pt-4">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 rounded-xl border bg-white overflow-hidden">
-            {/* Box 1 */}
             <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-neutral-500">
@@ -122,9 +145,10 @@ export default function OrdersPage() {
                 </h3>
                 <Info className="size-4 text-neutral-400" />
               </div>
-              <div className="text-4xl font-bold text-[#1E202E]">50</div>
+              <div className="text-4xl font-bold text-[#1E202E]">
+                {orders?.length ?? 0}
+              </div>
             </div>
-            {/* Box 2 */}
             <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-neutral-500">
@@ -132,9 +156,10 @@ export default function OrdersPage() {
                 </h3>
                 <Info className="size-4 text-neutral-400" />
               </div>
-              <div className="text-4xl font-bold text-[#1E202E]">10</div>
+              <div className="text-4xl font-bold text-[#1E202E]">
+                {inProductionCount}
+              </div>
             </div>
-            {/* Box 3 */}
             <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-neutral-500">
@@ -142,9 +167,10 @@ export default function OrdersPage() {
                 </h3>
                 <Info className="size-4 text-neutral-400" />
               </div>
-              <div className="text-4xl font-bold text-[#1E202E]">4</div>
+              <div className="text-4xl font-bold text-[#1E202E]">
+                {completedCount}
+              </div>
             </div>
-            {/* Box 4 */}
             <div className="p-6 relative">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-sm font-medium text-neutral-500">
@@ -152,13 +178,14 @@ export default function OrdersPage() {
                 </h3>
                 <Info className="size-4 text-neutral-400" />
               </div>
-              <div className="text-4xl font-bold text-[#1E202E]">2</div>
+              <div className="text-4xl font-bold text-[#1E202E]">
+                {readyCount}
+              </div>
             </div>
           </div>
 
           {/* Table Section */}
           <div className="rounded-xl border bg-white">
-            {/* Table Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between p-4 border-b border-neutral-100 gap-4">
               <h2 className="text-base font-semibold text-[#1E202E]">
                 Order History
@@ -170,6 +197,8 @@ export default function OrdersPage() {
                     type="text"
                     placeholder="Search by name or reference"
                     className="w-full pl-9 h-10 rounded-md"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
                   />
                 </div>
 
@@ -190,11 +219,14 @@ export default function OrdersPage() {
             </div>
 
             <DataGrid
-              rows={order_data}
+              rows={orders ?? []}
               columns={columns}
               page={page}
+              loading={isLoading}
               setPage={setPage}
               bordered={false}
+              error={error}
+              isError={isError}
               className="w-full"
             />
           </div>

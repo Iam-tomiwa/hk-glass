@@ -6,15 +6,15 @@ import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ComboBox } from "@/components/ui/combo-box-2";
-import { Search, Info } from "lucide-react";
+import { Search, Info, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { getBadgeVariant } from "@/lib/utils";
-import { order_data } from "@/lib/constant";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScanOrderPage from "./scan-order";
 import Link from "next/link";
 import { useListFactoryQueue } from "@/services/queries/factory";
 import { Header } from "@/components/header";
+import OrderStatusBadge from "@/components/order-status-badge";
+import DateTag from "@/components/date-tag";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -29,7 +29,7 @@ export default function OrdersPage() {
     {
       field: "date",
       headerName: "Date Inititated",
-      valueGetter: (row) => row.date,
+      renderCell: (row) => <DateTag date={row.created_at} />,
     },
     {
       field: "dimensions",
@@ -56,10 +56,11 @@ export default function OrdersPage() {
               {el}
             </Badge>
           ))}
-
-          <Badge variant="secondary" hideDot className="bg-[#F1F5F9] rounded">
-            +{row.addons.slice(3).length}
-          </Badge>
+          {row.addons.slice(3).length > 0 && (
+            <Badge variant="secondary" hideDot className="bg-[#F1F5F9] rounded">
+              +{row.addons.slice(3).length}
+            </Badge>
+          )}
         </div>
       ),
     },
@@ -67,23 +68,16 @@ export default function OrdersPage() {
       field: "status",
       headerName: "Status",
       renderCell: (row) => {
-        return (
-          <Badge
-            variant={getBadgeVariant(row.status)}
-            className="flex w-fit items-center gap-1.5 px-3 py-3 font-medium border-transparent shadow-none rounded-full"
-          >
-            {row.status}
-          </Badge>
-        );
+        return <OrderStatusBadge status={row.status} />;
       },
     },
     {
       field: "actions",
       headerName: " ",
       align: "right",
-      renderCell: () => (
+      renderCell: (row) => (
         <div className="flex justify-end pr-4">
-          <Link href={"/factory/123"}>
+          <Link href={`/factory/${row.rowId}`}>
             <Button variant="outline">View Order</Button>
           </Link>
         </div>
@@ -91,7 +85,7 @@ export default function OrdersPage() {
     },
   ];
 
-  const { data, isLoading, isError } = useListFactoryQueue();
+  const { data, isLoading, isError, error } = useListFactoryQueue();
   return (
     <div className="bg-[#F8F9FA]">
       <div className="mx-auto">
@@ -203,6 +197,7 @@ export default function OrdersPage() {
                   rows={
                     data?.map((order) => ({
                       id: order.order_reference || order.id,
+                      rowId: order.id,
                       // date: new Date(order.).toLocaleDateString(),
                       dimensions: `${order.width} x ${order.height}`,
                       thickness: order.thickness ?? "-",
@@ -220,7 +215,14 @@ export default function OrdersPage() {
                   page={page}
                   setPage={setPage}
                   bordered={false}
+                  loading={isLoading}
+                  isError={isError}
+                  error={error}
                   className="w-full"
+                  emptyStateProps={{
+                    title: "No Orders Found",
+                    icon: <ShoppingBag />,
+                  }}
                 />
               </div>
             </div>

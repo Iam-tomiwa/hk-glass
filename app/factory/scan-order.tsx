@@ -6,25 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import QrCodeScanner from "@/components/qr-code-scanner";
-import { useGetOrderByQr } from "@/services/queries/qr";
+import { useRouter } from "next/navigation";
+
+function extractOrderId(value: string): string {
+  try {
+    const url = new URL(value);
+    const segments = url.pathname.split("/").filter(Boolean);
+    return segments[segments.length - 1] ?? value;
+  } catch {
+    return value.trim();
+  }
+}
 
 export default function ScanOrderPage() {
-  const [scannedResult, setScannedResult] = useState<string | null>(null);
-
+  const router = useRouter();
+  const [scannedId, setScannedId] = useState<string | null>(null);
   const [orderId, setOrderId] = useState("");
-  const [qrToken, setQrToken] = useState<string | null>(null);
-
-  const { data, isLoading, isError } = useGetOrderByQr(qrToken || undefined);
 
   const handleScanResult = useCallback((result: string) => {
-    setScannedResult(result);
-    setOrderId(result);
-    setQrToken(result);
-  }, []);
+    const id = extractOrderId(result);
+    setScannedId(id);
+    router.push(`/factory/${id}`);
+  }, [router]);
 
   const handleLookupOrder = () => {
-    if (!orderId.trim()) return;
-    setQrToken(orderId);
+    const id = extractOrderId(orderId);
+    if (!id) return;
+    router.push(`/factory/${id}`);
   };
 
   return (
@@ -61,9 +69,9 @@ export default function ScanOrderPage() {
               <ScanLineAnimated />
             </div>
 
-            {scannedResult && (
+            {scannedId && (
               <p className="mt-2 text-xs text-green-700 text-center">
-                ✓ Scanned: {scannedResult}
+                ✓ Scanned: {scannedId}
               </p>
             )}
           </div>

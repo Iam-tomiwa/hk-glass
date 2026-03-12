@@ -25,7 +25,7 @@ import {
   listPayments,
   getSummary,
   listRecentOrders,
-  setupAdminDevice,
+  setupDevice,
 } from "../api/admin";
 import {
   GlassTypeCreate,
@@ -268,6 +268,6 @@ export function useGetDevices(params?: {
 }) {
   return useQuery<any>({
     queryKey: queryKeys.admin.list(params),
-    queryFn: () => setupAdminDevice(params),
+    queryFn: () => setupDevice(params),
   });
 }

@@ -8,6 +8,8 @@ import { FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { useListAddons, useListGlassTypes } from "@/services/queries/orders";
+import { formatNaira } from "@/lib/utils";
 
 export function PaymentStep({
   form,
@@ -19,10 +21,24 @@ export function PaymentStep({
   isLoading?: boolean;
 }) {
   const values = form.getValues();
-  const subtotal = 760.0;
+  const { data: glassTypes } = useListGlassTypes();
+  const { data: addonsList } = useListAddons();
 
   // Watch insuranceCoverage to dynamically update total
   const hasInsurance = form.watch("insuranceCoverage");
+
+  const areaSqm =
+    (((Number(values.length) || 0) * (Number(values.width) || 0)) / 144) *
+    0.0929;
+  const selectedGlassType = glassTypes?.find(
+    (t) => t.id === values.glassTypeId,
+  );
+  const glassPrice = Number(selectedGlassType?.price_per_sqm || 0) * areaSqm;
+  const addonTotal = (values.selectedAddons || [])
+    .map((id) => addonsList?.find((a) => a.id === id))
+    .filter(Boolean)
+    .reduce((sum, a) => sum + Number(a?.price || 0), 0);
+  const subtotal = glassPrice + addonTotal;
 
   const tax = subtotal * 0.08;
   const insuranceCost = hasInsurance ? subtotal * 0.05 : 0;
@@ -88,20 +104,20 @@ export function PaymentStep({
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Subtotal:</span>
                   <span className="font-medium text-neutral-800">
-                    ${subtotal.toFixed(2)}
+                    {formatNaira(subtotal)}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Tax (8%):</span>
                   <span className="font-medium text-neutral-800">
-                    ${tax.toFixed(2)}
+                    {formatNaira(tax)}
                   </span>
                 </div>
                 {hasInsurance && (
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Insurance (5%):</span>
                     <span className="font-medium text-neutral-800">
-                      ${insuranceCost.toFixed(2)}
+                      {formatNaira(insuranceCost)}
                     </span>
                   </div>
                 )}
@@ -114,7 +130,7 @@ export function PaymentStep({
                   Total:
                 </span>
                 <span className="font-bold text-blue-800 text-lg">
-                  ${total.toFixed(2)}
+                  {formatNaira(total)}
                 </span>
               </div>
             </CardContent>
