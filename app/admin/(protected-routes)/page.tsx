@@ -107,8 +107,10 @@ export default function AdminDashboardPage() {
 
   const { data: payments } = useListPayments();
 
+  const paymentsArr = Array.isArray(payments) ? payments : [];
+
   const chartData = Object.entries(
-    (payments ?? [])?.reduce<Record<string, number>>((acc, p) => {
+    paymentsArr.reduce<Record<string, number>>((acc, p) => {
       const month = format(new Date(p.created_at), "MMM");
       acc[month] = (acc[month] ?? 0) + 1;
       return acc;
@@ -123,7 +125,7 @@ export default function AdminDashboardPage() {
       label: "Total Revenue",
       value: summary?.total_revenue
         ? `$${summary.total_revenue}`
-        : `$${(payments ?? []).reduce((sum, p) => sum + parseFloat(p.amount), 0).toFixed(2)}`,
+        : `$${paymentsArr.reduce((sum, p) => sum + parseFloat(p.amount), 0).toFixed(2)}`,
     },
   ];
 
