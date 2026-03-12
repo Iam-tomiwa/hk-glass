@@ -136,7 +136,7 @@ export default function CompanyDevices() {
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto w-full min-h-[500px]">
+    <div className="max-w-[1200px] w-[95%] mx-auto min-h-[500px]">
       <div className="rounded-xl border border-[#E5E7EB] bg-white overflow-hidden shadow-sm">
         <DataGrid
           isPaginated

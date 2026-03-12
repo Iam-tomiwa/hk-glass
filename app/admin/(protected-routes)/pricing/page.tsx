@@ -109,7 +109,10 @@ export default function PricingPage() {
       const updates: Promise<any>[] = [];
 
       glassTypes.forEach((g) => {
-        if (draftBase[g.id] !== undefined && draftBase[g.id] !== g.price_per_sqm) {
+        if (
+          draftBase[g.id] !== undefined &&
+          draftBase[g.id] !== g.price_per_sqm
+        ) {
           updates.push(
             updateGlassTypeMutation.mutateAsync({
               glass_type_id: g.id,
@@ -179,22 +182,13 @@ export default function PricingPage() {
         description="Manage pricing for glass and services"
       >
         <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setModalOpen(true)}
-            className="bg-[#00AE4D] hover:bg-[#009b44] text-white h-10 px-6 rounded-md font-medium shadow-sm"
-          >
-            Add new Product
-          </Button>
+          <Button onClick={() => setModalOpen(true)}>Add new Product</Button>
           {saved ? (
             <Button onClick={handleManage} variant="outline">
               Manage Pricing
             </Button>
           ) : (
-            <Button
-              onClick={handleSave}
-              variant="outline"
-              disabled={isSaving}
-            >
+            <Button onClick={handleSave} variant="outline" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           )}
