@@ -15,68 +15,67 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const { data, isLoading, error, isError } = useGetOrder(params.id as string);
 
-  // Type cast for flexibility since actual return might be OrderPublicDetailResponse
-  const orderDetail = data as any;
+  const orderDetail = data;
 
   const customerInfoRows = [
-    { label: "Full Name", value: orderDetail.customer_name },
-    { label: "Email Address", value: orderDetail.customer_email },
-    { label: "Phone Number", value: orderDetail.customer_phone },
+    { label: "Full Name", value: orderDetail?.customer_name },
+    { label: "Email Address", value: orderDetail?.customer_email },
+    { label: "Phone Number", value: orderDetail?.customer_phone },
   ];
 
   const glassSpecRows = [
-    { label: "Glass Type", value: orderDetail.glass_type?.name || "N/A" },
+    { label: "Glass Type", value: orderDetail?.glass_type?.name || "N/A" },
     {
       label: "Dimensions",
-      value: `${orderDetail.width} x ${orderDetail.height}`,
+      value: `${orderDetail?.width} x ${orderDetail?.height}`,
     },
-    { label: "Area", value: `${orderDetail.area} sqm` },
-    { label: "Sheet Size", value: orderDetail.sheet_size || "N/A" },
-    { label: "Thickness", value: orderDetail.thickness || "N/A" },
+    { label: "Area", value: `${orderDetail?.area} sqm` },
+    { label: "Sheet Size", value: orderDetail?.sheet_size || "N/A" },
+    { label: "Thickness", value: orderDetail?.thickness || "N/A" },
     {
       label: "Drill Holes",
-      value: orderDetail.drill_holes_count?.toString() || "None",
+      value: orderDetail?.drill_holes_count?.toString() || "None",
     },
   ];
-  if (orderDetail.hole_diameter)
+  if (orderDetail?.hole_diameter)
     glassSpecRows.push({
       label: "Hole Diameter",
-      value: `${orderDetail.hole_diameter}`,
+      value: `${orderDetail?.hole_diameter}`,
     });
-  if (orderDetail.tint_type)
-    glassSpecRows.push({ label: "Tint Type", value: orderDetail.tint_type });
-  if (orderDetail.engraving_text)
+  if (orderDetail?.tint_type)
+    glassSpecRows.push({ label: "Tint Type", value: orderDetail?.tint_type });
+  if (orderDetail?.engraving_text)
     glassSpecRows.push({
       label: "Engraving",
-      value: orderDetail.engraving_text,
+      value: orderDetail?.engraving_text,
     });
 
   const mappedAddons =
-    orderDetail.addons?.length > 0
-      ? orderDetail.addons.map((a: any) => ({
-          label: a.addon.name,
-          value: `$${a.calculated_price}`,
-        }))
+    (orderDetail?.addons || [])?.length > 0
+      ? orderDetail?.addons.map((a: any) => ({
+        label: a.addon.name,
+        value: `$${a.calculated_price}`,
+      }))
       : [{ label: "No Add-ons", value: "-" }];
 
-  const createdAt = orderDetail.created_at
-    ? format(new Date(orderDetail.created_at), "EEEE, MMM d, yyyy 'at' h:mma")
+  const createdAt = orderDetail?.created_at
+    ? format(new Date(orderDetail?.created_at), "EEEE, MMM d, yyyy 'at' h:mma")
     : "-";
 
-  const productionAt = orderDetail.production_started_at
+  const productionAt = orderDetail?.production_started_at
     ? format(
-        new Date(orderDetail.production_started_at),
-        "EEEE, MMM d, yyyy 'at' h:mma",
-      )
+      new Date(orderDetail?.production_started_at),
+      "EEEE, MMM d, yyyy 'at' h:mma",
+    )
     : undefined;
-  const readyPickupAt = orderDetail.ready_pickup_at
+  const readyPickupAt = orderDetail?.ready_pickup_at
     ? format(
-        new Date(orderDetail.ready_pickup_at),
-        "EEEE, MMM d, yyyy 'at' h:mma",
-      )
+      new Date(orderDetail?.ready_pickup_at),
+      "EEEE, MMM d, yyyy 'at' h:mma",
+    )
     : undefined;
-  const completedAt = orderDetail.completed_at
-    ? format(new Date(orderDetail.completed_at), "EEEE, MMM d, yyyy 'at' h:mma")
+  const completedAt = orderDetail?.completed_at
+    ? format(new Date(orderDetail?.completed_at), "EEEE, MMM d, yyyy 'at' h:mma")
     : undefined;
 
   const orderTimeline: TimelineEvent[] = [
@@ -120,7 +119,7 @@ export default function OrderDetailsPage() {
               Order Details
             </h1>
             <p className="text-sm text-neutral-500 mt-1">
-              Order ID: {orderDetail.order_reference || orderDetail.id}
+              Order ID: {orderDetail?.order_reference || orderDetail?.id}
             </p>
           </div>
         </div>
@@ -146,7 +145,7 @@ export default function OrderDetailsPage() {
               <h3 className="text-base font-bold text-gray-900 mb-2">
                 Add-ons &amp; Services
               </h3>
-              <SpecTable rows={mappedAddons} />
+              <SpecTable rows={mappedAddons || []} />
             </CardContent>
 
             <CardContent className="py-4 px-0">
@@ -157,12 +156,12 @@ export default function OrderDetailsPage() {
                 rows={[
                   {
                     label: "Subtotal",
-                    value: `$${orderDetail.subtotal_amount}`,
+                    value: `$${orderDetail?.subtotal_amount}`,
                   },
-                  { label: "Tax", value: `$${orderDetail.tax_amount}` },
+                  { label: "Tax", value: `$${orderDetail?.tax_amount}` },
                   {
                     label: "Insurance",
-                    value: `$${orderDetail.insurance_amount}`,
+                    value: `$${orderDetail?.insurance_amount}`,
                   },
                 ]}
               />
@@ -174,7 +173,7 @@ export default function OrderDetailsPage() {
                     label: "Total Paid",
                     value: (
                       <span className="text-lg font-bold text-[#1E202E]">
-                        ${orderDetail.total_amount}
+                        ${orderDetail?.total_amount}
                       </span>
                     ),
                   },
@@ -195,7 +194,7 @@ export default function OrderDetailsPage() {
               </p>
               <div className="p-2 bg-white rounded-lg shadow-sm border">
                 <QRCodeSVG
-                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/order/${orderDetail.id}`}
+                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/order/${orderDetail?.id}`}
                   size={148}
                 />
               </div>
@@ -209,26 +208,26 @@ export default function OrderDetailsPage() {
                 rows={[
                   {
                     label: "Order ID",
-                    value: orderDetail.order_reference || orderDetail.id,
+                    value: orderDetail?.order_reference || orderDetail?.id,
                   },
                   { label: "Created On", value: createdAt },
                   {
                     label: "Created By",
-                    value: orderDetail.created_by_user?.name || "Customer",
+                    value: orderDetail?.created_by_user?.name || "Customer",
                   },
                   {
                     label: "Status",
                     value: (
-                      <Badge variant={getBadgeVariant(orderDetail.order_status)}>
-                        {orderDetail.order_status}
+                      <Badge variant={getBadgeVariant(orderDetail?.order_status)}>
+                        {orderDetail?.order_status}
                       </Badge>
                     ),
                   },
                   {
                     label: "Payment Status",
                     value: (
-                      <Badge variant={getBadgeVariant(orderDetail.payment_status)}>
-                        {orderDetail.payment_status}
+                      <Badge variant={getBadgeVariant(orderDetail?.payment_status)}>
+                        {orderDetail?.payment_status}
                       </Badge>
                     ),
                   },

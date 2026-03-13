@@ -45,6 +45,7 @@ import {
   PaymentResponse,
   DashboardSummaryResponse,
   DashboardOrderResponse,
+  PaginatedResponse,
 } from "../types/openapi";
 
 export function useCreateGlassType() {
@@ -234,10 +235,15 @@ export function useListStaff() {
   });
 }
 
-export function useListOrders() {
-  return useQuery<OrderResponse[]>({
-    queryKey: queryKeys.admin.list("orders"),
-    queryFn: () => listOrders(),
+export function useListOrders(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}) {
+  return useQuery<PaginatedResponse<OrderResponse>>({
+    queryKey: queryKeys.admin.list(["orders", params]),
+    queryFn: () => listOrders(params),
   });
 }
 

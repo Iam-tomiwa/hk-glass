@@ -8,17 +8,11 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/search-input";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { useListOrders } from "@/services/queries/admin";
 import { Inbox } from "lucide-react";
 import OrderStatusBadge from "@/components/order-status-badge";
+import DateTag from "@/components/date-tag";
 
-const statusStyles: Record<string, string> = {
-  "In Production": "bg-blue-100 text-blue-700",
-  "Ready for Pickup": "bg-indigo-100 text-indigo-700",
-  Paid: "bg-green-100 text-green-700",
-  Completed: "bg-purple-100 text-purple-700",
-};
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -29,7 +23,7 @@ export default function OrdersPage() {
       field: "id",
       headerName: "Order ID",
       renderCell: (row) => (
-        <span className="font-semibold text-[#111827]">{row.id}</span>
+        <span className="font-semibold text-[#111827]">{row?.order_reference}</span>
       ),
     },
     {
@@ -50,7 +44,7 @@ export default function OrdersPage() {
       field: "date",
       headerName: "Date Created",
       renderCell: (row) => (
-        <span className="text-[#4B5563] text-[14px]">{row.created_at}</span>
+        <span className="text-[#4B5563] text-[14px]"><DateTag date={row.created_at} /></span>
       ),
     },
     {
@@ -69,9 +63,9 @@ export default function OrdersPage() {
       field: "actions",
       headerName: " ",
       align: "right",
-      renderCell: () => (
+      renderCell: (row) => (
         <div className="flex center">
-          <Link href={"/admin/orders/123"}>
+          <Link href={`/admin/orders/${row.id}`}>
             <Button variant="outline" size="sm">
               View Order
             </Button>
@@ -82,7 +76,7 @@ export default function OrdersPage() {
   ];
 
   const { data, isLoading, error, isError } = useListOrders();
-
+  console.log(data)
   return (
     <div className="space-y-8">
       <Header
@@ -119,7 +113,7 @@ export default function OrdersPage() {
                 </div>
               </div>
             }
-            rows={data || []}
+            rows={data?.items || []}
             emptyStateProps={{
               title: "No Orders Found",
               icon: <Inbox />,

@@ -18,6 +18,7 @@ import {
   PaymentResponse,
   DashboardSummaryResponse,
   DashboardOrderResponse,
+  PaginatedResponse,
 } from "../types/openapi";
 
 // Create Glass Type
@@ -133,8 +134,15 @@ export async function listStaff(): Promise<UserResponse[]> {
 }
 
 // List Orders
-export async function listOrders(): Promise<OrderResponse[]> {
-  return await get<OrderResponse[]>(`/api/admin/orders`);
+export async function listOrders(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+}): Promise<PaginatedResponse<OrderResponse>> {
+  return await get<PaginatedResponse<OrderResponse>>(`/api/admin/orders`, {
+    params,
+  });
 }
 
 // List Payments

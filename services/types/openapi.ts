@@ -1,5 +1,12 @@
-export interface AddonCategory {}
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
 
+export interface AddonCategory {}
 export interface AddonCreate {
   name: string;
   category?: AddonCategory | any | null;
@@ -164,7 +171,7 @@ export interface OrderCreate {
   insurance_selected?: boolean;
 }
 
-export interface OrderPublicDetailResponse {
+export interface OrderResponse {
   id: string;
   order_reference?: string | any | null;
   customer_name: string;
@@ -192,36 +199,6 @@ export interface OrderPublicDetailResponse {
   qr_code_token?: string | any | null;
   glass_type: GlassTypeResponse;
   addons: OrderAddonResponse[];
-}
-
-export interface OrderResponse {
-  id: string;
-  order_reference?: string | any | null;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  created_at: string;
-  width: string;
-  height: string;
-  area: string;
-  sheet_size?: string | any | null;
-  thickness?: string | any | null;
-  drill_holes_count?: number | any | null;
-  hole_diameter?: string | any | null;
-  tint_type?: string | any | null;
-  engraving_text?: string | any | null;
-  subtotal_amount: string;
-  tax_amount: string;
-  insurance_amount: string;
-  total_amount: string;
-  order_status: string;
-  production_started_at?: string | any | null;
-  ready_pickup_at?: string | any | null;
-  completed_at?: string | any | null;
-  payment_status: string;
-  insurance_selected: boolean;
-  qr_code_token?: string | any | null;
-  created_by_user?: UserResponse | any | null;
 }
 
 export interface OrderStatus {}

@@ -1,8 +1,8 @@
-import { get, post, put, patch, del } from "@/lib/axios-setup";
-import { OrderPublicDetailResponse } from "../types/openapi";
+import { get } from "@/lib/axios-setup";
+import { OrderResponse } from "../types/openapi";
 
 // Get Order By Qr
-export async function getOrderByQr(token: string): Promise<OrderPublicDetailResponse> {
-  return await get<OrderPublicDetailResponse>(`/api/qr/${token}`);
+export async function getOrderByQr(token: string): Promise<OrderResponse> {
+  return await get<OrderResponse>(`/api/qr/${token}`);
 }
 

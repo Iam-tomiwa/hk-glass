@@ -23,7 +23,7 @@ export const BadgeVariantMap = {
   completed: "info",
   ready_pickup: "success",
 };
-export const getBadgeVariant = (status: string): BadgeVariant => {
+export const getBadgeVariant = (status?: string): BadgeVariant => {
   switch (status) {
     case "in_production":
       return "default";
