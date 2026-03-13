@@ -6,7 +6,7 @@ import TimelineItem, { TimelineEvent } from "@/components/timeline-item";
 import SpecTable from "@/components/spec-item";
 import { Badge } from "@/components/ui/badge";
 import { getBadgeVariant } from "@/lib/utils";
-import { useGetOrder } from "@/services/queries/orders";
+import { useGetOrder } from "@/services/queries/admin";
 import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import SuspenseContainer from "@/components/custom-suspense";
@@ -53,9 +53,9 @@ export default function OrderDetailsPage() {
   const mappedAddons =
     (orderDetail?.addons || [])?.length > 0
       ? orderDetail?.addons.map((a: any) => ({
-        label: a.addon.name,
-        value: `$${a.calculated_price}`,
-      }))
+          label: a.addon.name,
+          value: `$${a.calculated_price}`,
+        }))
       : [{ label: "No Add-ons", value: "-" }];
 
   const createdAt = orderDetail?.created_at
@@ -64,18 +64,21 @@ export default function OrderDetailsPage() {
 
   const productionAt = orderDetail?.production_started_at
     ? format(
-      new Date(orderDetail?.production_started_at),
-      "EEEE, MMM d, yyyy 'at' h:mma",
-    )
+        new Date(orderDetail?.production_started_at),
+        "EEEE, MMM d, yyyy 'at' h:mma",
+      )
     : undefined;
   const readyPickupAt = orderDetail?.ready_pickup_at
     ? format(
-      new Date(orderDetail?.ready_pickup_at),
-      "EEEE, MMM d, yyyy 'at' h:mma",
-    )
+        new Date(orderDetail?.ready_pickup_at),
+        "EEEE, MMM d, yyyy 'at' h:mma",
+      )
     : undefined;
   const completedAt = orderDetail?.completed_at
-    ? format(new Date(orderDetail?.completed_at), "EEEE, MMM d, yyyy 'at' h:mma")
+    ? format(
+        new Date(orderDetail?.completed_at),
+        "EEEE, MMM d, yyyy 'at' h:mma",
+      )
     : undefined;
 
   const orderTimeline: TimelineEvent[] = [
@@ -218,7 +221,9 @@ export default function OrderDetailsPage() {
                   {
                     label: "Status",
                     value: (
-                      <Badge variant={getBadgeVariant(orderDetail?.order_status)}>
+                      <Badge
+                        variant={getBadgeVariant(orderDetail?.order_status)}
+                      >
                         {orderDetail?.order_status}
                       </Badge>
                     ),
@@ -226,7 +231,9 @@ export default function OrderDetailsPage() {
                   {
                     label: "Payment Status",
                     value: (
-                      <Badge variant={getBadgeVariant(orderDetail?.payment_status)}>
+                      <Badge
+                        variant={getBadgeVariant(orderDetail?.payment_status)}
+                      >
                         {orderDetail?.payment_status}
                       </Badge>
                     ),

@@ -117,6 +117,10 @@ export async function listCombinedDevices(): Promise<CombinedDeviceResponse[]> {
   return await get<CombinedDeviceResponse[]>(`/api/admin/devices/combined`);
 }
 
+export async function getCurrentDevice(): Promise<CombinedDeviceResponse> {
+  return await get<CombinedDeviceResponse>(`/api/admin/devices/me`);
+}
+
 // Deactivate Staff Device
 export async function deactivateStaffDevice(
   device_id: string,
@@ -143,6 +147,10 @@ export async function listOrders(params?: {
   return await get<PaginatedResponse<OrderResponse>>(`/api/admin/orders`, {
     params,
   });
+}
+
+export async function getOrder(order_id: string): Promise<OrderResponse> {
+  return await get<OrderResponse>(`/api/admin/orders/${order_id}`);
 }
 
 // List Payments

@@ -199,6 +199,9 @@ export interface OrderResponse {
   qr_code_token?: string | any | null;
   glass_type: GlassTypeResponse;
   addons: OrderAddonResponse[];
+  created_at: string;
+  updated_at: string;
+  created_by_user: UserResponse;
 }
 
 export interface OrderStatus {}

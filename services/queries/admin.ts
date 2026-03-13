@@ -26,6 +26,8 @@ import {
   getSummary,
   listRecentOrders,
   setupDevice,
+  getCurrentDevice,
+  getOrder,
 } from "../api/admin";
 import {
   GlassTypeCreate,
@@ -213,6 +215,13 @@ export function useListCombinedDevices() {
   });
 }
 
+export function useCurrentDevice() {
+  return useQuery<CombinedDeviceResponse>({
+    queryKey: queryKeys.admin.list("current-device"),
+    queryFn: () => getCurrentDevice(),
+  });
+}
+
 export function useDeactivateStaffDevice() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -244,6 +253,14 @@ export function useListOrders(params?: {
   return useQuery<PaginatedResponse<OrderResponse>>({
     queryKey: queryKeys.admin.list(["orders", params]),
     queryFn: () => listOrders(params),
+  });
+}
+
+export function useGetOrder(order_id: string) {
+  return useQuery<OrderResponse>({
+    queryKey: queryKeys.admin.list(["orders", order_id]),
+    queryFn: () => getOrder(order_id),
+    enabled: !!order_id,
   });
 }
 
