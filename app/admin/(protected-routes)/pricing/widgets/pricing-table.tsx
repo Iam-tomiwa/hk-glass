@@ -16,6 +16,7 @@ export default function PriceTable({
   isLoading = false,
   isError = false,
   error = null,
+  variableName = "Price",
 }: {
   title: string;
   fields: { key: string; label: string; unit: string }[];
@@ -28,6 +29,7 @@ export default function PriceTable({
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
+  variableName?: string;
 }) {
   return (
     <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
@@ -45,7 +47,7 @@ export default function PriceTable({
               Unit
             </th>
             <th className="text-left text-[13px] font-semibold px-4 py-3">
-              {suffix === "$" ? "Price ($)" : "Rate (%)"}
+              {variableName}
             </th>
           </tr>
         </thead>

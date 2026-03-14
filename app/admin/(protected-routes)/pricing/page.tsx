@@ -209,6 +209,7 @@ export default function PricingPage() {
               isLoading={isGlassLoading}
               isError={isGlassError}
               error={glassError as Error | null}
+              variableName="Price (₦)"
             />
 
             <PriceTable
@@ -218,6 +219,7 @@ export default function PricingPage() {
               onChange={updateDraft(setDraftAddon)}
               disabled={saved}
               prefix="₦"
+              variableName="Price (₦)"
               isLoading={isAddonsLoading}
               isError={isAddonsError}
               error={addonsError as Error | null}
@@ -232,6 +234,7 @@ export default function PricingPage() {
               values={rateValues}
               onChange={updateDraft(setDraftRates)}
               disabled={saved}
+              variableName="Rate (%)"
               suffix="%"
               isLoading={isRatesLoading}
               isError={isRatesError}
