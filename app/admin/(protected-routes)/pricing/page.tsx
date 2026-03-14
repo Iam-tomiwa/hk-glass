@@ -205,7 +205,7 @@ export default function PricingPage() {
               values={glassValues}
               onChange={updateDraft(setDraftBase)}
               disabled={saved}
-              suffix="$"
+              prefix="₦"
               isLoading={isGlassLoading}
               isError={isGlassError}
               error={glassError as Error | null}
@@ -217,7 +217,7 @@ export default function PricingPage() {
               values={addonValues}
               onChange={updateDraft(setDraftAddon)}
               disabled={saved}
-              suffix="$"
+              prefix="₦"
               isLoading={isAddonsLoading}
               isError={isAddonsError}
               error={addonsError as Error | null}

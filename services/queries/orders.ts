@@ -92,7 +92,7 @@ export function useUpdateOrder() {
       updateOrder(order_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success("Action successful.");
+      toast.success("Order status updated successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));

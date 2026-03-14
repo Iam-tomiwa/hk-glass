@@ -99,7 +99,10 @@ export default function OrderDetailsPage() {
       STATUS_CONFIRM_MESSAGE[nextStatus] ??
         `Update order status to "${nextStatus.split("_").join(" ")}"?`,
       () => {
-        updateOrder({ order_id: orderId, data: { order_status: nextStatus } });
+        updateOrder({
+          order_id: order?.id ?? "",
+          data: { order_status: nextStatus },
+        });
       },
       { title: "Confirm Status Update" },
     );

@@ -10,7 +10,8 @@ export default function PriceTable({
   values,
   onChange,
   disabled,
-  suffix = "$",
+  suffix,
+  prefix,
   defaults,
   isLoading = false,
   isError = false,
@@ -21,7 +22,8 @@ export default function PriceTable({
   values: PriceMap;
   onChange: (key: string, val: string) => void;
   disabled: boolean;
-  suffix?: "$" | "%";
+  suffix?: string;
+  prefix?: string;
   defaults?: PriceMap;
   isLoading?: boolean;
   isError?: boolean;
@@ -92,9 +94,9 @@ export default function PriceTable({
                   <td className="px-4 py-4">
                     {disabled ? (
                       <div className="flex items-center gap-2">
-                        {suffix === "$" && (
+                        {prefix && (
                           <span className="text-sm font-medium text-neutral-400">
-                            $
+                            {prefix}
                           </span>
                         )}
                         <div className="h-9 max-w-[160px] w-full flex items-center px-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm text-neutral-400 select-none">
@@ -102,17 +104,17 @@ export default function PriceTable({
                             ? Number(viewDisplayValue).toLocaleString()
                             : "—"}
                         </div>
-                        {suffix === "%" && (
+                        {suffix && (
                           <span className="text-sm font-medium text-neutral-400">
-                            %
+                            {suffix}
                           </span>
                         )}
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        {suffix === "$" && (
-                          <span className="text-sm font-medium text-neutral-500">
-                            $
+                        {prefix && (
+                          <span className="text-sm font-medium text-neutral-400">
+                            {prefix}
                           </span>
                         )}
                         <Input
@@ -124,9 +126,9 @@ export default function PriceTable({
                           onChange={(e) => onChange(field.key, e.target.value)}
                           className="h-9 max-w-[160px] text-sm border-neutral-200 bg-white focus-visible:ring-[#00AE4D] placeholder:text-neutral-400"
                         />
-                        {suffix === "%" && (
-                          <span className="text-sm font-medium text-neutral-500">
-                            %
+                        {suffix && (
+                          <span className="text-sm font-medium text-neutral-400">
+                            {suffix}
                           </span>
                         )}
                       </div>

@@ -55,3 +55,45 @@ export function formatNaira(
     minimumFractionDigits: 2,
   }).format(num);
 }
+
+/**
+ * Compact Naira formatter for tight UI spaces (e.g. summary cards).
+ * Abbreviates only at ≥10,000 so smaller amounts still show full precision:
+ *   1,040      → ₦1,040
+ *   9,999      → ₦9,999
+ *   10,000     → ₦10k
+ *   10,500     → ₦10.5k
+ *   1,200,000  → ₦1.2M
+ *   2,500,000,000 → ₦2.5B
+ */
+export function formatCompactNaira(
+  amount: number | string | null | undefined,
+): string {
+  const num = Number(amount ?? 0);
+  if (isNaN(num)) return "₦0";
+
+  const abs = Math.abs(num);
+  const sign = num < 0 ? "-" : "";
+
+  // Below 10k — show the full formatted amount
+  if (abs < 10_000) {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: abs % 1 === 0 ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  }
+
+  let value: string;
+  if (abs >= 1_000_000_000) {
+    value = `${(abs / 1_000_000_000).toFixed(abs % 1_000_000_000 === 0 ? 0 : 1)}B`;
+  } else if (abs >= 1_000_000) {
+    value = `${(abs / 1_000_000).toFixed(abs % 1_000_000 === 0 ? 0 : 1)}M`;
+  } else {
+    // 10,000 – 999,999
+    value = `${(abs / 1_000).toFixed(abs % 1_000 === 0 ? 0 : 1)}k`;
+  }
+
+  return `${sign}₦${value}`;
+}

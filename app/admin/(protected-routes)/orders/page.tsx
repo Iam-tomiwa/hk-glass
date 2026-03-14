@@ -12,6 +12,7 @@ import { useListOrders } from "@/services/queries/admin";
 import { Inbox } from "lucide-react";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
+import { AmountDisplay } from "@/components/amount-display";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -54,7 +55,7 @@ export default function OrdersPage() {
       field: "total",
       headerName: "Total",
       renderCell: (row) => (
-        <span className="font-semibold text-[#111827]">{row.total_amount}</span>
+        <AmountDisplay amount={row.total_amount} showFullAmount />
       ),
     },
     {

@@ -18,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/search-input";
 import { Inbox, Info, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, formatNaira } from "@/lib/utils";
+import { AmountDisplay } from "@/components/amount-display";
 import { format } from "date-fns";
 import SuspenseContainer from "@/components/custom-suspense";
 import {
@@ -60,7 +61,9 @@ const columns: ColumnDef[] = [
     field: "total",
     headerName: "Total",
     renderCell: (row) => (
-      <span className="font-semibold text-[#111827]">${row.total_amount}</span>
+      <span className="font-semibold text-[#111827]">
+        {formatNaira(row.total_amount)}
+      </span>
     ),
   },
   {
@@ -118,14 +121,22 @@ export default function AdminDashboardPage() {
   ).map(([month, value]) => ({ month, value }));
 
   const summaryCards = [
-    { label: "Today's Sales", value: summary?.todays_sales ?? "—" },
+    {
+      label: "Today's Sales",
+      value: <AmountDisplay amount={summary?.todays_sales} />,
+    },
     { label: "In Production", value: summary?.in_production ?? "—" },
     { label: "Completed", value: summary?.completed ?? "—" },
     {
       label: "Total Revenue",
-      value: summary?.total_revenue
-        ? `$${summary.total_revenue}`
-        : `$${paymentsArr.reduce((sum, p) => sum + parseFloat(p.amount), 0).toFixed(2)}`,
+      value: (
+        <AmountDisplay
+          amount={
+            summary?.total_revenue ??
+            paymentsArr.reduce((sum, p) => sum + parseFloat(p.amount), 0)
+          }
+        />
+      ),
     },
   ];
 
@@ -156,7 +167,7 @@ export default function AdminDashboardPage() {
                   </h3>
                   <Info className="size-4 text-neutral-400" />
                 </div>
-                <div className="text-4xl font-bold text-[#1E202E]">
+                <div className="text-3xl font-bold text-[#1E202E] truncate">
                   {card.value}
                 </div>
               </div>
