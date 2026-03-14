@@ -1,265 +1,205 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { QRCodeSVG } from "qrcode.react";
 import TimelineItem, { TimelineEvent } from "@/components/timeline-item";
 import SpecTable from "@/components/spec-item";
 import { Badge } from "@/components/ui/badge";
-import { getBadgeVariant } from "@/lib/utils";
+import { getBadgeVariant, formatNaira } from "@/lib/utils";
 import { useGetOrder } from "@/services/queries/admin";
 import { useParams } from "next/navigation";
-import { format } from "date-fns";
-import SuspenseContainer from "@/components/custom-suspense";
+import { format, parseISO } from "date-fns";
+import { useOrderDetails } from "@/hooks/use-order-details";
+import { OrderDetailShell } from "@/components/order-detail-shell";
+import { OrderQRSection } from "@/components/order-qr-section";
+import OrderStatusBadge from "@/components/order-status-badge";
+import DateTag from "@/components/date-tag";
+
+function formatDate(date: string | null | undefined): string {
+  if (!date) return "";
+  return format(parseISO(date), "MMM d, yyyy 'at' h:mma");
+}
 
 export default function OrderDetailsPage() {
   const params = useParams();
-  const { data, isLoading, error, isError } = useGetOrder(params.id as string);
+  const orderId = params.id as string;
 
-  const orderDetail = data;
+  const { data: order, isLoading, isError, error } = useGetOrder(orderId);
 
-  const customerInfoRows = [
-    { label: "Full Name", value: orderDetail?.customer_name },
-    { label: "Email Address", value: orderDetail?.customer_email },
-    { label: "Phone Number", value: orderDetail?.customer_phone },
+  const { glassSpecs, addOns } = useOrderDetails(order);
+
+  const customerInfo = [
+    { label: "Full Name", value: order?.customer_name ?? "—" },
+    { label: "Email Address", value: order?.customer_email ?? "—" },
+    { label: "Phone Number", value: order?.customer_phone ?? "—" },
   ];
 
-  const glassSpecRows = [
-    { label: "Glass Type", value: orderDetail?.glass_type?.name || "N/A" },
-    {
-      label: "Dimensions",
-      value: `${orderDetail?.width} x ${orderDetail?.height}`,
-    },
-    { label: "Area", value: `${orderDetail?.area} sqm` },
-    { label: "Sheet Size", value: orderDetail?.sheet_size || "N/A" },
-    { label: "Thickness", value: orderDetail?.thickness || "N/A" },
-    {
-      label: "Drill Holes",
-      value: orderDetail?.drill_holes_count?.toString() || "None",
-    },
-  ];
-  if (orderDetail?.hole_diameter)
-    glassSpecRows.push({
-      label: "Hole Diameter",
-      value: `${orderDetail?.hole_diameter}`,
-    });
-  if (orderDetail?.tint_type)
-    glassSpecRows.push({ label: "Tint Type", value: orderDetail?.tint_type });
-  if (orderDetail?.engraving_text)
-    glassSpecRows.push({
-      label: "Engraving",
-      value: orderDetail?.engraving_text,
-    });
-
-  const mappedAddons =
-    (orderDetail?.addons || [])?.length > 0
-      ? orderDetail?.addons.map((a: any) => ({
-          label: a.addon.name,
-          value: `$${a.calculated_price}`,
-        }))
-      : [{ label: "No Add-ons", value: "-" }];
-
-  const createdAt = orderDetail?.created_at
-    ? format(new Date(orderDetail?.created_at), "EEEE, MMM d, yyyy 'at' h:mma")
-    : "-";
-
-  const productionAt = orderDetail?.production_started_at
-    ? format(
-        new Date(orderDetail?.production_started_at),
-        "EEEE, MMM d, yyyy 'at' h:mma",
-      )
-    : undefined;
-  const readyPickupAt = orderDetail?.ready_pickup_at
-    ? format(
-        new Date(orderDetail?.ready_pickup_at),
-        "EEEE, MMM d, yyyy 'at' h:mma",
-      )
-    : undefined;
-  const completedAt = orderDetail?.completed_at
-    ? format(
-        new Date(orderDetail?.completed_at),
-        "EEEE, MMM d, yyyy 'at' h:mma",
-      )
-    : undefined;
-
-  const orderTimeline: TimelineEvent[] = [
+  const timeline: TimelineEvent[] = [
     {
       title: "Order Placed",
-      description: "An order has been placed successfully",
-      date: createdAt,
+      description: "An order has been placed successfully.",
+      date: formatDate(order?.created_at),
       completed: true,
       active: true,
     },
     {
       title: "Production Started",
-      description: "The order is in production",
-      date: productionAt || "Pending",
-      completed: !!productionAt,
-      active: !!productionAt,
+      description: "The order is in production.",
+      date: formatDate(order?.production_started_at),
+      completed: !!order?.production_started_at,
+      active: !!order?.production_started_at,
     },
     {
       title: "Ready for Pickup",
-      description: "The order is ready for pickup",
-      date: readyPickupAt || "Pending",
-      completed: !!readyPickupAt,
-      active: !!readyPickupAt,
+      description: "The order is ready for pickup.",
+      date: formatDate(order?.ready_pickup_at),
+      completed: !!order?.ready_pickup_at,
+      active: !!order?.ready_pickup_at,
     },
     {
       title: "Completed",
-      description: "The order has been completed",
-      date: completedAt || "Pending",
-      completed: !!completedAt,
-      active: !!completedAt,
+      description: "The order has been completed.",
+      date: formatDate(order?.completed_at),
+      completed: !!order?.completed_at,
+      active: !!order?.completed_at,
     },
   ];
 
+  const qrValue =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/order/${orderId}`
+      : orderId;
+
+  const createdBy =
+    (order as any)?.created_by_user?.name ??
+    (order as any)?.created_by_user?.email ??
+    "Customer";
+
   return (
-    <SuspenseContainer isLoading={isLoading} isError={isError} error={error}>
-      <div className="min-h-screen bg-[#F5F5F5]">
-        {/* Header */}
-        <div className="bg-background border-b">
-          <div className="container py-6">
-            <h1 className="text-2xl font-bold tracking-tight text-[#1E202E]">
-              Order Details
-            </h1>
-            <p className="text-sm text-neutral-500 mt-1">
-              Order ID: {orderDetail?.order_reference || orderDetail?.id}
-            </p>
-          </div>
-        </div>
+    <OrderDetailShell
+      description={`Order ID: ${order?.order_reference ?? orderId}`}
+      backHref="/admin/orders"
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      leftCard={
+        <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 bg-white">
+          <CardContent className="pb-4 px-0 pt-6">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Customer Information
+            </h3>
+            <SpecTable rows={customerInfo} />
+          </CardContent>
 
-        <div className="w-full max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 py-6 px-4 xl:px-0">
-          {/* ── Left card: Glass Specifications ── */}
-          <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0  bg-white">
-            <CardContent className="pb-4 px-0 pt-6">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Customer Information
-              </h3>
-              <SpecTable rows={customerInfoRows} />
-            </CardContent>
+          <CardContent className="py-4 px-0">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Glass Specifications
+            </h3>
+            <SpecTable rows={glassSpecs} />
+          </CardContent>
 
-            <CardContent className="py-4 px-0">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Glass Specifications
-              </h3>
-              <SpecTable rows={glassSpecRows} />
-            </CardContent>
+          <CardContent className="py-4 px-0">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Add-ons &amp; Services
+            </h3>
+            <SpecTable rows={addOns} />
+          </CardContent>
 
-            <CardContent className="py-4 px-0">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Add-ons &amp; Services
-              </h3>
-              <SpecTable rows={mappedAddons || []} />
-            </CardContent>
+          <CardContent className="py-4 px-0">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Pricing Details
+            </h3>
+            <SpecTable
+              rows={[
+                {
+                  label: "Subtotal",
+                  value: formatNaira(order?.subtotal_amount),
+                },
+                { label: "Tax", value: formatNaira(order?.tax_amount) },
+                {
+                  label: "Insurance",
+                  value: order?.insurance_selected
+                    ? formatNaira(order.insurance_amount)
+                    : "Not selected",
+                },
+                {
+                  label: "Payment Status",
+                  value: order ? (
+                    <Badge variant={getBadgeVariant(order.payment_status)}>
+                      {order.payment_status}
+                    </Badge>
+                  ) : (
+                    "—"
+                  ),
+                },
+              ]}
+            />
+          </CardContent>
 
-            <CardContent className="py-4 px-0">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Pricing Details
-              </h3>
-              <SpecTable
-                rows={[
-                  {
-                    label: "Subtotal",
-                    value: `$${orderDetail?.subtotal_amount}`,
-                  },
-                  { label: "Tax", value: `$${orderDetail?.tax_amount}` },
-                  {
-                    label: "Insurance",
-                    value: `$${orderDetail?.insurance_amount}`,
-                  },
-                ]}
-              />
-            </CardContent>
-            <CardContent className="py-4 px-0">
-              <SpecTable
-                rows={[
-                  {
-                    label: "Total Paid",
-                    value: (
-                      <span className="text-lg font-bold text-[#1E202E]">
-                        ${orderDetail?.total_amount}
-                      </span>
-                    ),
-                  },
-                ]}
-              />
-            </CardContent>
-          </Card>
+          <CardContent className="pt-4 pb-6 px-0">
+            <SpecTable
+              rows={[
+                {
+                  label: "Total Paid",
+                  value: (
+                    <span className="text-lg font-bold text-[#1E202E]">
+                      {formatNaira(order?.total_amount)}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      }
+      rightCard={
+        <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 bg-white">
+          <CardContent className="px-0">
+            <OrderQRSection value={qrValue} />
+          </CardContent>
 
-          {/* ── Right card: QR + Timeline ── */}
-          <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6  bg-white">
-            {/* QR Code section */}
-            <CardContent className="px-0 flex flex-col items-center pb-4 pt-6">
-              <h2 className="text-base font-bold text-gray-900">
-                Production QR Code
-              </h2>
-              <p className="text-sm text-gray-500 mt-0.5 mb-5 text-center">
-                Scan to view order in production system
-              </p>
-              <div className="p-2 bg-white rounded-lg  border">
-                <QRCodeSVG
-                  value={`${typeof window !== "undefined" ? window.location.origin : ""}/order/${orderDetail?.id}`}
-                  size={148}
+          <CardContent className="px-0 py-4">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Order Information
+            </h3>
+            <SpecTable
+              rows={[
+                {
+                  label: "Order ID",
+                  value: order?.order_reference ?? orderId,
+                },
+                {
+                  label: "Created On",
+                  value: <DateTag date={order?.created_at ?? ""} />,
+                },
+                { label: "Created By", value: createdBy },
+                {
+                  label: "Order Status",
+                  value: order ? (
+                    <OrderStatusBadge status={order.order_status} />
+                  ) : (
+                    "—"
+                  ),
+                },
+              ]}
+            />
+          </CardContent>
+
+          <CardContent className="px-0 pt-5 pb-4 flex-1">
+            <h3 className="text-base font-bold text-gray-900 mb-4">
+              Order Status &amp; Timeline
+            </h3>
+            <div>
+              {timeline.map((event, i) => (
+                <TimelineItem
+                  key={event.title}
+                  event={event}
+                  isLast={i === timeline.length - 1}
                 />
-              </div>
-            </CardContent>
-
-            <CardContent className="px-0 py-4">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Order Information
-              </h3>
-              <SpecTable
-                rows={[
-                  {
-                    label: "Order ID",
-                    value: orderDetail?.order_reference || orderDetail?.id,
-                  },
-                  { label: "Created On", value: createdAt },
-                  {
-                    label: "Created By",
-                    value: orderDetail?.created_by_user?.name || "Customer",
-                  },
-                  {
-                    label: "Status",
-                    value: (
-                      <Badge
-                        variant={getBadgeVariant(orderDetail?.order_status)}
-                      >
-                        {orderDetail?.order_status}
-                      </Badge>
-                    ),
-                  },
-                  {
-                    label: "Payment Status",
-                    value: (
-                      <Badge
-                        variant={getBadgeVariant(orderDetail?.payment_status)}
-                      >
-                        {orderDetail?.payment_status}
-                      </Badge>
-                    ),
-                  },
-                ]}
-              />
-            </CardContent>
-
-            {/* Timeline section */}
-            <CardContent className="px-0 py-4 flex-1">
-              <h3 className="text-base font-bold text-gray-900 mb-4">
-                Order Status &amp; Timeline
-              </h3>
-              <div className="flex flex-col">
-                {orderTimeline.map((event, i) => (
-                  <TimelineItem
-                    key={event.title}
-                    event={event}
-                    isLast={i === orderTimeline.length - 1}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </SuspenseContainer>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      }
+    />
   );
 }
