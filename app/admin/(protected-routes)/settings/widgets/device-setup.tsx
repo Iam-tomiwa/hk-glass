@@ -29,7 +29,7 @@ export default function DeviceSetup() {
               className="my-4"
               rows={[
                 { label: "Name", value: device?.name },
-                { label: "Device Type", value: device?.device_type },
+                { label: "Last IP", value: device?.last_ip },
                 {
                   label: "Status",
                   value: device?.is_active ? "Active" : "Inactive",
