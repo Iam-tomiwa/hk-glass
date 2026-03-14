@@ -1,5 +1,4 @@
 import React from "react";
-import RAPTURES_LOGO from "@/assets/images/rapture-logo.svg";
 import { CircularProgress } from "./ui/circular-progress";
 
 interface LoaderProps {
@@ -12,7 +11,7 @@ const Loader: React.FC<LoaderProps> = ({ loadingText = "Loading..." }) => {
       <div className="relative inline-block">
         <CircularProgress size="3xl" strokeWidth={2} />
         <img
-          src={RAPTURES_LOGO}
+          src="/images/logo-icon.svg"
           className="absolute inset-0 m-auto w-14 h-14 object-contain"
           alt="logo"
         />
