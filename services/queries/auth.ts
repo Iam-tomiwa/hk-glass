@@ -112,10 +112,11 @@ export function useListRecoveryCodes() {
   });
 }
 
-export function useGetCurrentUser() {
+export function useGetCurrentUser({ enabled = true }: { enabled?: boolean }) {
   return useQuery<UserResponse>({
     queryKey: queryKeys.auth.detail("me"),
     queryFn: () => getCurrentUser(),
+    enabled,
   });
 }
 

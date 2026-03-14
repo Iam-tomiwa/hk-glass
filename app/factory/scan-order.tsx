@@ -23,11 +23,14 @@ export default function ScanOrderPage() {
   const [scannedId, setScannedId] = useState<string | null>(null);
   const [orderId, setOrderId] = useState("");
 
-  const handleScanResult = useCallback((result: string) => {
-    const id = extractOrderId(result);
-    setScannedId(id);
-    router.push(`/factory/${id}`);
-  }, [router]);
+  const handleScanResult = useCallback(
+    (result: string) => {
+      const id = extractOrderId(result);
+      setScannedId(id);
+      router.push(`/factory/${id}`);
+    },
+    [router],
+  );
 
   const handleLookupOrder = () => {
     const id = extractOrderId(orderId);
@@ -52,7 +55,7 @@ export default function ScanOrderPage() {
         {/* Main content */}
         <div className="flex items-stretch gap-0">
           {/* QR Scanner — inline, no modal */}
-          <div className="flex-shrink-0 w-[340px]">
+          <div className="shrink-0 w-[340px]">
             <div
               className="relative bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
               style={{ height: 340 }}
@@ -174,7 +177,7 @@ function ScanLineAnimated() {
         }
       `}</style>
       <div
-        className="absolute left-[18px] right-[18px] h-[2px] bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-70 pointer-events-none"
+        className="absolute left-[18px] right-[18px] h-[2px] bg-linear-to-r from-transparent via-green-500 to-transparent opacity-70 pointer-events-none"
         style={{ animation: "scanline 2.4s ease-in-out infinite", zIndex: 10 }}
       />
     </>

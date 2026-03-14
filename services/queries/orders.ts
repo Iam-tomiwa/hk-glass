@@ -9,11 +9,20 @@ import {
   listGlassTypes,
   listAddons,
   searchOrders,
-  getOrder,
   updateOrder,
-  deleteOrder
+  deleteOrder,
+  getOrderByReference,
 } from "../api/orders";
-import { OrderCreate, OrderResponse, GlassTypeResponse, AddonResponse, PaymentStatus, OrderStatus, OrderUpdate } from "../types/openapi";
+import {
+  OrderCreate,
+  OrderResponse,
+  GlassTypeResponse,
+  AddonResponse,
+  PaymentStatus,
+  OrderStatus,
+  OrderUpdate,
+  PaginatedResponse,
+} from "../types/openapi";
 
 export function useCreateOrder() {
   const queryClient = useQueryClient();
@@ -43,25 +52,44 @@ export function useListAddons() {
   });
 }
 
-export function useSearchOrders(params?: { customer_name?: string | any | null; customer_email?: string | any | null; customer_phone?: string | any | null; reference?: string | any | null; glass_type_id?: string | any | null; payment_status?: PaymentStatus | any | null; order_status?: OrderStatus | any | null; min_width?: number | string | any | null; max_width?: number | string | any | null; min_height?: number | string | any | null; max_height?: number | string | any | null; min_area?: number | string | any | null; max_area?: number | string | any | null; min_total?: number | string | any | null; max_total?: number | string | any | null; created_from?: string | any | null; created_to?: string | any | null }) {
-  return useQuery<OrderResponse[]>({
+export function useSearchOrders(params?: {
+  customer_name?: string | any | null;
+  customer_email?: string | any | null;
+  customer_phone?: string | any | null;
+  reference?: string | any | null;
+  glass_type_id?: string | any | null;
+  payment_status?: PaymentStatus | any | null;
+  order_status?: OrderStatus | any | null;
+  min_width?: number | string | any | null;
+  max_width?: number | string | any | null;
+  min_height?: number | string | any | null;
+  max_height?: number | string | any | null;
+  min_area?: number | string | any | null;
+  max_area?: number | string | any | null;
+  min_total?: number | string | any | null;
+  max_total?: number | string | any | null;
+  created_from?: string | any | null;
+  created_to?: string | any | null;
+}) {
+  return useQuery<PaginatedResponse<OrderResponse>>({
     queryKey: queryKeys.orders.list(params),
     queryFn: () => searchOrders(params),
   });
 }
 
-export function useGetOrder(order_id: string) {
+export function useGetOrderByReference(order_reference: string) {
   return useQuery<OrderResponse>({
-    queryKey: queryKeys.orders.detail(order_id),
-    queryFn: () => getOrder(order_id),
-    enabled: !!order_id,
+    queryKey: queryKeys.orders.detail(order_reference),
+    queryFn: () => getOrderByReference(order_reference),
+    enabled: !!order_reference,
   });
 }
 
 export function useUpdateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ order_id, data }: { order_id: string; data: OrderUpdate }) => updateOrder(order_id, data),
+    mutationFn: ({ order_id, data }: { order_id: string; data: OrderUpdate }) =>
+      updateOrder(order_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       toast.success("Action successful.");
@@ -85,4 +113,3 @@ export function useDeleteOrder() {
     },
   });
 }
-

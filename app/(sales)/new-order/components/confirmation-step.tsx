@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import { useGetOrder } from "@/services/queries/orders";
+import { useGetOrderByReference } from "@/services/queries/orders";
 import { getBadgeVariant } from "@/lib/utils";
 
 export function ConfirmationStep() {
@@ -16,7 +16,7 @@ export function ConfirmationStep() {
   const orderId = searchParams.get("order_id");
 
   // Fetch order if order_id is in URL (backend may include it in callback URL)
-  const { data: order } = useGetOrder(orderId ?? "");
+  const { data: order } = useGetOrderByReference(orderId ?? "");
 
   const isSuccess = status === "success" || (!status && !!reference);
   const isFailed = status === "failed" || status === "cancelled";

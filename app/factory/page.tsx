@@ -11,10 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScanOrderPage from "./scan-order";
 import Link from "next/link";
-import { useListFactoryQueue } from "@/services/queries/factory";
+import {
+  useGetFactoryStats,
+  useListFactoryQueue,
+} from "@/services/queries/factory";
 import { Header } from "@/components/header";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
+import { StatsGrid } from "@/components/stats-grid";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -77,14 +81,14 @@ export default function OrdersPage() {
       align: "right",
       renderCell: (row) => (
         <div className="flex justify-end pr-4">
-          <Link href={`/factory/${row.rowId}`}>
+          <Link href={`/factory/${row.id}`}>
             <Button variant="outline">View Order</Button>
           </Link>
         </div>
       ),
     },
   ];
-
+  const { data: stats } = useGetFactoryStats();
   const { data, isLoading, isError, error } = useListFactoryQueue();
   return (
     <div className="bg-[#F8F9FA]">
@@ -117,49 +121,17 @@ export default function OrdersPage() {
           <TabsContent value="order-queue">
             <div className="container space-y-4 pb-10">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 rounded-xl border bg-white overflow-hidden">
-                {/* Box 1 */}
-                <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-neutral-500">
-                      Total Orders
-                    </h3>
-                    <Info className="size-4 text-neutral-400" />
-                  </div>
-                  <div className="text-4xl font-bold text-[#1E202E]">50</div>
-                </div>
-                {/* Box 2 */}
-                <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-neutral-500">
-                      In Production
-                    </h3>
-                    <Info className="size-4 text-neutral-400" />
-                  </div>
-                  <div className="text-4xl font-bold text-[#1E202E]">10</div>
-                </div>
-                {/* Box 3 */}
-                <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-neutral-500">
-                      Completed
-                    </h3>
-                    <Info className="size-4 text-neutral-400" />
-                  </div>
-                  <div className="text-4xl font-bold text-[#1E202E]">4</div>
-                </div>
-                {/* Box 4 */}
-                <div className="p-6 relative">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-medium text-neutral-500">
-                      Ready Pickup
-                    </h3>
-                    <Info className="size-4 text-neutral-400" />
-                  </div>
-                  <div className="text-4xl font-bold text-[#1E202E]">2</div>
-                </div>
-              </div>
-
+              <StatsGrid
+                stats={[
+                  { label: "Total Orders", value: stats?.total_orders ?? "--" },
+                  {
+                    label: "In Production",
+                    value: stats?.in_production ?? "--",
+                  },
+                  { label: "Completed", value: stats?.completed ?? "--" },
+                  { label: "Ready Pickup", value: stats?.ready_pickup ?? "--" },
+                ]}
+              />
               {/* Table Section */}
               <div className="rounded-xl border bg-white">
                 {/* Table Toolbar */}
@@ -195,7 +167,7 @@ export default function OrdersPage() {
 
                 <DataGrid
                   rows={
-                    data?.map((order) => ({
+                    data?.items.map((order) => ({
                       id: order.order_reference || order.id,
                       rowId: order.id,
                       // date: new Date(order.).toLocaleDateString(),
@@ -218,6 +190,7 @@ export default function OrdersPage() {
                   loading={isLoading}
                   isError={isError}
                   error={error}
+                  isPaginated
                   className="w-full"
                   emptyStateProps={{
                     title: "No Orders Found",

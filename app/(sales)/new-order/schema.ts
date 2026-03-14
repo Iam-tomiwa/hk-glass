@@ -3,7 +3,7 @@ import * as z from "zod";
 export const orderFormSchema = z.object({
   customerName: z.string().min(1, "Customer Name is required"),
   email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
+  phone: z.string().min(1, "Phone number is required"),
 
   glassTypeId: z.string().min(1, "Glass type is required"),
   length: z.string().min(1, "Length/Height is required"),

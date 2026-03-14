@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { Lock, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -21,7 +21,6 @@ import { ConfirmationStep } from "./components/confirmation-step";
 import { Header } from "@/components/header";
 import { useCreateOrder } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
-import { Loader2 } from "lucide-react";
 
 const steps = [
   { id: "customer", label: "Customer" },
@@ -50,6 +49,8 @@ function NewOrderForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("customer");
+  // Tracks the furthest step index the user has validly reached.
+  const [highestUnlockedIndex, setHighestUnlockedIndex] = useState(0);
 
   // Automatically trigger the confirmation step if there is a payment reference in URL
   useEffect(() => {
@@ -57,6 +58,7 @@ function NewOrderForm() {
       searchParams.get("reference") ||
       searchParams.get("paystack") === "success"
     ) {
+      setHighestUnlockedIndex(steps.length - 1);
       setActiveTab("confirmation");
     }
   }, [searchParams]);
@@ -93,6 +95,8 @@ function NewOrderForm() {
     }
     const currentIndex = steps.findIndex((step) => step.id === activeTab);
     if (currentIndex < steps.length - 1) {
+      // Unlock the next step if not already unlocked
+      setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
       setActiveTab(steps[currentIndex + 1].id);
     }
   };
@@ -134,6 +138,7 @@ function NewOrderForm() {
           if (paymentRes?.authorization_url) {
             window.location.href = paymentRes.authorization_url;
           } else {
+            setHighestUnlockedIndex(steps.length - 1);
             setActiveTab("confirmation");
           }
         }
@@ -176,15 +181,22 @@ function NewOrderForm() {
           {/* Sidebar / Top Nav */}
           <div className="md:w-[240px] sticky top-0 max-h-[calc(100vh-10rem)] overflow-y-auto md:shrink-0 border-b md:border-b-0 md:border-r bg-white flex flex-col px-4">
             <TabsList className="flex md:flex-col h-auto w-full justify-start items-start space-x-4 md:space-x-0 bg-transparent px-4 md:px-0 md:py-6 overflow-x-auto rounded-none border-none">
-              {steps.map((step) => (
-                <TabsTrigger
-                  key={step.id}
-                  value={step.id}
-                  className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors"
-                >
-                  {step.label}
-                </TabsTrigger>
-              ))}
+              {steps.map((step, index) => {
+                const isLocked = index > highestUnlockedIndex;
+                return (
+                  <TabsTrigger
+                    key={step.id}
+                    value={step.id}
+                    disabled={isLocked}
+                    className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
+                  >
+                    <span className="flex items-center gap-2">
+                      {step.label}
+                      {isLocked && <Lock className="size-3" />}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
             </TabsList>
           </div>
 

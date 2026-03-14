@@ -51,11 +51,12 @@ export default function OrdersPage() {
   });
 
   const inProductionCount =
-    orders?.filter((o) => o.order_status === "in_production").length ?? 0;
+    orders?.items.filter((o) => o.order_status === "in_production").length ?? 0;
   const completedCount =
-    orders?.filter((o) => o.order_status === "completed").length ?? 0;
+    orders?.items.filter((o) => o.order_status === "completed").length ?? 0;
   const readyCount =
-    orders?.filter((o) => o.order_status === "ready_for_pickup").length ?? 0;
+    orders?.items.filter((o) => o.order_status === "ready_for_pickup").length ??
+    0;
 
   const columns: ColumnDef[] = [
     {
@@ -107,7 +108,7 @@ export default function OrdersPage() {
       align: "right",
       renderCell: (row: OrderResponse) => (
         <div className="flex justify-end pr-4">
-          <Link href={`/${row.id}`}>
+          <Link href={`/${row.order_reference}`}>
             <Button
               variant="outline"
               size="sm"
@@ -146,7 +147,7 @@ export default function OrdersPage() {
                 <Info className="size-4 text-neutral-400" />
               </div>
               <div className="text-4xl font-bold text-[#1E202E]">
-                {orders?.length ?? 0}
+                {orders?.total ?? 0}
               </div>
             </div>
             <div className="p-6 relative border-b md:border-b-0 md:border-r border-neutral-100">
@@ -219,7 +220,7 @@ export default function OrdersPage() {
             </div>
 
             <DataGrid
-              rows={orders ?? []}
+              rows={orders?.items ?? []}
               columns={columns}
               page={page}
               loading={isLoading}
@@ -227,6 +228,7 @@ export default function OrdersPage() {
               bordered={false}
               error={error}
               isError={isError}
+              isPaginated
               className="w-full"
             />
           </div>

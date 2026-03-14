@@ -13,7 +13,6 @@ import { Inbox } from "lucide-react";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
 
-
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -23,7 +22,9 @@ export default function OrdersPage() {
       field: "id",
       headerName: "Order ID",
       renderCell: (row) => (
-        <span className="font-semibold text-[#111827]">{row?.order_reference}</span>
+        <span className="font-semibold text-[#111827]">
+          {row?.order_reference}
+        </span>
       ),
     },
     {
@@ -44,7 +45,9 @@ export default function OrdersPage() {
       field: "date",
       headerName: "Date Created",
       renderCell: (row) => (
-        <span className="text-[#4B5563] text-[14px]"><DateTag date={row.created_at} /></span>
+        <span className="text-[#4B5563] text-[14px]">
+          <DateTag date={row.created_at} />
+        </span>
       ),
     },
     {
@@ -76,7 +79,6 @@ export default function OrdersPage() {
   ];
 
   const { data, isLoading, error, isError } = useListOrders();
-  console.log(data)
   return (
     <div className="space-y-8">
       <Header

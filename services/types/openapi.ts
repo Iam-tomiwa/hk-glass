@@ -204,10 +204,21 @@ export interface OrderResponse {
   created_by_user: UserResponse;
 }
 
-export interface OrderStatus {}
+export interface OrderStats {
+  total_orders: number;
+  in_production: number;
+  completed: number;
+  ready_pickup: number;
+}
+
+export type OrderStatus =
+  | "pending"
+  | "in_production"
+  | "ready_pickup"
+  | "completed";
 
 export interface OrderStatusUpdate {
-  order_status: string;
+  order_status: OrderStatus;
 }
 
 export interface OrderUpdate {
