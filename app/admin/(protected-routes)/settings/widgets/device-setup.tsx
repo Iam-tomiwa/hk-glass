@@ -10,7 +10,7 @@ import SuspenseContainer from "@/components/custom-suspense";
 export default function DeviceSetup() {
   const { data: device, isLoading, isError, error } = useCurrentDevice();
   return (
-    <div className="max-w-[650px] min-h-screen mx-auto py-10">
+    <div className="max-w-[650px] w-[95%] min-h-screen mx-auto py-10">
       <h1 className="font-bold text-xl mb-2">Device Setup</h1>
       <p className="text-gray-600">
         Register new devices and view current device information.
