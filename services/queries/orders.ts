@@ -12,10 +12,13 @@ import {
   updateOrder,
   deleteOrder,
   getOrderByReference,
+  reviewOrder,
 } from "../api/orders";
 import {
   OrderCreate,
   OrderResponse,
+  OrderReviewRequest,
+  OrderReviewResponse,
   GlassTypeResponse,
   AddonResponse,
   PaymentStatus,
@@ -110,6 +113,15 @@ export function useDeleteOrder() {
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useReviewOrder() {
+  return useMutation<OrderReviewResponse, Error, { data: OrderReviewRequest }>({
+    mutationFn: ({ data }) => reviewOrder(data),
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed to calculate price. Please try again."));
     },
   });
 }

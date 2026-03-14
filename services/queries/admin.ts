@@ -264,10 +264,14 @@ export function useGetOrder(order_id: string) {
   });
 }
 
-export function useListPayments() {
+export function useListPayments(params?: {
+  paid_from?: string;
+  paid_to?: string;
+  status?: string;
+}) {
   return useQuery<PaymentResponse[]>({
-    queryKey: queryKeys.admin.list("payments"),
-    queryFn: () => listPayments(),
+    queryKey: queryKeys.admin.list(["payments", params]),
+    queryFn: () => listPayments(params),
   });
 }
 

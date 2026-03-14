@@ -154,8 +154,12 @@ export async function getOrder(order_id: string): Promise<OrderResponse> {
 }
 
 // List Payments
-export async function listPayments(): Promise<PaymentResponse[]> {
-  return await get<PaymentResponse[]>(`/api/admin/payments`);
+export async function listPayments(params?: {
+  paid_from?: string;
+  paid_to?: string;
+  status?: string;
+}): Promise<PaymentResponse[]> {
+  return await get<PaymentResponse[]>(`/api/admin/payments`, { params });
 }
 
 // Get Summary

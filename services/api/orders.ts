@@ -2,6 +2,8 @@ import { get, post, put, patch, del } from "@/lib/axios-setup";
 import {
   OrderCreate,
   OrderResponse,
+  OrderReviewRequest,
+  OrderReviewResponse,
   GlassTypeResponse,
   AddonResponse,
   PaymentStatus,
@@ -68,4 +70,11 @@ export async function updateOrder(
 // Delete Order
 export async function deleteOrder(order_id: string): Promise<OrderResponse> {
   return await del<OrderResponse>(`/api/orders/${order_id}`);
+}
+
+// Review Order Price
+export async function reviewOrder(
+  data: OrderReviewRequest,
+): Promise<OrderReviewResponse> {
+  return await post<OrderReviewResponse>(`/api/orders/review`, data);
 }

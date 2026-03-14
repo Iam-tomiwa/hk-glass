@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useListAddons, useListGlassTypes } from "@/services/queries/orders";
 import { formatNaira } from "@/lib/utils";
+import { OrderReviewResponse } from "@/services/types/openapi";
 
 export function ReviewStep({
   form,
+  pricing,
   onBack,
   onNext,
 }: {
   form: UseFormReturn<OrderFormValues>;
+  pricing: OrderReviewResponse | null;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -21,25 +24,7 @@ export function ReviewStep({
   const { data: addonsList } = useListAddons();
   const { data: glassTypes } = useListGlassTypes();
 
-  // area in sq ft, convert to sq m for pricing
-  const area =
-    ((Number(values.length) || 0) * (Number(values.width) || 0)) / 144;
-  const areaSqm = area * 0.0929;
-
-  const selectedGlassType = glassTypes?.find(
-    (t) => t.id === values.glassTypeId,
-  );
-  const glassPrice = Number(selectedGlassType?.price_per_sqm || 0) * areaSqm;
-  const selectedAddonObjects = (values.selectedAddons || [])
-    .map((id) => addonsList?.find((a) => a.id === id))
-    .filter(Boolean);
-  const addonTotal = selectedAddonObjects.reduce(
-    (sum, a) => sum + Number(a?.price || 0),
-    0,
-  );
-  const subtotal = glassPrice + addonTotal;
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const selectedGlassType = glassTypes?.find((t) => t.id === values.glassTypeId);
 
   const basicAddons = [
     { key: "drillHoles", label: "drill Holes" },
@@ -116,7 +101,7 @@ export function ReviewStep({
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Area:</span>
                     <span className="font-medium text-neutral-800">
-                      {area.toFixed(2)} sq ft
+                      {pricing ? Number(pricing.area).toFixed(2) : "—"} sq ft
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -221,36 +206,26 @@ export function ReviewStep({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3 text-sm">
-                {selectedGlassType && (
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">
-                      Glass ({selectedGlassType.name}):
-                    </span>
-                    <span className="font-medium text-neutral-800">
-                      {formatNaira(glassPrice)}
-                    </span>
-                  </div>
-                )}
-                {selectedAddonObjects.map((addon) => (
-                  <div key={addon?.id} className="flex justify-between">
-                    <span className="text-neutral-500">{addon?.name}:</span>
-                    <span className="font-medium text-neutral-800">
-                      {formatNaira(addon?.price)}
-                    </span>
-                  </div>
-                ))}
                 <div className="flex justify-between">
                   <span className="text-neutral-500">Subtotal:</span>
                   <span className="font-medium text-neutral-800">
-                    {formatNaira(subtotal)}
+                    {formatNaira(pricing?.subtotal_amount)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-neutral-500">Tax (8%):</span>
+                  <span className="text-neutral-500">Tax:</span>
                   <span className="font-medium text-neutral-800">
-                    {formatNaira(tax)}
+                    {formatNaira(pricing?.tax_amount)}
                   </span>
                 </div>
+                {pricing && Number(pricing.insurance_amount) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">Insurance:</span>
+                    <span className="font-medium text-neutral-800">
+                      {formatNaira(pricing.insurance_amount)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <Separator />
@@ -258,7 +233,7 @@ export function ReviewStep({
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold text-[#1E202E]">Total:</span>
                 <span className="font-bold text-blue-600 text-base">
-                  {formatNaira(total)}
+                  {formatNaira(pricing?.total_amount)}
                 </span>
               </div>
             </CardContent>

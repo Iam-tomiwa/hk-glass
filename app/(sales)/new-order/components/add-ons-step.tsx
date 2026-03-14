@@ -20,15 +20,18 @@ import {
 import { OrderFormValues } from "../schema";
 import { useListAddons } from "@/services/queries/orders";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function AddOnsStep({
   form,
   onBack,
   onNext,
+  isLoading,
 }: {
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
   onNext: () => void;
+  isLoading?: boolean;
 }) {
   const { data: addons, isLoading: isLoadingAddons } = useListAddons();
 
@@ -356,9 +359,17 @@ export function AddOnsStep({
           <Button
             type="button"
             onClick={onNext}
+            disabled={isLoading}
             className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] px-8 h-10 rounded-md font-medium"
           >
-            Next
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin size-4 mr-2" />
+                Calculating...
+              </>
+            ) : (
+              "Next"
+            )}
           </Button>
           <Button
             variant="outline"

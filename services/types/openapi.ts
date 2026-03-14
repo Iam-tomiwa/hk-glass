@@ -97,6 +97,22 @@ export interface DeviceSetupResponse {
   setup_url?: string | any | null;
 }
 
+export interface OrderReviewRequest {
+  width: number;
+  height: number;
+  glass_type_id: string;
+  addon_ids: string[];
+  insurance_selected: boolean;
+}
+
+export interface OrderReviewResponse {
+  area: string;
+  subtotal_amount: string;
+  tax_amount: string;
+  insurance_amount: string;
+  total_amount: string;
+}
+
 export interface GlassTypeCreate {
   name: string;
   price_per_sqm: number | string | null;
@@ -254,7 +270,7 @@ export interface PaymentResponse {
   paystack_reference: string;
   amount: string;
   status: string;
-  created_at: string;
+  paid_at: string;
 }
 
 export interface PaymentStatus {}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -10,7 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ComboBox } from "@/components/ui/combo-box-2";
 import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Header } from "@/components/header";
@@ -20,7 +19,7 @@ import { Inbox, Info, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { cn, formatNaira } from "@/lib/utils";
 import { AmountDisplay } from "@/components/amount-display";
-import { format } from "date-fns";
+import { format, subDays, subMonths, subYears } from "date-fns";
 import SuspenseContainer from "@/components/custom-suspense";
 import {
   useGetSummary,
@@ -29,6 +28,14 @@ import {
 } from "@/services/queries/admin";
 import DateTag from "@/components/date-tag";
 import OrderStatusBadge from "@/components/order-status-badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ComboBox } from "@/components/ui/combo-box-2";
+import { DateRangePicker } from "@/components/date-picker-select";
+import { useDateRange } from "@/providers/date-range-context";
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
@@ -91,8 +98,30 @@ const columns: ColumnDef[] = [
 
 export default function AdminDashboardPage() {
   const [page, setPage] = useState(1);
-  const [chartRange, setChartRange] = useState<"2D" | "1M" | "1Y">("1Y");
+  const [chartRange, setChartRange] = useState<"7D" | "1M" | "1Y" | "custom">(
+    "1Y",
+  );
+  const [chartStatus, setChartStatus] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  // Date range comes from the shared DateRangeContext (written by DateRangePicker)
+  const { dateRange, setDateRange } = useDateRange();
+
+  const activeFilterCount = [chartStatus, dateRange].filter(Boolean).length;
+
+  const computedPaidFrom = useMemo(() => {
+    // Custom date range from the picker takes priority
+    if (dateRange?.from) return dateRange.from.toISOString();
+    const now = new Date();
+    if (chartRange === "7D") return subDays(now, 7).toISOString();
+    if (chartRange === "1M") return subMonths(now, 1).toISOString();
+    if (chartRange === "1Y") return subYears(now, 1).toISOString();
+  }, [chartRange, dateRange]);
+
+  const computedPaidTo = useMemo(() => {
+    if (dateRange?.to) return dateRange.to.toISOString();
+    return undefined;
+  }, [dateRange]);
 
   const {
     data: summary,
@@ -108,17 +137,33 @@ export default function AdminDashboardPage() {
     error: ordersError,
   } = useListRecentOrders({ limit: 10 });
 
-  const { data: payments } = useListPayments();
+  const {
+    data: payments,
+    isLoading,
+    isError,
+    error,
+  } = useListPayments({
+    paid_from: computedPaidFrom,
+    paid_to: computedPaidTo,
+    status: chartStatus || undefined,
+  });
 
   const paymentsArr = Array.isArray(payments) ? payments : [];
 
   const chartData = Object.entries(
-    paymentsArr.reduce<Record<string, number>>((acc, p) => {
-      const month = format(new Date(p.created_at), "MMM");
-      acc[month] = (acc[month] ?? 0) + 1;
-      return acc;
-    }, {}),
-  ).map(([month, value]) => ({ month, value }));
+    paymentsArr.reduce<Record<string, { value: number; ts: number }>>(
+      (acc, p) => {
+        const date = new Date(p.paid_at);
+        const key = format(date, "dd MMM, yyyy");
+        if (!acc[key]) acc[key] = { value: 0, ts: date.getTime() };
+        acc[key].value += parseFloat(p.amount);
+        return acc;
+      },
+      {},
+    ),
+  )
+    .sort((a, b) => a[1].ts - b[1].ts)
+    .map(([day, { value }]) => ({ day, value }));
 
   const summaryCards = [
     {
@@ -129,14 +174,7 @@ export default function AdminDashboardPage() {
     { label: "Completed", value: summary?.completed ?? "—" },
     {
       label: "Total Revenue",
-      value: (
-        <AmountDisplay
-          amount={
-            summary?.total_revenue ??
-            paymentsArr.reduce((sum, p) => sum + parseFloat(p.amount), 0)
-          }
-        />
-      ),
+      value: <AmountDisplay amount={summary?.total_revenue} />,
     },
   ];
 
@@ -177,15 +215,19 @@ export default function AdminDashboardPage() {
 
         {/* ── Chart ── */}
         <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h2 className="text-[15px] font-semibold text-[#1E202E]">
               Transaction Activity
             </h2>
-            <div className="flex items-center gap-2">
-              {(["2D", "1M", "1Y"] as const).map((r) => (
+            <div className="flex items-center gap-2 flex-wrap">
+              {(["7D", "1M", "1Y"] as const).map((r) => (
                 <button
                   key={r}
-                  onClick={() => setChartRange(r)}
+                  onClick={() => {
+                    setChartRange(r);
+                    // Clear any custom date range from the picker
+                    setDateRange(undefined);
+                  }}
                   className={cn(
                     "h-8 min-w-[40px] px-3 rounded-md text-sm font-medium border transition-colors",
                     chartRange === r
@@ -196,10 +238,65 @@ export default function AdminDashboardPage() {
                   {r}
                 </button>
               ))}
-              <button className="h-8 px-3 rounded-md text-sm font-medium border border-neutral-200 bg-white text-neutral-600 flex items-center gap-1.5 hover:bg-neutral-50 transition-colors">
-                <SlidersHorizontal size={14} />
-                Filter
-              </button>
+
+              {/* Filter button + popup */}
+              <Popover>
+                <PopoverTrigger
+                  className={cn(
+                    "h-8 px-3 rounded-md text-sm font-medium border flex items-center gap-1.5 transition-colors",
+                    activeFilterCount > 0
+                      ? "bg-neutral-900 text-white border-neutral-900"
+                      : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50",
+                  )}
+                >
+                  <SlidersHorizontal size={14} />
+                  Filter
+                  {activeFilterCount > 0 && (
+                    <span className="ml-1 h-4 w-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 gap-2">
+                  <p className="text-xs mb-1 font-semibold text-neutral-500 uppercase tracking-wide">
+                    Filters
+                  </p>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-neutral-600">
+                      Status
+                    </label>
+                    <ComboBox
+                      className="w-full"
+                      options={[
+                        { value: "", label: "All Statuses" },
+                        { value: "pending", label: "Pending" },
+                        { value: "paid", label: "Paid" },
+                        { value: "failed", label: "Failed" },
+                      ]}
+                      value={chartStatus}
+                      onValueChange={(value) => setChartStatus(value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-neutral-600">
+                      Date Range
+                    </label>
+                    <DateRangePicker className="overflow-ellipsis" />
+                  </div>
+                  {activeFilterCount > 0 && (
+                    <Button
+                      className={"mt-4"}
+                      variant={"outline"}
+                      onClick={() => {
+                        setChartStatus("");
+                        setDateRange(undefined);
+                      }}
+                    >
+                      Reset filters
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -207,57 +304,71 @@ export default function AdminDashboardPage() {
           <div className="flex justify-end mb-2">
             <span className="flex items-center gap-1.5 text-xs text-neutral-500 font-medium">
               <span className="h-2.5 w-2.5 rounded-full bg-[#3B82F6]" />
-              Number of Transactions
+              Revenue (₦)
             </span>
           </div>
 
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart
-              data={chartData}
-              margin={{ top: 4, right: 0, left: -20, bottom: 0 }}
-            >
-              <defs>
-                <linearGradient id="txGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                vertical={false}
-                stroke="#F0F0F0"
-                strokeDasharray="0"
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tickFormatter={(v) => `${v}%`}
-                ticks={[0, 25, 50, 75, 100]}
-                tick={{ fontSize: 12, fill: "#9CA3AF" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 8,
-                  border: "1px solid #E5E7EB",
-                  fontSize: 13,
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="#3B82F6"
-                strokeWidth={2}
-                fill="url(#txGradient)"
-                dot={false}
-                activeDot={{ r: 5 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <SuspenseContainer
+            isError={isError}
+            error={error}
+            isLoading={isLoading}
+            isEmpty={payments?.length === 0}
+            emptyStateProps={{
+              title: chartStatus
+                ? `No ${chartStatus} payments found`
+                : "No payments found",
+              icon: <Inbox />,
+            }}
+          >
+            <ResponsiveContainer width="100%" height={260}>
+              <AreaChart
+                data={chartData}
+                margin={{ top: 4, right: 0, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="txGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="#F0F0F0"
+                  strokeDasharray="0"
+                />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={(v) => formatNaira(v)}
+                  tick={{ fontSize: 12, fill: "#9CA3AF" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: "1px solid #E5E7EB",
+                    fontSize: 13,
+                  }}
+                  formatter={(v) => [formatNaira(Number(v)), "Revenue"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  fill="url(#txGradient)"
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </SuspenseContainer>
         </div>
 
         {/* ── Recent orders table ── */}

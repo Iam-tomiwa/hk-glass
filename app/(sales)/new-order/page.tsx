@@ -19,8 +19,9 @@ import { ReviewStep } from "./components/review-step";
 import { PaymentStep } from "./components/payment-step";
 import { ConfirmationStep } from "./components/confirmation-step";
 import { Header } from "@/components/header";
-import { useCreateOrder } from "@/services/queries/orders";
+import { useCreateOrder, useReviewOrder } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
+import { OrderReviewResponse } from "@/services/types/openapi";
 
 const steps = [
   { id: "customer", label: "Customer" },
@@ -51,6 +52,7 @@ function NewOrderForm() {
   const [activeTab, setActiveTab] = useState("customer");
   // Tracks the furthest step index the user has validly reached.
   const [highestUnlockedIndex, setHighestUnlockedIndex] = useState(0);
+  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(null);
 
   // Automatically trigger the confirmation step if there is a payment reference in URL
   useEffect(() => {
@@ -105,6 +107,42 @@ function NewOrderForm() {
     useCreateOrder();
   const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
     useInitializePayment();
+  const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
+    useReviewOrder();
+
+  const handleAddOnsNext = async () => {
+    const fields: (keyof typeof form.getValues)[] = [
+      "selectedAddons",
+      "drillHoles",
+      "numberOfHoles",
+      "holeDiameter",
+      "addTintFilm",
+      "tintType",
+      "engraving",
+      "engravingText",
+    ] as any;
+    const isValid = await form.trigger(fields);
+    if (!isValid) return;
+
+    const values = form.getValues();
+    try {
+      const result = await reviewOrder({
+        data: {
+          width: Number(values.width),
+          height: Number(values.length),
+          glass_type_id: values.glassTypeId,
+          addon_ids: values.selectedAddons ?? [],
+          insurance_selected: values.insuranceCoverage ?? false,
+        },
+      });
+      setOrderReview(result);
+      const currentIndex = steps.findIndex((s) => s.id === "add-ons");
+      setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
+      setActiveTab("review");
+    } catch {
+      // error already toasted by the hook
+    }
+  };
 
   async function onSubmit(data: OrderFormValues) {
     if (activeTab === "payment") {
@@ -229,21 +267,12 @@ function NewOrderForm() {
                 <AddOnsStep
                   form={form}
                   onBack={handleCancel}
-                  onNext={() =>
-                    handleNextTab([
-                      "selectedAddons",
-                      "drillHoles",
-                      "numberOfHoles",
-                      "holeDiameter",
-                      "addTintFilm",
-                      "tintType",
-                      "engraving",
-                      "engravingText",
-                    ])
-                  }
+                  onNext={handleAddOnsNext}
+                  isLoading={isReviewingOrder}
                 />
                 <ReviewStep
                   form={form}
+                  pricing={orderReview}
                   onBack={() => setActiveTab("add-ons")}
                   onNext={() => handleNextTab()}
                 />
