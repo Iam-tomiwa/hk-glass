@@ -129,7 +129,7 @@ export default function OrderDetailsPage() {
 
         <div className="w-full max-w-[1120px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 py-6 px-4 xl:px-0">
           {/* ── Left card: Glass Specifications ── */}
-          <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 shadow-sm bg-white">
+          <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0  bg-white">
             <CardContent className="pb-4 px-0 pt-6">
               <h3 className="text-base font-bold text-gray-900 mb-2">
                 Customer Information
@@ -186,7 +186,7 @@ export default function OrderDetailsPage() {
           </Card>
 
           {/* ── Right card: QR + Timeline ── */}
-          <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 shadow-sm bg-white">
+          <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6  bg-white">
             {/* QR Code section */}
             <CardContent className="px-0 flex flex-col items-center pb-4 pt-6">
               <h2 className="text-base font-bold text-gray-900">
@@ -195,7 +195,7 @@ export default function OrderDetailsPage() {
               <p className="text-sm text-gray-500 mt-0.5 mb-5 text-center">
                 Scan to view order in production system
               </p>
-              <div className="p-2 bg-white rounded-lg shadow-sm border">
+              <div className="p-2 bg-white rounded-lg  border">
                 <QRCodeSVG
                   value={`${typeof window !== "undefined" ? window.location.origin : ""}/order/${orderDetail?.id}`}
                   size={148}

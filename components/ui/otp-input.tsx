@@ -65,7 +65,7 @@ export function OtpInput({
           onKeyDown={(e) => handleOtpKeyDown(index, e)}
           disabled={disabled}
           className={cn(
-            "flex size-[4.5rem] items-center text-center justify-center rounded-xl border bg-background text-[2.5rem] font-bold shadow-sm outline-none transition-all placeholder:text-muted-foreground",
+            "flex size-[4.5rem] items-center text-center justify-center rounded-xl border bg-background text-[2.5rem] font-bold  outline-none transition-all placeholder:text-muted-foreground",
             "focus:border-[#00B412] focus:ring-1 focus:ring-[#00B412]",
             disabled && "opacity-50 cursor-not-allowed",
           )}

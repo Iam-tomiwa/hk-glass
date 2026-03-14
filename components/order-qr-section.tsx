@@ -18,7 +18,7 @@ export function OrderQRSection({ value, size = 148 }: OrderQRSectionProps) {
       <p className="text-sm text-gray-500 mt-0.5 mb-5 text-center">
         Scan to view order in production system
       </p>
-      <div className="p-2 bg-white rounded-lg shadow-sm border">
+      <div className="p-2 bg-white rounded-lg  border">
         <QRCodeSVG value={value || " "} size={size} />
       </div>
     </div>

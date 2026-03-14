@@ -37,7 +37,7 @@ export const Pagination = ({
       <button
         disabled={current <= 1}
         onClick={goToPrevious}
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151]  transition-colors hover:bg-gray-50 disabled:opacity-40"
       >
         <ChevronLeft size={16} />
       </button>
@@ -51,7 +51,7 @@ export const Pagination = ({
       <button
         disabled={current >= totalPages}
         onClick={goToNext}
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151] shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
+        className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E7EB] bg-white text-[#374151]  transition-colors hover:bg-gray-50 disabled:opacity-40"
       >
         <ChevronRight size={16} />
       </button>

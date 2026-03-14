@@ -49,7 +49,7 @@ export default function OrderDetailsPage() {
       isError={isError}
       error={error}
       leftCard={
-        <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 shadow-sm bg-white">
+        <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0  bg-white">
           <CardContent className="pb-4 px-0 pt-6">
             <h3 className="text-base font-bold text-gray-900 mb-2">
               Customer Information
@@ -119,7 +119,7 @@ export default function OrderDetailsPage() {
         </Card>
       }
       rightCard={
-        <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 shadow-sm bg-white">
+        <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6  bg-white">
           <CardContent className="px-0">
             <OrderQRSection value={qrValue} />
           </CardContent>

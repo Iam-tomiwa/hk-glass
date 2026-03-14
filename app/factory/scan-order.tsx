@@ -57,7 +57,7 @@ export default function ScanOrderPage() {
           {/* QR Scanner — inline, no modal */}
           <div className="shrink-0 w-[340px]">
             <div
-              className="relative bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+              className="relative bg-white rounded-2xl border border-gray-200  overflow-hidden"
               style={{ height: 340 }}
             >
               <CornerBrackets />
