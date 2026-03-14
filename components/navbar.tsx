@@ -4,24 +4,9 @@ import useConfirmations from "@/providers/confirmations-provider/use-confirmatio
 import { cn } from "@/lib/utils";
 import { Bell, LogOut } from "lucide-react";
 import Cookies from "js-cookie";
-import { useGetCurrentUser } from "@/services/queries/auth";
 
 export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
   const { openConfirmModal } = useConfirmations();
-  const { data: user } = useGetCurrentUser({
-    enabled:
-      typeof window !== "undefined" &&
-      !window.location.pathname.includes("/admin"),
-  });
-
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-    : "—";
 
   const handleLogout = () => {
     Cookies.remove("access_token");
@@ -65,11 +50,6 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
           >
             <LogOut size={20} />
           </button>
-          <div className="relative">
-            <div className="h-10 w-10 rounded-full bg-[#F3E8E3] text-[#1E202E] font-semibold flex items-center justify-center text-sm">
-              {"HK"}
-            </div>
-          </div>
         </div>
       </div>
     </nav>
