@@ -24,6 +24,7 @@ import {
   useListRecoveryCodes,
 } from "@/services/queries/auth";
 import { TotpSetupResponse } from "@/services/types/openapi";
+import Loader from "@/components/loader";
 
 export default function TwoFactorAuth() {
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
@@ -31,12 +32,9 @@ export default function TwoFactorAuth() {
   const [totpSetup, setTotpSetup] = useState<TotpSetupResponse | null>(null);
   const [confirmCode, setConfirmCode] = useState("");
 
-  const {
-    data: user,
-    isPending: isUserLoading,
-    isError: isUserError,
-    error: userError,
-  } = useGetCurrentUser();
+  const { data: user, isPending: isUserLoading } = useGetCurrentUser({
+    enabled: true,
+  });
   const isEnabled = user?.is_2fa_enabled ?? false;
 
   const { mutateAsync: setupTotp, isPending: isSettingUp } = useSetupTotp();
@@ -84,6 +82,8 @@ export default function TwoFactorAuth() {
     setRecoveryCodes(result.codes);
     setRecoveryModalOpen(true);
   };
+
+  if (isUserLoading) return <Loader />;
 
   return (
     <div className="max-w-[700px] mx-auto py-10 w-full min-h-[500px] flex flex-col gap-6">
