@@ -8,7 +8,10 @@ export const orderFormSchema = z.object({
   glassTypeId: z.string().min(1, "Glass type is required"),
   length: z.string().min(1, "Length/Height is required"),
   width: z.string().min(1, "Width is required"),
+  shape: z.enum(["rectangular", "curved"]),
+  curveDiameter: z.string().optional(),
   sheetSize: z.string().optional(),
+  customSheetSize: z.string().optional(),
   thickness: z.string().optional(),
 
   // Addons and services
@@ -22,11 +25,19 @@ export const orderFormSchema = z.object({
   tintType: z.string().optional(),
 
   engraving: z.boolean(),
+  engravingType: z.string().optional(),
   engravingText: z
     .string()
     .max(100, "Maximum 100 characters allowed")
     .optional(),
+
+  customerNotes: z.string().max(500).optional(),
+
   insuranceCoverage: z.boolean(),
+
+  deliveryMethod: z.enum(["pickup", "delivery"]),
+  deliveryAddress: z.string().optional(),
+  deliveryFee: z.string().optional(),
 });
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;

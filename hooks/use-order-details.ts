@@ -14,7 +14,7 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     { label: "Glass Type", value: (order as any)?.glass_type?.name ?? "—" },
     {
       label: "Dimensions",
-      value: order ? `${order.width}" × ${order.height}"` : "—",
+      value: order ? `${order.width}" × ${order.length}"` : "—",
     },
     { label: "Area", value: order ? `${order.area} sqm` : "—" },
     { label: "Sheet Size", value: order?.sheet_size ?? "Standard" },

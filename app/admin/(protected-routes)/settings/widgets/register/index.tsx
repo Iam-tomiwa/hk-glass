@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ComboBox } from "@/components/ui/combo-box-2";
 import { cn } from "@/lib/utils";
 import {
   useRegisterAdminDevice,
@@ -45,10 +44,9 @@ export default function RegisterDeviceModal({
     if (!deviceName || !role) return;
 
     try {
-      const response =
-        role === "display"
-          ? await registerAdmin.mutateAsync({ data: { name: deviceName } })
-          : await registerStaff.mutateAsync({ data: { name: deviceName } });
+      const response = await registerStaff.mutateAsync({
+        data: { name: deviceName },
+      });
 
       setSetupCode(response.setup_code.split(""));
       setStep(2);
@@ -112,19 +110,6 @@ export default function RegisterDeviceModal({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-sm font-medium">
-                Select Role
-              </Label>
-              <ComboBox
-                value={role}
-                onValueChange={(v) => setRole(v)}
-                options={ROLE_OPTIONS}
-                placeholder="Select Device Role"
-                className="w-full"
-              />
-            </div>
-
             <div className="flex gap-2 pt-2">
               <Button
                 className="bg-[#00B412] hover:bg-[#00B412]/90 text-white"
@@ -157,7 +142,9 @@ export default function RegisterDeviceModal({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => navigator.clipboard.writeText(setupCode.join(""))}
+                onClick={() =>
+                  navigator.clipboard.writeText(setupCode.join(""))
+                }
               >
                 <Copy className="size-4" />
               </Button>

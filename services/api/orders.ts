@@ -10,6 +10,8 @@ import {
   OrderStatus,
   OrderUpdate,
   PaginatedResponse,
+  OrderFileUploadResponse,
+  OrderFileLinksResponse,
 } from "../types/openapi";
 
 // Create Order
@@ -59,6 +61,13 @@ export async function getOrderByReference(
   return await get<OrderResponse>(`/api/orders/reference/${order_reference}`);
 }
 
+// Get Order Files
+export async function getOrderFiles(
+  order_id: string,
+): Promise<OrderFileLinksResponse> {
+  return await get<OrderFileLinksResponse>(`/api/orders/${order_id}/files`);
+}
+
 // Update Order
 export async function updateOrder(
   order_id: string,
@@ -77,4 +86,46 @@ export async function reviewOrder(
   data: OrderReviewRequest,
 ): Promise<OrderReviewResponse> {
   return await post<OrderReviewResponse>(`/api/orders/review`, data);
+}
+
+// Upload Specification File
+export async function uploadSpecification(
+  order_id: string,
+  file: File,
+): Promise<OrderFileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await post<OrderFileUploadResponse>(
+    `/api/orders/${order_id}/upload-specification`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+}
+
+// Upload Engraving Image
+export async function uploadEngravingImage(
+  order_id: string,
+  file: File,
+): Promise<OrderFileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await post<OrderFileUploadResponse>(
+    `/api/orders/${order_id}/upload-engraving-image`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
+}
+
+// Upload Signature
+export async function uploadSignature(
+  order_id: string,
+  file: File,
+): Promise<OrderFileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await post<OrderFileUploadResponse>(
+    `/api/orders/${order_id}/upload-signature`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
+  );
 }

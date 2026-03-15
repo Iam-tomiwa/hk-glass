@@ -99,7 +99,7 @@ export interface DeviceSetupResponse {
 
 export interface OrderReviewRequest {
   width: number;
-  height: number;
+  length: number;
   glass_type_id: string;
   addon_ids: string[];
   insurance_selected: boolean;
@@ -170,12 +170,23 @@ export interface OrderAddonResponse {
   calculated_price: string;
 }
 
+export interface OrderFileUploadResponse {
+  file_path: string;
+  download_url: string;
+}
+
+export interface OrderFileLinksResponse {
+  specification_files: OrderFileUploadResponse[];
+  engraving_image_files: OrderFileUploadResponse[];
+  signature_file?: OrderFileUploadResponse | null;
+}
+
 export interface OrderCreate {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
   width: number | string | null;
-  height: number | string | null;
+  length: number | string | null;
   sheet_size?: string | any | null;
   thickness?: string | any | null;
   drill_holes_count?: number | any | null;
@@ -185,6 +196,16 @@ export interface OrderCreate {
   glass_type_id: string;
   addon_ids?: string[];
   insurance_selected?: boolean;
+  shape_type?: string | null;
+  curve_diameter?: number | null;
+  custom_shape_spec?: string | null;
+  customer_notes?: string | null;
+  delivery_method?: string | null;
+  delivery_address?: string | null;
+  delivery_fee?: number | null;
+  specification_files?: string[];
+  engraving_image_files?: string[];
+  signature_file_path?: string | null;
 }
 
 export interface OrderResponse {
@@ -194,7 +215,7 @@ export interface OrderResponse {
   customer_email: string;
   customer_phone: string;
   width: string;
-  height: string;
+  length: string;
   area: string;
   sheet_size?: string | any | null;
   thickness?: string | any | null;
@@ -242,7 +263,7 @@ export interface OrderUpdate {
   customer_email?: string | any | null;
   customer_phone?: string | any | null;
   width?: number | string | any | null;
-  height?: number | string | any | null;
+  length?: number | string | any | null;
   sheet_size?: string | any | null;
   thickness?: string | any | null;
   drill_holes_count?: number | any | null;

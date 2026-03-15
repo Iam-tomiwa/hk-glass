@@ -62,7 +62,7 @@ function LoginContent() {
 
     try {
       const response = await loginMutation({ data });
-      Cookies.set("access_token", response.access_token, { expires: 7 });
+      Cookies.set("access_token", response.access_token);
       router.push(redirectTo);
     } catch (loginError: any) {
       const status = loginError.response?.status;
@@ -82,7 +82,7 @@ function LoginContent() {
             await recoverMutation({ data });
             // Retry login; cookies will now be sent automatically (withCredentials)
             const response = await loginMutation({ data });
-            Cookies.set("access_token", response.access_token, { expires: 7 });
+            Cookies.set("access_token", response.access_token);
             router.push("/admin");
           } catch (recoverError: any) {
             toast.error(

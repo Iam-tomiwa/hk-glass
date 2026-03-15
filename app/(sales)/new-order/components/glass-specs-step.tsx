@@ -32,15 +32,10 @@ export function GlassSpecsStep({
   const { data: glassTypes, isLoading: isLoadingGlassTypes } =
     useListGlassTypes();
 
-  const length = useWatch({
-    control: form.control,
-    name: "length",
-  });
-
-  const width = useWatch({
-    control: form.control,
-    name: "width",
-  });
+  const length = useWatch({ control: form.control, name: "length" });
+  const width = useWatch({ control: form.control, name: "width" });
+  const shape = useWatch({ control: form.control, name: "shape" });
+  const sheetSize = useWatch({ control: form.control, name: "sheetSize" });
 
   // Calculate area in sq ft assuming length and width are in inches
   const area = ((Number(length) || 0) * (Number(width) || 0)) / 144;
@@ -162,11 +157,67 @@ export function GlassSpecsStep({
 
           <FormField
             control={form.control}
+            name="shape"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Select Shape
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
+                      <SelectValue placeholder="Select shape" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="rectangular">Rectangular</SelectItem>
+                    <SelectItem value="curved">Curved</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {shape === "curved" && (
+            <FormField
+              control={form.control}
+              name="curveDiameter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#1E202E] font-medium text-sm">
+                    Diameter <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        className="bg-background shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                        inches
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
             name="sheetSize"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Sheet Size <span className="text-red-500">*</span>
+                  Sheet Size
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}
@@ -192,13 +243,42 @@ export function GlassSpecsStep({
             )}
           />
 
+          {sheetSize === "custom" && (
+            <FormField
+              control={form.control}
+              name="customSheetSize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#1E202E] font-medium text-sm">
+                    Input Custom Sheet Size <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        className="bg-background shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                        inches
+                      </span>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="thickness"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Thickness <span className="text-red-500">*</span>
+                  Sheet thickness
                 </FormLabel>
                 <Select
                   onValueChange={field.onChange}

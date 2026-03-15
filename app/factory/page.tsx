@@ -171,7 +171,7 @@ export default function OrdersPage() {
                       id: order.order_reference || order.id,
                       rowId: order.id,
                       // date: new Date(order.).toLocaleDateString(),
-                      dimensions: `${order.width} x ${order.height}`,
+                      dimensions: `${order.width} x ${order.length}`,
                       thickness: order.thickness ?? "-",
                       addons: [
                         order.tint_type,

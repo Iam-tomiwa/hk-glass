@@ -4,13 +4,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import SpecTable from "@/components/spec-item";
 import { Badge } from "@/components/ui/badge";
 import { getBadgeVariant, formatNaira } from "@/lib/utils";
-import { useGetOrderByReference } from "@/services/queries/orders";
+import {
+  useGetOrderByReference,
+  useGetOrderFiles,
+} from "@/services/queries/orders";
 import { useParams } from "next/navigation";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
 import { useOrderDetails } from "@/hooks/use-order-details";
 import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderQRSection } from "@/components/order-qr-section";
+import { FileText, Image, PenLine, Download, ExternalLink } from "lucide-react";
+import { OrderFileUploadResponse } from "@/services/types/openapi";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -22,6 +27,8 @@ export default function OrderDetailsPage() {
     isError,
     error,
   } = useGetOrderByReference(orderId);
+
+  const { data: orderFiles } = useGetOrderFiles(order?.id ?? "");
 
   const { glassSpecs, addOns } = useOrderDetails(order);
 
@@ -116,6 +123,62 @@ export default function OrderDetailsPage() {
               ]}
             />
           </CardContent>
+
+          {/* Specification Files */}
+          {(orderFiles?.specification_files?.length ?? 0) > 0 && (
+            <CardContent className="py-4 px-0">
+              <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <FileText className="size-4" /> Specification Files
+              </h3>
+              <div className="space-y-2">
+                {orderFiles!.specification_files.map((f: OrderFileUploadResponse, i: number) => {
+                  const name = f.file_path.split("/").pop() ?? `file-${i + 1}`;
+                  return (
+                    <div key={f.file_path} className="flex items-center justify-between gap-2 p-2 rounded-lg border border-neutral-100 bg-neutral-50 text-sm">
+                      <span className="text-neutral-700 truncate flex-1">{name}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a href={f.download_url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                          <ExternalLink className="size-3.5" /> View
+                        </a>
+                        <a href={f.download_url} download={name} className="flex items-center gap-1 text-neutral-600 hover:underline">
+                          <Download className="size-3.5" /> Download
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          )}
+
+          {/* Engraving Images */}
+          {(orderFiles?.engraving_image_files?.length ?? 0) > 0 && (
+            <CardContent className="py-4 px-0">
+              <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Image className="size-4" /> Engraving Images
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {orderFiles!.engraving_image_files.map((f: OrderFileUploadResponse) => (
+                  <a key={f.file_path} href={f.download_url} target="_blank" rel="noreferrer">
+                    <img src={f.download_url} alt="Engraving" className="w-full h-24 object-cover rounded-lg border border-neutral-200" />
+                  </a>
+                ))}
+              </div>
+            </CardContent>
+          )}
+
+          {/* Signature */}
+          {orderFiles?.signature_file && (
+            <CardContent className="py-4 px-0">
+              <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <PenLine className="size-4" /> Customer Signature
+              </h3>
+              <p className="text-xs text-neutral-500 mb-2">Signed by customer</p>
+              <a href={orderFiles.signature_file.download_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline">
+                <ExternalLink className="size-3.5" /> View Signature
+              </a>
+            </CardContent>
+          )}
         </Card>
       }
       rightCard={

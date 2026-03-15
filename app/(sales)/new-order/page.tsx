@@ -16,19 +16,22 @@ import { CustomerStep } from "./components/customer-step";
 import { GlassSpecsStep } from "./components/glass-specs-step";
 import { AddOnsStep } from "./components/add-ons-step";
 import { ReviewStep } from "./components/review-step";
-import { PaymentStep } from "./components/payment-step";
 import { ConfirmationStep } from "./components/confirmation-step";
 import { Header } from "@/components/header";
 import { useCreateOrder, useReviewOrder } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
 import { OrderReviewResponse } from "@/services/types/openapi";
+import {
+  uploadSpecification,
+  uploadEngravingImage,
+  uploadSignature,
+} from "@/services/api/orders";
 
 const steps = [
   { id: "customer", label: "Customer" },
   { id: "glass-specs", label: "Glass Specs" },
   { id: "add-ons", label: "Add-ons" },
   { id: "review", label: "Review" },
-  { id: "payment", label: "Payment" },
   { id: "confirmation", label: "Confirmation" },
 ];
 
@@ -50,11 +53,14 @@ function NewOrderForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("customer");
-  // Tracks the furthest step index the user has validly reached.
   const [highestUnlockedIndex, setHighestUnlockedIndex] = useState(0);
-  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(null);
+  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(
+    null,
+  );
+  const [specFiles, setSpecFiles] = useState<File[]>([]);
+  const [engravingImageFile, setEngravingImageFile] = useState<File | null>(null);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
-  // Automatically trigger the confirmation step if there is a payment reference in URL
   useEffect(() => {
     if (
       searchParams.get("reference") ||
@@ -74,7 +80,10 @@ function NewOrderForm() {
       glassTypeId: "",
       length: "",
       width: "",
+      shape: "rectangular",
+      curveDiameter: "",
       sheetSize: "",
+      customSheetSize: "",
       thickness: "",
       selectedAddons: [],
       drillHoles: false,
@@ -83,8 +92,13 @@ function NewOrderForm() {
       addTintFilm: false,
       tintType: "",
       engraving: false,
+      engravingType: "",
       engravingText: "",
+      customerNotes: "",
       insuranceCoverage: false,
+      deliveryMethod: "pickup",
+      deliveryAddress: "",
+      deliveryFee: "",
     },
   });
 
@@ -97,7 +111,6 @@ function NewOrderForm() {
     }
     const currentIndex = steps.findIndex((step) => step.id === activeTab);
     if (currentIndex < steps.length - 1) {
-      // Unlock the next step if not already unlocked
       setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
       setActiveTab(steps[currentIndex + 1].id);
     }
@@ -111,7 +124,7 @@ function NewOrderForm() {
     useReviewOrder();
 
   const handleAddOnsNext = async () => {
-    const fields: (keyof typeof form.getValues)[] = [
+    const fields: (keyof OrderFormValues)[] = [
       "selectedAddons",
       "drillHoles",
       "numberOfHoles",
@@ -120,7 +133,7 @@ function NewOrderForm() {
       "tintType",
       "engraving",
       "engravingText",
-    ] as any;
+    ];
     const isValid = await form.trigger(fields);
     if (!isValid) return;
 
@@ -129,7 +142,7 @@ function NewOrderForm() {
       const result = await reviewOrder({
         data: {
           width: Number(values.width),
-          height: Number(values.length),
+          length: Number(values.length),
           glass_type_id: values.glassTypeId,
           addon_ids: values.selectedAddons ?? [],
           insurance_selected: values.insuranceCoverage ?? false,
@@ -144,58 +157,85 @@ function NewOrderForm() {
     }
   };
 
-  async function onSubmit(data: OrderFormValues) {
-    if (activeTab === "payment") {
-      try {
-        const orderRes = await createOrder({
-          data: {
-            customer_name: data.customerName,
-            customer_email: data.email,
-            customer_phone: data.phone || "",
-            width: Number(data.width),
-            height: Number(data.length),
-            sheet_size: data.sheetSize,
-            thickness: data.thickness,
-            drill_holes_count: data.drillHoles ? Number(data.numberOfHoles) : 0,
-            hole_diameter: data.drillHoles ? data.holeDiameter : "",
-            tint_type: data.addTintFilm ? data.tintType : "",
-            engraving_text: data.engraving ? data.engravingText : "",
-            glass_type_id: data.glassTypeId,
-            addon_ids: data.selectedAddons,
-            insurance_selected: data.insuranceCoverage,
-          },
+  const handleProceedToPayment = async () => {
+    const data = form.getValues();
+    try {
+      const orderRes = await createOrder({
+        data: {
+          customer_name: data.customerName,
+          customer_email: data.email,
+          customer_phone: data.phone || "",
+          width: Number(data.width),
+          length: Number(data.length),
+          sheet_size: data.sheetSize,
+          thickness: data.thickness,
+          drill_holes_count: data.drillHoles ? Number(data.numberOfHoles) : 0,
+          hole_diameter: data.drillHoles ? data.holeDiameter : "",
+          tint_type: data.addTintFilm ? data.tintType : "",
+          engraving_text: data.engraving ? data.engravingText : "",
+          glass_type_id: data.glassTypeId,
+          addon_ids: data.selectedAddons,
+          insurance_selected: data.insuranceCoverage,
+          shape_type: data.shape as any,
+          curve_diameter: data.curveDiameter
+            ? Number(data.curveDiameter)
+            : undefined,
+          customer_notes: data.customerNotes,
+          delivery_method: data.deliveryMethod as any,
+          delivery_address:
+            data.deliveryMethod === "delivery"
+              ? data.deliveryAddress
+              : undefined,
+          delivery_fee:
+            data.deliveryMethod === "delivery" && data.deliveryFee
+              ? Number(data.deliveryFee)
+              : 0,
+        },
+      });
+
+      if (orderRes?.id) {
+        const orderId = orderRes.id;
+
+        // Upload files in parallel
+        const uploadPromises: Promise<unknown>[] = [];
+
+        for (const file of specFiles) {
+          uploadPromises.push(uploadSpecification(orderId, file));
+        }
+
+        if (engravingImageFile) {
+          uploadPromises.push(uploadEngravingImage(orderId, engravingImageFile));
+        }
+
+        if (signatureDataUrl?.startsWith("data:")) {
+          const res = await fetch(signatureDataUrl);
+          const blob = await res.blob();
+          const sigFile = new File([blob], "signature.png", { type: "image/png" });
+          uploadPromises.push(uploadSignature(orderId, sigFile));
+        }
+
+        await Promise.all(uploadPromises);
+
+        const paymentRes = await initializePayment({
+          data: { order_id: orderId },
         });
 
-        if (orderRes?.id) {
-          const paymentRes = await initializePayment({
-            data: {
-              order_id: orderRes.id,
-            },
-          });
-
-          if (paymentRes?.authorization_url) {
-            window.location.href = paymentRes.authorization_url;
-          } else {
-            setHighestUnlockedIndex(steps.length - 1);
-            setActiveTab("confirmation");
-          }
+        if (paymentRes?.authorization_url) {
+          window.location.href = paymentRes.authorization_url;
+        } else {
+          setHighestUnlockedIndex(steps.length - 1);
+          setActiveTab("confirmation");
         }
-      } catch (e) {
-        console.error("Order processing failed", e);
       }
-    } else {
-      const currentIndex = steps.findIndex((step) => step.id === activeTab);
-      if (currentIndex < steps.length - 1) {
-        setActiveTab(steps[currentIndex + 1].id);
-      }
+    } catch (e) {
+      console.error("Order processing failed", e);
     }
-  }
+  };
 
   const handleCancel = () => router.push("/");
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <Header title="New Order Placement" className="border-b">
         <Link href="/">
           <Button
@@ -208,13 +248,12 @@ function NewOrderForm() {
         </Link>
       </Header>
 
-      {/* Main Content */}
       <div className="flex flex-1 flex-col md:flex-row">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}
           orientation="vertical"
-          className="flex  flex-1 flex-col md:flex-row w-full data-[orientation=vertical]:flex-col md:data-[orientation=vertical]:flex-row"
+          className="flex flex-1 flex-col md:flex-row w-full data-[orientation=vertical]:flex-col md:data-[orientation=vertical]:flex-row"
         >
           {/* Sidebar / Top Nav */}
           <div className="md:w-[240px] sticky top-0 max-h-[calc(100vh-10rem)] overflow-y-auto md:shrink-0 border-b md:border-b-0 md:border-r bg-white flex flex-col px-4">
@@ -225,7 +264,7 @@ function NewOrderForm() {
                   <TabsTrigger
                     key={step.id}
                     value={step.id}
-                    disabled={isLocked}
+                    // disabled={isLocked}
                     className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
                   >
                     <span className="flex items-center gap-2">
@@ -242,8 +281,8 @@ function NewOrderForm() {
           <div className="flex-1 bg-[#F8F9FA] overflow-auto p-6 md:p-12">
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className={`mx-auto w-full`}
+                onSubmit={(e) => e.preventDefault()}
+                className="mx-auto w-full"
               >
                 <CustomerStep
                   form={form}
@@ -269,17 +308,19 @@ function NewOrderForm() {
                   onBack={handleCancel}
                   onNext={handleAddOnsNext}
                   isLoading={isReviewingOrder}
+                  specFiles={specFiles}
+                  onSpecFilesChange={setSpecFiles}
+                  engravingImageFile={engravingImageFile}
+                  onEngravingImageChange={setEngravingImageFile}
                 />
                 <ReviewStep
                   form={form}
                   pricing={orderReview}
                   onBack={() => setActiveTab("add-ons")}
-                  onNext={() => handleNextTab()}
-                />
-                <PaymentStep
-                  form={form}
-                  onBack={() => setActiveTab("review")}
+                  onProceedToPayment={handleProceedToPayment}
                   isLoading={isCreatingOrder || isInitializingPayment}
+                  signatureDataUrl={signatureDataUrl}
+                  onSignatureChange={setSignatureDataUrl}
                 />
 
                 <TabsContent value="confirmation" className="mt-0 outline-none">

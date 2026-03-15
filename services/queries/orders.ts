@@ -13,6 +13,7 @@ import {
   deleteOrder,
   getOrderByReference,
   reviewOrder,
+  getOrderFiles,
 } from "../api/orders";
 import {
   OrderCreate,
@@ -25,6 +26,7 @@ import {
   OrderStatus,
   OrderUpdate,
   PaginatedResponse,
+  OrderFileLinksResponse,
 } from "../types/openapi";
 
 export function useCreateOrder() {
@@ -88,6 +90,14 @@ export function useGetOrderByReference(order_reference: string) {
   });
 }
 
+export function useGetOrderFiles(order_id: string) {
+  return useQuery<OrderFileLinksResponse>({
+    queryKey: queryKeys.orders.files(order_id),
+    queryFn: () => getOrderFiles(order_id),
+    enabled: !!order_id,
+  });
+}
+
 export function useUpdateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -121,7 +131,9 @@ export function useReviewOrder() {
   return useMutation<OrderReviewResponse, Error, { data: OrderReviewRequest }>({
     mutationFn: ({ data }) => reviewOrder(data),
     onError: (error: any) => {
-      toast.error(getErrorMessage(error, "Failed to calculate price. Please try again."));
+      toast.error(
+        getErrorMessage(error, "Failed to calculate price. Please try again."),
+      );
     },
   });
 }

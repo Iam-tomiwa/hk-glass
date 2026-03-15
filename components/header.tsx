@@ -12,7 +12,7 @@ export const Header = ({
   className?: string;
 }) => {
   return (
-    <div className={cn("bg-background", className)}>
+    <div className={cn("bg-background border-b", className)}>
       <div className="px-6 flex items-center justify-between py-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1E202E] tracking-tight">
