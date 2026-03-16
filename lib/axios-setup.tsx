@@ -34,7 +34,7 @@ axiosInstance.interceptors.response.use(
       toast.error("Request timed out. Please try again.");
     }
 
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
       if (typeof window !== "undefined") {
         const { pathname } = window.location;
 

@@ -1206,7 +1206,6 @@
                 { "$ref": "#/components/schemas/OrderStatus" },
                 { "type": "null" }
               ],
-              "default": "in_production",
               "title": "Order Status"
             }
           },
@@ -1250,6 +1249,152 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PaginatedOrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/orders/{order_id}/detail": {
+      "get": {
+        "tags": ["factory"],
+        "summary": "Get Factory Order Detail",
+        "operationId": "get_factory_order_detail_api_factory_orders__order_id__detail_get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Order Id" }
+          },
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrderDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/orders/{order_id}/damage": {
+      "patch": {
+        "tags": ["factory"],
+        "summary": "Report Factory Order Damage",
+        "operationId": "report_factory_order_damage_api_factory_orders__order_id__damage_patch",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Order Id" }
+          },
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderDamageReport" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrderDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/orders/{order_id}/upload-damage-file": {
+      "post": {
+        "tags": ["factory"],
+        "summary": "Upload Factory Damage File",
+        "operationId": "upload_factory_damage_file_api_factory_orders__order_id__upload_damage_file_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Order Id" }
+          },
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_factory_damage_file_api_factory_orders__order_id__upload_damage_file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderFileUploadResponse"
                 }
               }
             }
@@ -2168,7 +2313,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedOrderResponse"
+                  "$ref": "#/components/schemas/PaginatedAdminOrderResponse"
                 }
               }
             }
@@ -2212,6 +2357,50 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/OrderDetailResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/orders/{order_id}/files": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Get Order File Links",
+        "operationId": "get_order_file_links_api_admin_orders__order_id__files_get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Order Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderFileLinksResponse"
+                }
               }
             }
           },
@@ -2913,6 +3102,212 @@
         "required": ["name"],
         "title": "AdminDeviceCreate"
       },
+      "AdminOrderResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "order_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Order Reference"
+          },
+          "customer_name": { "type": "string", "title": "Customer Name" },
+          "customer_email": { "type": "string", "title": "Customer Email" },
+          "customer_phone": { "type": "string", "title": "Customer Phone" },
+          "width": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Width"
+          },
+          "length": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Length"
+          },
+          "area": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Area"
+          },
+          "shape_type": { "$ref": "#/components/schemas/ShapeType" },
+          "curve_diameter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Curve Diameter"
+          },
+          "custom_shape_spec": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Custom Shape Spec"
+          },
+          "sheet_size": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sheet Size"
+          },
+          "thickness": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Thickness"
+          },
+          "drill_holes_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Drill Holes Count"
+          },
+          "hole_diameter": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Hole Diameter"
+          },
+          "tint_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Tint Type"
+          },
+          "engraving_text": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Engraving Text"
+          },
+          "customer_notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Customer Notes"
+          },
+          "delivery_method": { "$ref": "#/components/schemas/DeliveryMethod" },
+          "delivery_address": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Delivery Address"
+          },
+          "delivery_fee": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Delivery Fee"
+          },
+          "specification_files": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Specification Files"
+          },
+          "engraving_image_files": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Engraving Image Files"
+          },
+          "signature_file_path": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Signature File Path"
+          },
+          "subtotal_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Subtotal Amount"
+          },
+          "tax_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Tax Amount"
+          },
+          "insurance_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Insurance Amount"
+          },
+          "total_amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount"
+          },
+          "order_status": { "type": "string", "title": "Order Status" },
+          "production_started_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Production Started At"
+          },
+          "ready_pickup_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Ready Pickup At"
+          },
+          "completed_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Completed At"
+          },
+          "payment_status": { "type": "string", "title": "Payment Status" },
+          "insurance_selected": {
+            "type": "boolean",
+            "title": "Insurance Selected"
+          },
+          "qr_code_token": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Qr Code Token"
+          },
+          "glass_type": { "$ref": "#/components/schemas/GlassTypeResponse" },
+          "created_by_user": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/UserResponse" },
+              { "type": "null" }
+            ]
+          },
+          "has_damage": { "type": "boolean", "title": "Has Damage" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "order_reference",
+          "customer_name",
+          "customer_email",
+          "customer_phone",
+          "width",
+          "length",
+          "area",
+          "shape_type",
+          "curve_diameter",
+          "custom_shape_spec",
+          "sheet_size",
+          "thickness",
+          "drill_holes_count",
+          "hole_diameter",
+          "tint_type",
+          "engraving_text",
+          "customer_notes",
+          "delivery_method",
+          "delivery_address",
+          "delivery_fee",
+          "specification_files",
+          "engraving_image_files",
+          "signature_file_path",
+          "subtotal_amount",
+          "tax_amount",
+          "insurance_amount",
+          "total_amount",
+          "order_status",
+          "production_started_at",
+          "ready_pickup_at",
+          "completed_at",
+          "payment_status",
+          "insurance_selected",
+          "qr_code_token",
+          "glass_type",
+          "has_damage"
+        ],
+        "title": "AdminOrderResponse"
+      },
       "AdminRecoveryRequest": {
         "properties": {
           "email": { "type": "string", "title": "Email" },
@@ -2941,6 +3336,18 @@
         "type": "object",
         "required": ["file"],
         "title": "Body_upload_engraving_image_api_orders__order_id__upload_engraving_image_post"
+      },
+      "Body_upload_factory_damage_file_api_factory_orders__order_id__upload_damage_file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_upload_factory_damage_file_api_factory_orders__order_id__upload_damage_file_post"
       },
       "Body_upload_signature_api_orders__order_id__upload_signature_post": {
         "properties": {
@@ -3607,6 +4014,25 @@
         ],
         "title": "OrderCreate"
       },
+      "OrderDamageReport": {
+        "properties": {
+          "damage_reason": { "type": "string", "title": "Damage Reason" },
+          "damage_notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Damage Notes"
+          },
+          "damage_files": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Damage Files"
+          }
+        },
+        "type": "object",
+        "required": ["damage_reason"],
+        "title": "OrderDamageReport"
+      },
       "OrderDetailResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -3685,6 +4111,26 @@
           "customer_notes": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Customer Notes"
+          },
+          "damage_reported_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Damage Reported At"
+          },
+          "damage_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Damage Reason"
+          },
+          "damage_notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Damage Notes"
+          },
+          "damage_files": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Damage Files"
           },
           "delivery_method": { "$ref": "#/components/schemas/DeliveryMethod" },
           "delivery_address": {
@@ -3795,6 +4241,10 @@
           "tint_type",
           "engraving_text",
           "customer_notes",
+          "damage_reported_at",
+          "damage_reason",
+          "damage_notes",
+          "damage_files",
           "delivery_method",
           "delivery_address",
           "delivery_fee",
@@ -3828,6 +4278,12 @@
             "items": { "$ref": "#/components/schemas/OrderFileUploadResponse" },
             "type": "array",
             "title": "Engraving Image Files"
+          },
+          "damage_files": {
+            "items": { "$ref": "#/components/schemas/OrderFileUploadResponse" },
+            "type": "array",
+            "title": "Damage Files",
+            "default": []
           },
           "signature_file": {
             "anyOf": [
@@ -4500,6 +4956,22 @@
         },
         "type": "object",
         "title": "OrderUpdate"
+      },
+      "PaginatedAdminOrderResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/AdminOrderResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "page_size": { "type": "integer", "title": "Page Size" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["items", "total", "page", "page_size", "total_pages"],
+        "title": "PaginatedAdminOrderResponse"
       },
       "PaginatedOrderResponse": {
         "properties": {

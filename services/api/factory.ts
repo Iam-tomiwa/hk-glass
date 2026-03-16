@@ -4,6 +4,8 @@ import {
   OrderStats,
   OrderStatus,
   OrderStatusUpdate,
+  OrderDamageReport,
+  OrderFileUploadResponse,
   PaginatedResponse,
 } from "../types/openapi";
 
@@ -30,5 +32,30 @@ export async function updateFactoryOrderStatus(
   return await patch<OrderResponse>(
     `/api/factory/orders/${order_id}/status`,
     data,
+  );
+}
+
+// Report Factory Order Damage
+export async function reportFactoryOrderDamage(
+  order_id: string,
+  data: OrderDamageReport,
+): Promise<OrderResponse> {
+  return await patch<OrderResponse>(
+    `/api/factory/orders/${order_id}/damage`,
+    data,
+  );
+}
+
+// Upload Factory Damage File
+export async function uploadFactoryDamageFile(
+  order_id: string,
+  file: File,
+): Promise<OrderFileUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return await post<OrderFileUploadResponse>(
+    `/api/factory/orders/${order_id}/upload-damage-file`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } },
   );
 }

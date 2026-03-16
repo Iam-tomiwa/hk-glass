@@ -8,11 +8,14 @@ import {
   listFactoryQueue,
   updateFactoryOrderStatus,
   getFactoryStats,
+  reportFactoryOrderDamage,
+  uploadFactoryDamageFile,
 } from "../api/factory";
 import {
   OrderResponse,
   OrderStatus,
   OrderStatusUpdate,
+  OrderDamageReport,
   PaginatedResponse,
   OrderStats,
 } from "../types/openapi";
@@ -49,6 +52,39 @@ export function useUpdateFactoryOrderStatus() {
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useReportFactoryOrderDamage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      order_id,
+      data,
+      file,
+    }: {
+      order_id: string;
+      data: OrderDamageReport;
+      file?: File;
+    }) => {
+      let filePaths: string[] = [];
+      if (file) {
+        const uploaded = await uploadFactoryDamageFile(order_id, file);
+        filePaths = [uploaded.file_path];
+      }
+      return reportFactoryOrderDamage(order_id, {
+        ...data,
+        damage_files: filePaths.length > 0 ? filePaths : undefined,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.factory.all });
+      toast.success("Damage report submitted.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed to submit damage report."));
     },
   });
 }

@@ -19,18 +19,12 @@ import {
   useRegisterStaffDevice,
 } from "@/services/queries/admin";
 
-const ROLE_OPTIONS = [
-  { value: "display", label: "Display Profile" },
-  { value: "staff", label: "Staff Portal" },
-];
-
 export default function RegisterDeviceModal({
   children,
 }: {
   children?: React.ReactNode;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
-  const [role, setRole] = useState("");
   const [deviceName, setDeviceName] = useState("");
   const [open, setOpen] = useState(false);
   const [setupCode, setSetupCode] = useState<string[]>([]);
@@ -41,7 +35,7 @@ export default function RegisterDeviceModal({
   const isLoading = registerAdmin.isPending || registerStaff.isPending;
 
   const handleGenerate = async () => {
-    if (!deviceName || !role) return;
+    if (!deviceName) return;
 
     try {
       const response = await registerStaff.mutateAsync({
@@ -60,7 +54,6 @@ export default function RegisterDeviceModal({
     if (!newOpen) {
       setTimeout(() => {
         setStep(1);
-        setRole("");
         setDeviceName("");
         setSetupCode([]);
       }, 300);
@@ -114,7 +107,7 @@ export default function RegisterDeviceModal({
               <Button
                 className="bg-[#00B412] hover:bg-[#00B412]/90 text-white"
                 onClick={handleGenerate}
-                disabled={!deviceName || !role || isLoading}
+                disabled={!deviceName || isLoading}
               >
                 {isLoading ? "Generating..." : "Generate Auth Key"}
               </Button>

@@ -239,6 +239,16 @@ export interface OrderResponse {
   created_at: string;
   updated_at: string;
   created_by_user: UserResponse;
+  damage_reported_at?: string | null;
+  damage_reason?: string | null;
+  damage_notes?: string | null;
+  damage_files?: string[];
+}
+
+export interface OrderDamageReport {
+  damage_reason: string;
+  damage_notes?: string | null;
+  damage_files?: string[] | null;
 }
 
 export interface OrderStats {

@@ -12,7 +12,11 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
     Cookies.remove("access_token");
     Cookies.remove("admin_device_token");
     Cookies.remove("device_token");
-    window.location.href = "/admin/login";
+    if (window.location.pathname.includes("admin")) {
+      window.location.href = "/admin/login";
+    } else {
+      window.location.href = "/unauthorized";
+    }
   };
 
   return (

@@ -1,19 +1,31 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import TimelineItem, { TimelineEvent } from "@/components/timeline-item";
 import SpecTable from "@/components/spec-item";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
+import { useGetOrderByReference } from "@/services/queries/orders";
 import {
-  useGetOrderByReference,
-  useUpdateOrder,
-} from "@/services/queries/orders";
+  useUpdateFactoryOrderStatus,
+  useReportFactoryOrderDamage,
+} from "@/services/queries/factory";
 import { useParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { useOrderDetails } from "@/hooks/use-order-details";
 import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderQRSection } from "@/components/order-qr-section";
+import { Upload, X, Loader2 } from "lucide-react";
+import DateTag from "@/components/date-tag";
 
 const ORDER_STATUSES = [
   "pending",
@@ -40,16 +52,21 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.id as string;
 
-  const {
-    data: order,
-    isLoading,
-    isError,
-    error,
-  } = useGetOrderByReference(orderId);
-  const { mutate: updateOrder, isPending: isUpdating } = useUpdateOrder();
+  const { data: order, isLoading, isError, error } = useGetOrderByReference(orderId);
+  const { mutate: updateStatus, isPending: isUpdating } = useUpdateFactoryOrderStatus();
+  const { mutateAsync: reportDamage, isPending: isReporting } = useReportFactoryOrderDamage();
   const { openConfirmModal } = useConfirmations();
-
   const { glassSpecs, addOns } = useOrderDetails(order);
+
+  // Report damage dialog
+  const [reportOpen, setReportOpen] = useState(false);
+  const [damageReason, setDamageReason] = useState("");
+  const [damageNotes, setDamageNotes] = useState("");
+  const [damageFile, setDamageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // View damage report dialog
+  const [viewOpen, setViewOpen] = useState(false);
 
   const currentStatusIndex = ORDER_STATUSES.indexOf(order?.order_status ?? "");
   const nextStatus =
@@ -57,34 +74,59 @@ export default function OrderDetailsPage() {
       ? ORDER_STATUSES[currentStatusIndex + 1]
       : null;
 
+  const hasDamage = !!order?.damage_reported_at;
+
   const timeline: TimelineEvent[] = [
     {
-      title: "Order Received",
-      description: "Order has been placed and confirmed.",
+      title: "Payment Completed",
+      description: "The customer completed payment",
       date: formatDate(order?.created_at),
       completed: currentStatusIndex >= 0,
       active: currentStatusIndex >= 0,
     },
     {
-      title: "Production Started",
-      description: "Glass is being cut and processed.",
+      title: "In Production",
+      description: "The customer completed payment",
       date: formatDate(order?.production_started_at),
       completed: currentStatusIndex >= 1,
       active: currentStatusIndex >= 1,
     },
+    ...(hasDamage
+      ? [
+          {
+            title: "Item Damage Reported",
+            description: "An item was reported damaged",
+            date: formatDate(order?.damage_reported_at),
+            completed: true,
+            active: true,
+            variant: "damage" as const,
+            link: {
+              text: "View Damage Report",
+              onClick: () => setViewOpen(true),
+            },
+          },
+        ]
+      : []),
     {
-      title: "Ready for Pickup",
-      description: "Order is complete and ready for collection.",
+      title: "Production Completed",
+      description: "Factory station has completed production",
       date: formatDate(order?.ready_pickup_at),
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex >= 2,
     },
     {
-      title: "Completed",
-      description: "Order has been picked up and closed.",
-      date: formatDate(order?.completed_at),
+      title: "Ready For Pickup",
+      description: "The item is ready for pickup",
+      date: formatDate(order?.ready_pickup_at),
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex >= 3,
+    },
+    {
+      title: "Item Collected",
+      description: "This item has been picked up",
+      date: formatDate(order?.completed_at),
+      completed: currentStatusIndex >= 4,
+      active: currentStatusIndex >= 4,
     },
   ];
 
@@ -99,75 +141,268 @@ export default function OrderDetailsPage() {
       STATUS_CONFIRM_MESSAGE[nextStatus] ??
         `Update order status to "${nextStatus.split("_").join(" ")}"?`,
       () => {
-        updateOrder({
+        updateStatus({
           order_id: order?.id ?? "",
-          data: { order_status: nextStatus },
+          data: { order_status: nextStatus as any },
         });
       },
       { title: "Confirm Status Update" },
     );
   }
 
+  async function handleSubmitDamage() {
+    if (!damageReason.trim() || !order?.id) return;
+    try {
+      await reportDamage({
+        order_id: order.id,
+        data: { damage_reason: damageReason.trim(), damage_notes: damageNotes.trim() || undefined },
+        file: damageFile ?? undefined,
+      });
+      setReportOpen(false);
+      setDamageReason("");
+      setDamageNotes("");
+      setDamageFile(null);
+    } catch {
+      // error already toasted
+    }
+  }
+
+  const createdBy =
+    (order as any)?.created_by_user?.name ??
+    (order as any)?.created_by_user?.email ??
+    "Staff";
+
   return (
-    <OrderDetailShell
-      description={`Order ID: ${order?.order_reference ?? orderId}`}
-      backHref="/factory"
-      isLoading={isLoading}
-      isError={isError}
-      error={error}
-      leftCard={
-        <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0  bg-white">
-          <CardContent className="pb-4 px-0 pt-6">
-            <h3 className="text-base font-bold text-gray-900 mb-2">
-              Glass Specifications
-            </h3>
-            <SpecTable rows={glassSpecs} />
-          </CardContent>
+    <>
+      <OrderDetailShell
+        description={`Order ID: ${order?.order_reference ?? orderId}`}
+        backHref="/factory"
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        leftCard={
+          <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 bg-white">
+            <CardContent className="pb-4 px-0 pt-6">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
+                Glass Specifications
+              </h3>
+              <SpecTable rows={glassSpecs} />
+            </CardContent>
 
-          <CardContent className="py-4 px-0">
-            <h3 className="text-base font-bold text-gray-900 mb-2">
-              Add-ons &amp; Services
-            </h3>
-            <SpecTable rows={addOns} />
-          </CardContent>
-        </Card>
-      }
-      rightCard={
-        <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6  bg-white">
-          <CardContent className="px-0">
-            <OrderQRSection value={qrValue} />
-          </CardContent>
+            <CardContent className="py-4 px-0">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
+                Add-ons &amp; Services
+              </h3>
+              <SpecTable rows={addOns} />
+            </CardContent>
+          </Card>
+        }
+        rightCard={
+          <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 bg-white">
+            <CardContent className="px-0">
+              <OrderQRSection value={qrValue} />
+            </CardContent>
 
-          <CardContent className="px-0 pt-5 pb-4 flex-1">
-            <h3 className="text-base font-bold text-gray-900 mb-4">
-              Order Status &amp; Timeline
-            </h3>
-            <div>
-              {timeline.map((event, i) => (
-                <TimelineItem
-                  key={event.title}
-                  event={event}
-                  isLast={i === timeline.length - 1}
-                />
-              ))}
+            <CardContent className="px-0 py-4">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
+                Order Information
+              </h3>
+              <SpecTable
+                rows={[
+                  { label: "Order ID", value: order?.order_reference ?? orderId },
+                  {
+                    label: "Created On",
+                    value: <DateTag date={order?.created_at ?? ""} />,
+                  },
+                  { label: "Created By", value: createdBy },
+                  {
+                    label: "Status",
+                    value: order ? (
+                      <Badge variant="outline" className="capitalize font-medium text-xs">
+                        {order.payment_status}
+                      </Badge>
+                    ) : "—",
+                  },
+                  ...(hasDamage
+                    ? [
+                        {
+                          label: "Damage Report",
+                          value: (
+                            <Badge className="bg-red-100 text-red-700 border-red-200 font-medium text-xs shadow-none hover:bg-red-100">
+                              Damage
+                            </Badge>
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </CardContent>
+
+            <CardContent className="px-0 pt-5 pb-4 flex-1">
+              <h3 className="text-base font-bold text-gray-900 mb-4">
+                Order Status &amp; Timeline
+              </h3>
+              <div>
+                {timeline.map((event, i) => (
+                  <TimelineItem
+                    key={event.title}
+                    event={event}
+                    isLast={i === timeline.length - 1}
+                  />
+                ))}
+              </div>
+            </CardContent>
+
+            <div className="px-0 pb-6 pt-2 space-y-2">
+              {nextStatus && (
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={isUpdating}
+                  className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
+                >
+                  {isUpdating ? "Updating..." : "Update Order Status"}
+                </Button>
+              )}
+              {!hasDamage && (
+                <Button
+                  variant="outline"
+                  onClick={() => setReportOpen(true)}
+                  className="w-full h-11 font-semibold text-sm rounded-lg"
+                >
+                  Report Item Damage
+                </Button>
+              )}
             </div>
-          </CardContent>
+          </Card>
+        }
+      />
 
-          {nextStatus && (
-            <div className="px-0 pb-6 pt-2">
+      {/* Report Damage Dialog */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Report Item Damage</DialogTitle>
+            <p className="text-sm text-neutral-500">
+              Report damage items or issues during production.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-[#1E202E] mb-1.5 block">
+                Input Damage Report <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Explain what happened"
+                className="resize-none min-h-[80px] shadow-none"
+                maxLength={100}
+                value={damageReason}
+                onChange={(e) => setDamageReason(e.target.value)}
+              />
+              <p className="text-xs text-neutral-500 mt-1">
+                {damageReason.length}/100 characters
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-[#1E202E] mb-1">
+                Upload Damaged Item
+              </p>
+              <p className="text-xs text-neutral-500 mb-2">
+                Upload an image or video of the damaged item
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                className="hidden"
+                onChange={(e) => setDamageFile(e.target.files?.[0] ?? null)}
+              />
+              {damageFile ? (
+                <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
+                  <span className="text-sm text-neutral-700 flex-1 truncate">
+                    {damageFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setDamageFile(null)}
+                    className="text-neutral-400 hover:text-neutral-600"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
+                >
+                  <Upload className="size-5 text-neutral-400" />
+                  <p className="text-sm text-neutral-500">Click to upload</p>
+                  <p className="text-xs text-neutral-400">Any file type</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-1">
               <Button
-                onClick={handleUpdateStatus}
-                disabled={isUpdating}
-                className="w-full h-11 text-white font-semibold text-sm rounded-lg"
+                onClick={handleSubmitDamage}
+                disabled={!damageReason.trim() || isReporting}
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
-                {isUpdating
-                  ? "Updating..."
-                  : `Mark as ${nextStatus.split("_").join(" ")}`}
+                {isReporting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="size-4 animate-spin" /> Submitting...
+                  </span>
+                ) : (
+                  "Submit Damage Report"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setReportOpen(false)}
+                disabled={isReporting}
+              >
+                Cancel
               </Button>
             </div>
-          )}
-        </Card>
-      }
-    />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Damage Report Dialog */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Damage Report</DialogTitle>
+            <p className="text-sm text-neutral-500">
+              Reported on {formatDate(order?.damage_reported_at)}
+            </p>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <div>
+              <p className="font-medium text-[#1E202E] mb-1">Damage Reason</p>
+              <p className="text-neutral-600">{order?.damage_reason ?? "—"}</p>
+            </div>
+            {order?.damage_notes && (
+              <div>
+                <p className="font-medium text-[#1E202E] mb-1">Notes</p>
+                <p className="text-neutral-600">{order.damage_notes}</p>
+              </div>
+            )}
+            {(order?.damage_files?.length ?? 0) > 0 && (
+              <div>
+                <p className="font-medium text-[#1E202E] mb-1">
+                  Attached Files ({order!.damage_files!.length})
+                </p>
+                <p className="text-neutral-500 text-xs">
+                  {order!.damage_files!.length} file(s) uploaded with this report.
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
