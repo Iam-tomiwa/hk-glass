@@ -178,6 +178,7 @@ export interface OrderFileUploadResponse {
 export interface OrderFileLinksResponse {
   specification_files: OrderFileUploadResponse[];
   engraving_image_files: OrderFileUploadResponse[];
+  damage_files?: OrderFileUploadResponse[];
   signature_file?: OrderFileUploadResponse | null;
 }
 
@@ -245,6 +246,19 @@ export interface OrderResponse {
   damage_files?: string[];
 }
 
+export interface OrderDetailResponse extends OrderResponse {
+  shape_type?: string | null;
+  curve_diameter?: string | null;
+  custom_shape_spec?: string | null;
+  customer_notes?: string | null;
+  delivery_method?: string | null;
+  delivery_address?: string | null;
+  delivery_fee?: number | null;
+  specification_files?: string[];
+  engraving_image_files?: string[];
+  signature_file_path?: string | null;
+}
+
 export interface OrderDamageReport {
   damage_reason: string;
   damage_notes?: string | null;
@@ -256,6 +270,32 @@ export interface OrderStats {
   in_production: number;
   completed: number;
   ready_pickup: number;
+}
+
+export interface NotificationResponse {
+  id: string;
+  created_at: string;
+  audience: string;
+  event_type: string;
+  title: string;
+  message: string;
+  order_id?: string | null;
+  is_read: boolean;
+  read_at?: string | null;
+  payload: Record<string, any>;
+}
+
+export interface NotificationListResponse {
+  items: NotificationResponse[];
+  unread_count: number;
+}
+
+export interface NotificationMarkReadResponse {
+  notification: NotificationResponse;
+}
+
+export interface NotificationUnreadCountResponse {
+  unread_count: number;
 }
 
 export type OrderStatus =

@@ -28,6 +28,7 @@ import {
   setupDevice,
   getCurrentDevice,
   getOrder,
+  getAdminOrderFiles,
 } from "../api/admin";
 import {
   GlassTypeCreate,
@@ -44,6 +45,8 @@ import {
   CombinedDeviceResponse,
   UserResponse,
   OrderResponse,
+  OrderDetailResponse,
+  OrderFileLinksResponse,
   PaymentResponse,
   DashboardSummaryResponse,
   DashboardOrderResponse,
@@ -257,9 +260,17 @@ export function useListOrders(params?: {
 }
 
 export function useGetOrder(order_id: string) {
-  return useQuery<OrderResponse>({
-    queryKey: queryKeys.admin.list(["orders", order_id]),
+  return useQuery<OrderDetailResponse>({
+    queryKey: queryKeys.admin.detail(order_id),
     queryFn: () => getOrder(order_id),
+    enabled: !!order_id,
+  });
+}
+
+export function useGetAdminOrderFiles(order_id: string) {
+  return useQuery<OrderFileLinksResponse>({
+    queryKey: queryKeys.admin.files(order_id),
+    queryFn: () => getAdminOrderFiles(order_id),
     enabled: !!order_id,
   });
 }

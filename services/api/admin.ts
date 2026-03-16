@@ -15,6 +15,8 @@ import {
   CombinedDeviceResponse,
   UserResponse,
   OrderResponse,
+  OrderDetailResponse,
+  OrderFileLinksResponse,
   PaymentResponse,
   DashboardSummaryResponse,
   DashboardOrderResponse,
@@ -149,8 +151,16 @@ export async function listOrders(params?: {
   });
 }
 
-export async function getOrder(order_id: string): Promise<OrderResponse> {
-  return await get<OrderResponse>(`/api/admin/orders/${order_id}`);
+export async function getOrder(order_id: string): Promise<OrderDetailResponse> {
+  return await get<OrderDetailResponse>(`/api/admin/orders/${order_id}`);
+}
+
+export async function getAdminOrderFiles(
+  order_id: string,
+): Promise<OrderFileLinksResponse> {
+  return await get<OrderFileLinksResponse>(
+    `/api/admin/orders/${order_id}/files`,
+  );
 }
 
 // List Payments

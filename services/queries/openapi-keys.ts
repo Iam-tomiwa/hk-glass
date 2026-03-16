@@ -39,6 +39,8 @@ export const queryKeys = {
     list: (params?: any) => [...queryKeys.admin.all, "list", params] as const,
     detail: (id: string | number) =>
       [...queryKeys.admin.all, "detail", id] as const,
+    files: (id: string | number) =>
+      [...queryKeys.admin.all, "files", id] as const,
   },
   inventory: {
     all: ["inventory"] as const,
@@ -58,5 +60,9 @@ export const queryKeys = {
     list: (params?: any) => [...queryKeys.default.all, "list", params] as const,
     detail: (id: string | number) =>
       [...queryKeys.default.all, "detail", id] as const,
+  },
+  notifications: {
+    staff: ["notifications", "staff"] as const,
+    factory: ["notifications", "factory"] as const,
   },
 };

@@ -2,7 +2,7 @@ import { CheckCircle2, Circle, AlertCircle } from "lucide-react";
 
 export type TimelineEvent = {
   title: string;
-  description: string;
+  description?: string;
   date: string;
   completed: boolean;
   active?: boolean;
@@ -41,7 +41,7 @@ export default function TimelineItem({
       <div className="pb-5 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-4">
           <span
-            className={`text-sm font-semibold ${isDamage ? "text-red-600" : event.completed ? "text-gray-900" : "text-gray-400"}`}
+            className={`text-sm font-semibold ${event.completed ? "text-gray-900" : "text-gray-400"}`}
           >
             {event.title}
           </span>
@@ -49,16 +49,18 @@ export default function TimelineItem({
             {event.date}
           </span>
         </div>
-        <p
-          className={`text-sm mt-0.5 ${isDamage ? "text-red-500" : event.completed ? "text-gray-600" : "text-gray-400"}`}
-        >
-          {event.description}
-        </p>
+        {event.description && (
+          <p
+            className={`text-sm mt-0.5 ${event.completed ? "text-gray-600" : "text-gray-400"}`}
+          >
+            {event.description}
+          </p>
+        )}
         {event.link && (
           <button
             type="button"
             onClick={event.link.onClick}
-            className="text-sm text-blue-600 underline mt-0.5 hover:text-blue-800"
+            className="text-sm cursor-pointer underline mt-0.5"
           >
             {event.link.text}
           </button>

@@ -1,12 +1,15 @@
 import { get, post, put, patch, del } from "@/lib/axios-setup";
 import {
   OrderResponse,
+  OrderDetailResponse,
   OrderStats,
   OrderStatus,
   OrderStatusUpdate,
   OrderDamageReport,
   OrderFileUploadResponse,
   PaginatedResponse,
+  NotificationListResponse,
+  NotificationMarkReadResponse,
 } from "../types/openapi";
 
 // List Factory Queue
@@ -35,6 +38,15 @@ export async function updateFactoryOrderStatus(
   );
 }
 
+// Get Factory Order Detail
+export async function getFactoryOrderDetail(
+  order_id: string,
+): Promise<OrderDetailResponse> {
+  return await get<OrderDetailResponse>(
+    `/api/factory/orders/${order_id}/detail`,
+  );
+}
+
 // Report Factory Order Damage
 export async function reportFactoryOrderDamage(
   order_id: string,
@@ -57,5 +69,23 @@ export async function uploadFactoryDamageFile(
     `/api/factory/orders/${order_id}/upload-damage-file`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+}
+
+// Factory Notifications
+export async function listFactoryNotifications(
+  limit = 20,
+): Promise<NotificationListResponse> {
+  return await get<NotificationListResponse>(
+    `/api/factory/notifications?limit=${limit}`,
+  );
+}
+
+export async function markFactoryNotificationRead(
+  notification_id: string,
+): Promise<NotificationMarkReadResponse> {
+  return await patch<NotificationMarkReadResponse>(
+    `/api/factory/notifications/${notification_id}/read`,
+    {},
   );
 }

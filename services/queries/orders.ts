@@ -12,8 +12,11 @@ import {
   updateOrder,
   deleteOrder,
   getOrderByReference,
+  getOrderById,
   reviewOrder,
   getOrderFiles,
+  listStaffNotifications,
+  markStaffNotificationRead,
 } from "../api/orders";
 import {
   OrderCreate,
@@ -27,6 +30,7 @@ import {
   OrderUpdate,
   PaginatedResponse,
   OrderFileLinksResponse,
+  NotificationListResponse,
 } from "../types/openapi";
 
 export function useCreateOrder() {
@@ -90,6 +94,14 @@ export function useGetOrderByReference(order_reference: string) {
   });
 }
 
+export function useGetOrderById(order_id: string) {
+  return useQuery<OrderResponse>({
+    queryKey: queryKeys.orders.detail(order_id),
+    queryFn: () => getOrderById(order_id),
+    enabled: !!order_id,
+  });
+}
+
 export function useGetOrderFiles(order_id: string) {
   return useQuery<OrderFileLinksResponse>({
     queryKey: queryKeys.orders.files(order_id),
@@ -134,6 +146,27 @@ export function useReviewOrder() {
       toast.error(
         getErrorMessage(error, "Failed to calculate price. Please try again."),
       );
+    },
+  });
+}
+
+export function useListStaffNotifications() {
+  return useQuery<NotificationListResponse>({
+    queryKey: queryKeys.notifications.staff,
+    queryFn: () => listStaffNotifications(),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useMarkStaffNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notification_id: string) =>
+      markStaffNotificationRead(notification_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.staff,
+      });
     },
   });
 }

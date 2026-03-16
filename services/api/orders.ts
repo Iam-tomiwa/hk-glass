@@ -12,6 +12,8 @@ import {
   PaginatedResponse,
   OrderFileUploadResponse,
   OrderFileLinksResponse,
+  NotificationListResponse,
+  NotificationMarkReadResponse,
 } from "../types/openapi";
 
 // Create Order
@@ -54,11 +56,18 @@ export async function searchOrders(params?: {
   });
 }
 
-// Get Order
+// Get Order by Reference
 export async function getOrderByReference(
   order_reference: string,
 ): Promise<OrderResponse> {
   return await get<OrderResponse>(`/api/orders/reference/${order_reference}`);
+}
+
+// Get Order by ID
+export async function getOrderById(
+  order_id: string,
+): Promise<OrderResponse> {
+  return await get<OrderResponse>(`/api/orders/${order_id}`);
 }
 
 // Get Order Files
@@ -127,5 +136,23 @@ export async function uploadSignature(
     `/api/orders/${order_id}/upload-signature`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+}
+
+// Staff Notifications
+export async function listStaffNotifications(
+  limit = 20,
+): Promise<NotificationListResponse> {
+  return await get<NotificationListResponse>(
+    `/api/orders/notifications?limit=${limit}`,
+  );
+}
+
+export async function markStaffNotificationRead(
+  notification_id: string,
+): Promise<NotificationMarkReadResponse> {
+  return await patch<NotificationMarkReadResponse>(
+    `/api/orders/notifications/${notification_id}/read`,
+    {},
   );
 }

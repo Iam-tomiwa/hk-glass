@@ -306,6 +306,101 @@
         }
       }
     },
+    "/api/orders/notifications": {
+      "get": {
+        "tags": ["orders"],
+        "summary": "List Staff Notifications",
+        "operationId": "list_staff_notifications_api_orders_notifications_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders/notifications/{notification_id}/read": {
+      "patch": {
+        "tags": ["orders"],
+        "summary": "Mark Staff Notification Read",
+        "operationId": "mark_staff_notification_read_api_orders_notifications__notification_id__read_patch",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Notification Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/orders/notifications/unread-count": {
+      "get": {
+        "tags": ["orders"],
+        "summary": "Get Staff Unread Notification Count",
+        "operationId": "get_staff_unread_notification_count_api_orders_notifications_unread_count_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCountResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/orders": {
       "post": {
         "tags": ["orders"],
@@ -712,7 +807,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/OrderResponse" }
+                "schema": { "$ref": "#/components/schemas/OrderDetailResponse" }
               }
             }
           },
@@ -745,7 +840,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/OrderResponse" }
+                "schema": { "$ref": "#/components/schemas/OrderDetailResponse" }
               }
             }
           },
@@ -1138,6 +1233,138 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OrderPublicDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/notifications": {
+      "get": {
+        "tags": ["factory"],
+        "summary": "List Factory Notifications",
+        "operationId": "list_factory_notifications_api_factory_notifications_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/notifications/{notification_id}/read": {
+      "patch": {
+        "tags": ["factory"],
+        "summary": "Mark Factory Notification Read",
+        "operationId": "mark_factory_notification_read_api_factory_notifications__notification_id__read_patch",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Notification Id" }
+          },
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/factory/notifications/unread-count": {
+      "get": {
+        "tags": ["factory"],
+        "summary": "Get Factory Unread Notification Count",
+        "operationId": "get_factory_unread_notification_count_api_factory_notifications_unread_count_get",
+        "parameters": [
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCountResponse"
                 }
               }
             }
@@ -3863,6 +4090,90 @@
         "required": ["email", "password"],
         "title": "LoginRequest"
       },
+      "NotificationAudience": {
+        "type": "string",
+        "enum": ["factory", "staff"],
+        "title": "NotificationAudience"
+      },
+      "NotificationListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/NotificationResponse" },
+            "type": "array",
+            "title": "Items"
+          },
+          "unread_count": { "type": "integer", "title": "Unread Count" }
+        },
+        "type": "object",
+        "required": ["items", "unread_count"],
+        "title": "NotificationListResponse"
+      },
+      "NotificationMarkReadResponse": {
+        "properties": {
+          "notification": {
+            "$ref": "#/components/schemas/NotificationResponse"
+          }
+        },
+        "type": "object",
+        "required": ["notification"],
+        "title": "NotificationMarkReadResponse"
+      },
+      "NotificationResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "audience": { "$ref": "#/components/schemas/NotificationAudience" },
+          "event_type": { "type": "string", "title": "Event Type" },
+          "title": { "type": "string", "title": "Title" },
+          "message": { "type": "string", "title": "Message" },
+          "order_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Order Id"
+          },
+          "is_read": { "type": "boolean", "title": "Is Read" },
+          "read_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Read At"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "audience",
+          "event_type",
+          "title",
+          "message",
+          "order_id",
+          "is_read",
+          "read_at",
+          "payload"
+        ],
+        "title": "NotificationResponse"
+      },
+      "NotificationUnreadCountResponse": {
+        "properties": {
+          "unread_count": { "type": "integer", "title": "Unread Count" }
+        },
+        "type": "object",
+        "required": ["unread_count"],
+        "title": "NotificationUnreadCountResponse"
+      },
       "OrderAddonResponse": {
         "properties": {
           "addon": { "$ref": "#/components/schemas/AddonResponse" },
@@ -5187,10 +5498,11 @@
       "TotpSetupResponse": {
         "properties": {
           "otpauth_url": { "type": "string", "title": "Otpauth Url" },
-          "secret": { "type": "string", "title": "Secret" }
+          "secret": { "type": "string", "title": "Secret" },
+          "setup_key": { "type": "string", "title": "Setup Key" }
         },
         "type": "object",
-        "required": ["otpauth_url", "secret"],
+        "required": ["otpauth_url", "secret", "setup_key"],
         "title": "TotpSetupResponse"
       },
       "UserCreate": {

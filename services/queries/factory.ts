@@ -8,16 +8,21 @@ import {
   listFactoryQueue,
   updateFactoryOrderStatus,
   getFactoryStats,
+  getFactoryOrderDetail,
   reportFactoryOrderDamage,
   uploadFactoryDamageFile,
+  listFactoryNotifications,
+  markFactoryNotificationRead,
 } from "../api/factory";
 import {
   OrderResponse,
+  OrderDetailResponse,
   OrderStatus,
   OrderStatusUpdate,
   OrderDamageReport,
   PaginatedResponse,
   OrderStats,
+  NotificationListResponse,
 } from "../types/openapi";
 
 export function useListFactoryQueue(params?: {
@@ -26,6 +31,14 @@ export function useListFactoryQueue(params?: {
   return useQuery<PaginatedResponse<OrderResponse>>({
     queryKey: queryKeys.factory.list(params),
     queryFn: () => listFactoryQueue(params),
+  });
+}
+
+export function useGetFactoryOrderDetail(order_id: string) {
+  return useQuery<OrderDetailResponse>({
+    queryKey: queryKeys.factory.detail(order_id),
+    queryFn: () => getFactoryOrderDetail(order_id),
+    enabled: !!order_id,
   });
 }
 
@@ -85,6 +98,27 @@ export function useReportFactoryOrderDamage() {
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed to submit damage report."));
+    },
+  });
+}
+
+export function useListFactoryNotifications() {
+  return useQuery<NotificationListResponse>({
+    queryKey: queryKeys.notifications.factory,
+    queryFn: () => listFactoryNotifications(),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useMarkFactoryNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notification_id: string) =>
+      markFactoryNotificationRead(notification_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.factory,
+      });
     },
   });
 }

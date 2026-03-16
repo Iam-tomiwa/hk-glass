@@ -2,10 +2,20 @@
 
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import { cn } from "@/lib/utils";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Cookies from "js-cookie";
+import {
+  StaffNotificationBell,
+  FactoryNotificationBell,
+} from "@/components/notification-bell";
 
-export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
+export const Navbar = ({
+  fullWidth = true,
+  persona,
+}: {
+  fullWidth?: Boolean;
+  persona?: "factory" | "staff";
+}) => {
   const { openConfirmModal } = useConfirmations();
 
   const handleLogout = () => {
@@ -35,9 +45,8 @@ export const Navbar = ({ fullWidth = true }: { fullWidth?: Boolean }) => {
           />
         </div>
         <div className="flex items-center gap-4">
-          <button className="h-10 w-10 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition-colors">
-            <Bell size={20} />
-          </button>
+          {persona === "factory" && <FactoryNotificationBell />}
+          {persona === "staff" && <StaffNotificationBell />}
           <button
             onClick={() => {
               openConfirmModal(
