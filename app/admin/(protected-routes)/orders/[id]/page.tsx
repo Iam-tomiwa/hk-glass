@@ -176,11 +176,7 @@ export default function OrderDetailsPage() {
                   ? [
                       {
                         label: "Damage Report",
-                        value: (
-                          <Badge className="bg-red-100 text-red-700 border-red-200 font-medium text-xs shadow-none hover:bg-red-100">
-                            Damage
-                          </Badge>
-                        ),
+                        value: <Badge variant={"destructive"}>Damage</Badge>,
                       },
                     ]
                   : []),

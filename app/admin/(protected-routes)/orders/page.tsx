@@ -13,6 +13,7 @@ import { Inbox } from "lucide-react";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
 import { AmountDisplay } from "@/components/amount-display";
+import { Badge } from "@/components/ui/badge";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -57,6 +58,16 @@ export default function OrdersPage() {
       renderCell: (row) => (
         <AmountDisplay amount={row.total_amount} showFullAmount />
       ),
+    },
+    {
+      field: "damage",
+      headerName: "Damaged",
+      renderCell: (row) =>
+        row.has_damage ? (
+          <Badge variant={"destructive"}>Damage</Badge>
+        ) : (
+          <span>NIL</span>
+        ),
     },
     {
       field: "status",

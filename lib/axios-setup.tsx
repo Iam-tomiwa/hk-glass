@@ -48,10 +48,12 @@ axiosInstance.interceptors.response.use(
       if (!skipRedirect && typeof window !== "undefined") {
         const { pathname } = window.location;
 
-        // Let the login / unauthorized pages handle their own 401s
-        // (e.g. recover-device flow). Redirecting here would prevent that.
+        const segments = pathname.split("/").filter(Boolean);
+        const isPublicOrderPage = segments.length === 1 && !["new-order", "unauthorized", "payment-confirmation", "factory"].includes(segments[0]);
+
+        // Let the login / unauthorized / public pages handle their own 401s
         const isAuthPage =
-          pathname === "/admin/login" || pathname === "/unauthorized";
+          pathname === "/admin/login" || pathname === "/unauthorized" || isPublicOrderPage;
 
         if (!isAuthPage) {
           const from = pathname + window.location.search;

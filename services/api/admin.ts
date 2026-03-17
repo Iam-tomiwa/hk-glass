@@ -143,6 +143,16 @@ export async function deactivateStaffDevice(
   );
 }
 
+// Delete Admin Device
+export async function deleteAdminDevice(device_id: string): Promise<any> {
+  return await del<any>(`/api/admin/devices/${device_id}`);
+}
+
+// Delete Staff Device
+export async function deleteStaffDevice(device_id: string): Promise<any> {
+  return await del<any>(`/api/admin/staff-devices/${device_id}`);
+}
+
 // List Staff
 export async function listStaff(): Promise<UserResponse[]> {
   return await get<UserResponse[]>(`/api/admin/staff`);

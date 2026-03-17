@@ -18,10 +18,12 @@ import {
   registerAdminDevice,
   listAdminDevices,
   deactivateAdminDevice,
+  deleteAdminDevice,
   registerStaffDevice,
   listStaffDevices,
   listCombinedDevices,
   deactivateStaffDevice,
+  deleteStaffDevice,
   listStaff,
   listOrders,
   listPayments,
@@ -263,6 +265,36 @@ export function useDeactivateStaffDevice() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useDeleteAdminDevice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ device_id }: { device_id: string }) =>
+      deleteAdminDevice(device_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Device deleted successfully.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useDeleteStaffDevice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ device_id }: { device_id: string }) =>
+      deleteStaffDevice(device_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Device deleted successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));

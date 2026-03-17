@@ -12,6 +12,8 @@ import {
   useListCombinedDevices,
   useDeactivateAdminDevice,
   useDeactivateStaffDevice,
+  useDeleteAdminDevice,
+  useDeleteStaffDevice,
 } from "@/services/queries/admin";
 import { CombinedDeviceResponse } from "@/services/types/openapi";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
@@ -54,12 +56,22 @@ export default function CompanyDevices() {
   const { data = [], isLoading } = useListCombinedDevices();
   const deactivateAdmin = useDeactivateAdminDevice();
   const deactivateStaff = useDeactivateStaffDevice();
+  const deleteAdmin = useDeleteAdminDevice();
+  const deleteStaff = useDeleteStaffDevice();
 
   const handleRevoke = (device: CombinedDeviceResponse) => {
     if (device.device_type.toLowerCase() === "admin") {
       deactivateAdmin.mutate({ device_id: device.id });
     } else {
       deactivateStaff.mutate({ device_id: device.id });
+    }
+  };
+
+  const handleDelete = (device: CombinedDeviceResponse) => {
+    if (device.device_type.toLowerCase() === "admin") {
+      deleteAdmin.mutate({ device_id: device.id });
+    } else {
+      deleteStaff.mutate({ device_id: device.id });
     }
   };
 
@@ -109,7 +121,7 @@ export default function CompanyDevices() {
       align: "right",
       renderCell: (row) => (
         <div className="flex justify-end pr-2">
-          {row.is_active && (
+          {row.is_active ? (
             <Button
               variant="outline"
               size="sm"
@@ -128,6 +140,26 @@ export default function CompanyDevices() {
               disabled={deactivateAdmin.isPending || deactivateStaff.isPending}
             >
               Revoke
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="px-4 text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => {
+                openConfirmModal(
+                  "Are you sure you want to delete this device?",
+                  () => handleDelete(row as CombinedDeviceResponse),
+                  {
+                    title: "Delete Device",
+                    isDelete: true,
+                    confirmText: "Delete",
+                  },
+                );
+              }}
+              disabled={deleteAdmin.isPending || deleteStaff.isPending}
+            >
+              Delete
             </Button>
           )}
         </div>
