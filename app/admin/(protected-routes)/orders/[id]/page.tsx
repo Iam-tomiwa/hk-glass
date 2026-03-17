@@ -88,8 +88,8 @@ export default function OrderDetailsPage() {
 
   const qrValue =
     typeof window !== "undefined"
-      ? `${window.location.origin}/order/${orderId}`
-      : orderId;
+      ? `${window.location.origin}/${order?.order_reference}`
+      : order?.order_reference;
 
   const createdBy =
     (order as any)?.created_by_user?.name ??

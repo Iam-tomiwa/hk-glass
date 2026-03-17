@@ -132,8 +132,8 @@ export default function OrderDetailsPage() {
 
   const qrValue =
     typeof window !== "undefined"
-      ? `${window.location.origin}/factory/${orderId}`
-      : orderId;
+      ? `${window.location.origin}/${order?.order_reference}`
+      : order?.order_reference;
 
   function handleUpdateStatus() {
     if (!nextStatus) return;
