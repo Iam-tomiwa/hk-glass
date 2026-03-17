@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   AreaChart,
   Area,
@@ -19,13 +19,8 @@ import { Inbox, Info, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { cn, formatNaira } from "@/lib/utils";
 import { AmountDisplay } from "@/components/amount-display";
-import { format, subDays, subMonths, subYears } from "date-fns";
 import SuspenseContainer from "@/components/custom-suspense";
-import {
-  useGetSummary,
-  useListRecentOrders,
-  useListPayments,
-} from "@/services/queries/admin";
+import { useGetSummary, useListRecentOrders } from "@/services/queries/admin";
 import DateTag from "@/components/date-tag";
 import OrderStatusBadge from "@/components/order-status-badge";
 import {
@@ -34,8 +29,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ComboBox } from "@/components/ui/combo-box-2";
-import { DateRangePicker } from "@/components/date-picker-select";
-import { useDateRange } from "@/providers/date-range-context";
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
@@ -98,37 +91,17 @@ const columns: ColumnDef[] = [
 
 export default function AdminDashboardPage() {
   const [page, setPage] = useState(1);
-  const [chartRange, setChartRange] = useState<"7D" | "1M" | "1Y" | "custom">(
-    "1Y",
-  );
-  const [chartStatus, setChartStatus] = useState("");
+  const [chartRange, setChartRange] = useState<"7d" | "1m" | "1y">("7d");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  // Date range comes from the shared DateRangeContext (written by DateRangePicker)
-  const { dateRange, setDateRange } = useDateRange();
-
-  const activeFilterCount = [chartStatus, dateRange].filter(Boolean).length;
-
-  const computedPaidFrom = useMemo(() => {
-    // Custom date range from the picker takes priority
-    if (dateRange?.from) return dateRange.from.toISOString();
-    const now = new Date();
-    if (chartRange === "7D") return subDays(now, 7).toISOString();
-    if (chartRange === "1M") return subMonths(now, 1).toISOString();
-    if (chartRange === "1Y") return subYears(now, 1).toISOString();
-  }, [chartRange, dateRange]);
-
-  const computedPaidTo = useMemo(() => {
-    if (dateRange?.to) return dateRange.to.toISOString();
-    return undefined;
-  }, [dateRange]);
 
   const {
     data: summary,
     isPending: isSummaryLoading,
     isError: isSummaryError,
     error: summaryError,
-  } = useGetSummary();
+  } = useGetSummary({
+    range: chartRange,
+  });
 
   const {
     data: recentOrders,
@@ -137,33 +110,11 @@ export default function AdminDashboardPage() {
     error: ordersError,
   } = useListRecentOrders({ limit: 10 });
 
-  const {
-    data: payments,
-    isLoading,
-    isError,
-    error,
-  } = useListPayments({
-    paid_from: computedPaidFrom,
-    paid_to: computedPaidTo,
-    status: chartStatus || undefined,
-  });
-
-  const paymentsArr = Array.isArray(payments) ? payments : [];
-
-  const chartData = Object.entries(
-    paymentsArr.reduce<Record<string, { value: number; ts: number }>>(
-      (acc, p) => {
-        const date = new Date(p.paid_at);
-        const key = format(date, "dd MMM, yyyy");
-        if (!acc[key]) acc[key] = { value: 0, ts: date.getTime() };
-        acc[key].value += parseFloat(p.amount);
-        return acc;
-      },
-      {},
-    ),
-  )
-    .sort((a, b) => a[1].ts - b[1].ts)
-    .map(([day, { value }]) => ({ day, value }));
+  const chartPoints = summary?.transactions_chart?.points ?? [];
+  const chartData = chartPoints.map((p) => ({
+    day: p.label,
+    value: parseFloat(p.total_amount),
+  }));
 
   const summaryCards = [
     {
@@ -171,6 +122,7 @@ export default function AdminDashboardPage() {
       value: <AmountDisplay amount={summary?.todays_sales} />,
     },
     { label: "In Production", value: summary?.in_production ?? "—" },
+    { label: "Ready For Pickup", value: summary?.ready_pickup ?? "—" },
     { label: "Completed", value: summary?.completed ?? "—" },
     {
       label: "Total Revenue",
@@ -189,12 +141,12 @@ export default function AdminDashboardPage() {
           isError={isSummaryError}
           error={summaryError as Error | null}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 rounded-xl border bg-white overflow-hidden">
+          <div className="flex rounded-xl flex-wrap md:flex-nowrap border bg-white overflow-hidden">
             {summaryCards.map((card, i) => (
               <div
                 key={card.label}
                 className={cn(
-                  "p-6 relative",
+                  "p-6 relative grow",
                   i < summaryCards.length - 1 &&
                     "border-b md:border-b-0 md:border-r border-neutral-100",
                 )}
@@ -220,16 +172,12 @@ export default function AdminDashboardPage() {
               Transaction Activity
             </h2>
             <div className="flex items-center gap-2 flex-wrap">
-              {(["7D", "1M", "1Y"] as const).map((r) => (
+              {(["7d", "1m", "1y"] as const).map((r) => (
                 <button
                   key={r}
-                  onClick={() => {
-                    setChartRange(r);
-                    // Clear any custom date range from the picker
-                    setDateRange(undefined);
-                  }}
+                  onClick={() => setChartRange(r)}
                   className={cn(
-                    "h-8 min-w-[40px] px-3 rounded-md text-sm font-medium border transition-colors",
+                    "h-8 uppercase min-w-[40px] px-3 rounded-md text-sm font-medium border transition-colors",
                     chartRange === r
                       ? "bg-neutral-900 text-white border-neutral-900"
                       : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50",
@@ -238,65 +186,6 @@ export default function AdminDashboardPage() {
                   {r}
                 </button>
               ))}
-
-              {/* Filter button + popup */}
-              <Popover>
-                <PopoverTrigger
-                  className={cn(
-                    "h-8 px-3 rounded-md text-sm font-medium border flex items-center gap-1.5 transition-colors",
-                    activeFilterCount > 0
-                      ? "bg-neutral-900 text-white border-neutral-900"
-                      : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50",
-                  )}
-                >
-                  <SlidersHorizontal size={14} />
-                  Filter
-                  {activeFilterCount > 0 && (
-                    <span className="ml-1 h-4 w-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-72 gap-2">
-                  <p className="text-xs mb-1 font-semibold text-neutral-500 uppercase tracking-wide">
-                    Filters
-                  </p>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-neutral-600">
-                      Status
-                    </label>
-                    <ComboBox
-                      className="w-full"
-                      options={[
-                        { value: "", label: "All Statuses" },
-                        { value: "pending", label: "Pending" },
-                        { value: "paid", label: "Paid" },
-                        { value: "failed", label: "Failed" },
-                      ]}
-                      value={chartStatus}
-                      onValueChange={(value) => setChartStatus(value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-neutral-600">
-                      Date Range
-                    </label>
-                    <DateRangePicker className="overflow-ellipsis" />
-                  </div>
-                  {activeFilterCount > 0 && (
-                    <Button
-                      className={"mt-4"}
-                      variant={"outline"}
-                      onClick={() => {
-                        setChartStatus("");
-                        setDateRange(undefined);
-                      }}
-                    >
-                      Reset filters
-                    </Button>
-                  )}
-                </PopoverContent>
-              </Popover>
             </div>
           </div>
 
@@ -309,14 +198,12 @@ export default function AdminDashboardPage() {
           </div>
 
           <SuspenseContainer
-            isError={isError}
-            error={error}
-            isLoading={isLoading}
-            isEmpty={payments?.length === 0}
+            isError={isSummaryError}
+            error={summaryError as Error | null}
+            isLoading={isSummaryLoading}
+            isEmpty={chartData.length === 0}
             emptyStateProps={{
-              title: chartStatus
-                ? `No ${chartStatus} payments found`
-                : "No payments found",
+              title: "No transactions found",
               icon: <Inbox />,
             }}
           >

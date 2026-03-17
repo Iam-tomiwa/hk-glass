@@ -69,6 +69,18 @@ export interface DashboardOrderResponse {
   created_at: string;
 }
 
+export interface TransactionsChartPoint {
+  label: string;
+  transactions: number;
+  total_amount: string;
+}
+
+export interface TransactionsChart {
+  range: string;
+  status: string;
+  points: TransactionsChartPoint[];
+}
+
 export interface DashboardSummaryResponse {
   total_orders: number;
   paid_orders: number;
@@ -77,6 +89,7 @@ export interface DashboardSummaryResponse {
   in_production: number;
   completed: number;
   ready_pickup: number;
+  transactions_chart: TransactionsChart;
 }
 
 export interface DeviceResponse {

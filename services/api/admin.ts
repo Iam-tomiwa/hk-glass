@@ -192,8 +192,11 @@ export async function listPayments(params?: {
 }
 
 // Get Summary
-export async function getSummary(): Promise<DashboardSummaryResponse> {
-  return await get<DashboardSummaryResponse>(`/api/admin/summary`);
+export async function getSummary(params?: {
+  range?: string;
+  status?: string;
+}): Promise<DashboardSummaryResponse> {
+  return await get<DashboardSummaryResponse>(`/api/admin/summary`, { params });
 }
 
 // List Recent Orders

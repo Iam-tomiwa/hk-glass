@@ -2,7 +2,7 @@
 
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import { cn } from "@/lib/utils";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import Cookies from "js-cookie";
 import {
   StaffNotificationBell,
@@ -12,9 +12,11 @@ import {
 export const Navbar = ({
   fullWidth = true,
   persona,
+  onMenuClick,
 }: {
   fullWidth?: Boolean;
   persona?: "factory" | "staff";
+  onMenuClick?: () => void;
 }) => {
   const { openConfirmModal } = useConfirmations();
 
@@ -35,7 +37,7 @@ export const Navbar = ({
       <div
         className={cn(
           " flex items-center justify-between py-6",
-          fullWidth ? "px-6" : "container",
+          fullWidth ? "md:px-6 px-4" : "container",
         )}
       >
         <div className="flex items-center gap-2">
@@ -45,7 +47,7 @@ export const Navbar = ({
             className="h-8 w-auto"
           />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
           {persona === "factory" && <FactoryNotificationBell />}
           {persona === "staff" && <StaffNotificationBell />}
           <button
@@ -64,6 +66,14 @@ export const Navbar = ({
           >
             <LogOut size={20} />
           </button>
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="md:hidden h-10 w-10 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 transition-colors"
+            >
+              <Menu size={20} />
+            </button>
+          )}
         </div>
       </div>
     </nav>

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Sidebar from "./sidebar";
-import Topbar from "./topbar";
 import { Navbar } from "@/components/navbar";
 
 export default function AdminShell({
@@ -16,7 +15,7 @@ export default function AdminShell({
     <div className="min-h-screen w-full bg-white text-gray-900 relative">
       {/* Sidebar - Desktop and Mobile */}
 
-      <Navbar fullWidth />
+      <Navbar fullWidth onMenuClick={() => setIsSidebarOpen(true)} />
       {/* Main Content Area */}
       <div className="flex w-full flex-1 min-w-0">
         {/* Overlay for mobile */}

@@ -31,16 +31,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="px-4 py-6">
-          <div className="flex items-center justify-between">
-            {/* Mobile close button */}
-            <button
-              onClick={onClose}
-              className="md:hidden p-1 -mr-1 text-[#6B7280] hover:text-[#111827]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
           <nav className="flex flex-col gap-1.5">
+            <div className="flex md:hidden items-center gap-2 pt-2 pb-12">
+              <img
+                src="/images/logo.svg"
+                alt="Glasstronics"
+                className="h-8 w-auto"
+              />
+            </div>
+
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||

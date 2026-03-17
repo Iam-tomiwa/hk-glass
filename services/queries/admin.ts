@@ -348,10 +348,10 @@ export function useListPayments(params?: {
   });
 }
 
-export function useGetSummary() {
+export function useGetSummary(params?: { range?: string; status?: string }) {
   return useQuery<DashboardSummaryResponse>({
-    queryKey: queryKeys.admin.list("summary"),
-    queryFn: () => getSummary(),
+    queryKey: queryKeys.admin.list(["summary", params]),
+    queryFn: () => getSummary(params),
   });
 }
 
