@@ -109,6 +109,13 @@ export function OrderLeftCard({
       name: f.file_path.split("/").pop(),
     })) ?? [];
 
+  const isNotEmpty = (val: any) => {
+    if (val === null || val === undefined || val === "") return false;
+    if (typeof val === "string" && (val.trim() === "—" || val.trim() === "__"))
+      return false;
+    return true;
+  };
+
   // Whether to render the customer section
   const hasCustomerSection = !!customerRows && customerRows.length > 0;
 
@@ -135,7 +142,7 @@ export function OrderLeftCard({
     <>
       <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 bg-white">
         {/* Customer Information */}
-        {hasCustomerSection && (
+        {hasCustomerSection && customerTableRows.some((r) => isNotEmpty(r.value)) && (
           <CardContent className="pb-4 px-0 pt-6">
             <h3 className="text-base font-bold text-gray-900 mb-2">
               Customer Information
@@ -145,69 +152,75 @@ export function OrderLeftCard({
         )}
 
         {/* Glass Specifications */}
-        <CardContent
-          className={hasCustomerSection ? "py-4 px-0" : "pb-4 px-0 pt-6"}
-        >
-          <h3 className="text-base font-bold text-gray-900 mb-2">
-            Glass Specifications
-          </h3>
-          <SpecTable rows={glassSpecs} />
-        </CardContent>
+        {glassSpecs.some((r) => isNotEmpty(r.value)) && (
+          <CardContent
+            className={hasCustomerSection ? "py-4 px-0" : "pb-4 px-0 pt-6"}
+          >
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Glass Specifications
+            </h3>
+            <SpecTable rows={glassSpecs} />
+          </CardContent>
+        )}
 
         {/* Add-ons & Services */}
-        <CardContent className="py-4 px-0">
-          <h3 className="text-base font-bold text-gray-900 mb-2">
-            Add-ons &amp; Services
-          </h3>
-          <SpecTable
-            rows={[
-              ...addOns,
-              ...(engravingImages.length > 0
-                ? [
-                    {
-                      label: "Engraving Images:",
-                      value: (
-                        <button
-                          onClick={() => setEngravingOpen(true)}
-                          className="underline"
-                        >
-                          View Image{engravingImages.length > 1 ? "s" : ""} (
-                          {engravingImages.length})
-                        </button>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </CardContent>
+        {(addOns.some((r) => isNotEmpty(r.value)) || engravingImages.length > 0) && (
+          <CardContent className="py-4 px-0">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Add-ons &amp; Services
+            </h3>
+            <SpecTable
+              rows={[
+                ...addOns,
+                ...(engravingImages.length > 0
+                  ? [
+                      {
+                        label: "Engraving Images:",
+                        value: (
+                          <button
+                            onClick={() => setEngravingOpen(true)}
+                            className="underline"
+                          >
+                            View Image{engravingImages.length > 1 ? "s" : ""} (
+                            {engravingImages.length})
+                          </button>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </CardContent>
+        )}
 
         {/* Specifications — customer notes + spec files (sales page) */}
-        <CardContent className="py-4 px-0">
-          <h3 className="text-base font-bold text-gray-900 mb-2">
-            Specifications
-          </h3>
-          <SpecTable
-            rows={[
-              { label: "Notes:", value: order?.customer_notes ?? "—" },
-              ...(specFiles.length > 0
-                ? [
-                    {
-                      label: "Visuals:",
-                      value: (
-                        <button
-                          onClick={() => setSpecFilesOpen(true)}
-                          className="underline"
-                        >
-                          View Files ({specFiles.length})
-                        </button>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-          />
-        </CardContent>
+        {(isNotEmpty(order?.customer_notes) || specFiles.length > 0) && (
+          <CardContent className="py-4 px-0">
+            <h3 className="text-base font-bold text-gray-900 mb-2">
+              Specifications
+            </h3>
+            <SpecTable
+              rows={[
+                { label: "Notes:", value: order?.customer_notes ?? "—" },
+                ...(specFiles.length > 0
+                  ? [
+                      {
+                        label: "Visuals:",
+                        value: (
+                          <button
+                            onClick={() => setSpecFilesOpen(true)}
+                            className="underline"
+                          >
+                            View Files ({specFiles.length})
+                          </button>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </CardContent>
+        )}
 
         {/* Delivery Details */}
         {order?.delivery_method && (

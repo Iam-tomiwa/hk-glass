@@ -14,9 +14,19 @@ export default function SpecTable({
   rows: SpecRow[];
   className?: string;
 }) {
+  const visibleRows = rows.filter((row) => {
+    const val = row.value;
+    if (val === null || val === undefined || val === "") return false;
+    if (typeof val === "string" && (val.trim() === "—" || val.trim() === "__"))
+      return false;
+    return true;
+  });
+
+  if (visibleRows.length === 0) return null;
+
   return (
     <div className={className}>
-      {rows.map((row) => (
+      {visibleRows.map((row) => (
         <div key={row.label} className="flex items-center justify-between py-2">
           <span className="text-sm text-gray-500">{row.label}</span>
           <span
