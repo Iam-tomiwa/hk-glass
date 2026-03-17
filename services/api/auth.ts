@@ -60,5 +60,5 @@ export async function getCurrentUser(): Promise<UserResponse> {
 
 // Disable 2FA
 export async function disableTotp(): Promise<any> {
-  return await del<any>(`/api/auth/2fa`);
+  return await post<any>(`/api/auth/2fa/disable`);
 }

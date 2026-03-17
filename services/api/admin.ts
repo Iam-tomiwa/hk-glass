@@ -162,7 +162,7 @@ export async function listStaff(): Promise<UserResponse[]> {
 export async function listOrders(params?: {
   page?: number;
   limit?: number;
-  status?: string;
+  order_status?: string;
   search?: string;
 }): Promise<PaginatedResponse<OrderResponse>> {
   return await get<PaginatedResponse<OrderResponse>>(`/api/admin/orders`, {

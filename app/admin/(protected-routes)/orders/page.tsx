@@ -99,7 +99,7 @@ export default function OrdersPage() {
 
   const { data, isLoading, error, isError } = useListOrders({
     search: debouncedSearch || undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
+    order_status: statusFilter !== "all" ? statusFilter : undefined,
   });
   return (
     <div className="space-y-8">
@@ -128,9 +128,9 @@ export default function OrdersPage() {
                     onValueChange={(v) => setStatusFilter(v)}
                     options={[
                       { value: "all", label: "All Statuses" },
-                      { value: "in-production", label: "In Production" },
-                      { value: "ready-for-pickup", label: "Ready for Pickup" },
-                      { value: "paid", label: "Paid" },
+                      { value: "pending", label: "Pending" },
+                      { value: "in_production", label: "In Production" },
+                      { value: "ready_pickup", label: "Ready for Pickup" },
                       { value: "completed", label: "Completed" },
                     ]}
                     placeholder="All Statuses"

@@ -31,19 +31,6 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
-  const getStatusParam = () => {
-    switch (statusFilter) {
-      case "production":
-        return "in_production";
-      case "completed":
-        return "completed";
-      case "ready":
-        return "ready_for_pickup";
-      default:
-        return undefined;
-    }
-  };
-
   const columns: ColumnDef[] = [
     {
       field: "id",
@@ -110,7 +97,7 @@ export default function OrdersPage() {
   ];
   const { data: stats } = useGetFactoryStats();
   const { data, isLoading, isError, error } = useListFactoryQueue({
-    order_status: getStatusParam(),
+    order_status: statusFilter !== "all" ? statusFilter : undefined,
   });
   return (
     <div className="bg-[#F8F9FA]">
@@ -178,10 +165,10 @@ export default function OrdersPage() {
                       onValueChange={(v) => setStatusFilter(v)}
                       options={[
                         { value: "all", label: "All statuses" },
-                        { value: "production", label: "In Production" },
-                        { value: "paid", label: "Paid" },
+                        { value: "pending", label: "Pending" },
+                        { value: "in_production", label: "In Production" },
+                        { value: "ready_pickup", label: "Ready for Pickup" },
                         { value: "completed", label: "Completed" },
-                        { value: "ready", label: "Ready Pickup" },
                       ]}
                       placeholder="All statuses"
                       className="w-[140px]"
@@ -190,8 +177,7 @@ export default function OrdersPage() {
                 </div>
 
                 <DataGrid
-                  rows={
-                    (data?.items ?? [])
+                  rows={(data?.items ?? [])
                     .filter((order) => {
                       if (!debouncedSearch) return true;
                       const q = debouncedSearch.toLowerCase();
@@ -214,8 +200,7 @@ export default function OrdersPage() {
                           : null,
                       ].filter(Boolean),
                       status: order.order_status,
-                    }))
-                  }
+                    }))}
                   columns={columns}
                   page={page}
                   setPage={setPage}

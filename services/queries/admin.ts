@@ -312,7 +312,7 @@ export function useListStaff() {
 export function useListOrders(params?: {
   page?: number;
   limit?: number;
-  status?: string;
+  order_status?: string;
   search?: string;
 }) {
   return useQuery<PaginatedResponse<OrderResponse>>({
