@@ -9,7 +9,7 @@ import { Lock, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { orderFormSchema, type OrderFormValues } from "./schema";
 import { CustomerStep } from "./components/customer-step";

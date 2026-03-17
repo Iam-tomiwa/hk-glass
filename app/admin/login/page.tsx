@@ -56,7 +56,7 @@ function LoginContent() {
     useRecoverDevice();
 
   const onSubmit = async (data: LoginFormValues) => {
-    if (showOtp) {
+    if (showOtp && !data.otp_code) {
       data.otp_code = otpValue.join("");
     }
 

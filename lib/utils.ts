@@ -97,3 +97,32 @@ export function formatCompactNaira(
 
   return `${sign}₦${value}`;
 }
+
+/**
+ * Downloads a file by fetching it as a blob.
+ * This is useful for cross-origin URLs where the 'download' attribute on a tags is ignored.
+ */
+export async function downloadFile(url: string, filename: string) {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error("Download failed:", error);
+    // Fallback: try opening in a new tab
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}

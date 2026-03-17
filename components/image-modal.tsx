@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, downloadFile } from "@/lib/utils";
 
 export interface ImageItem {
   url: string;
@@ -40,15 +40,9 @@ export function ImageModal({
   const current = images[index];
   const hasMultiple = images.length > 1;
 
-  function handleDownload() {
+  async function handleDownload() {
     if (!current) return;
-    const a = document.createElement("a");
-    a.href = current.url;
-    a.download = current.name ?? "image";
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    await downloadFile(current.url, current.name ?? "image.png");
   }
 
   return (

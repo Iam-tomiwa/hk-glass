@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FileText, Download } from "lucide-react";
+import { downloadFile } from "@/lib/utils";
 
 export interface FileItem {
   name: string;
@@ -54,15 +55,13 @@ export function FileListModal({
                   <p className="text-xs text-neutral-500 mt-0.5">{file.date}</p>
                 )}
               </div>
-              <a
-                href={file.url}
-                download={file.name}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => downloadFile(file.url, file.name)}
                 className="shrink-0 text-neutral-400 hover:text-neutral-700 transition-colors"
+                title="Download file"
               >
                 <Download className="size-5" />
-              </a>
+              </button>
             </div>
           ))}
         </div>

@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, downloadFile } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,13 +65,7 @@ function formatReportedDate(iso: string | null | undefined): string {
 }
 
 function handleDownload(item: MediaItem) {
-  const a = document.createElement("a");
-  a.href = item.url;
-  a.download = item.name ?? "file";
-  a.target = "_blank";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  downloadFile(item.url, item.name ?? "file");
 }
 
 // ─── Inline media viewer ──────────────────────────────────────────────────────
