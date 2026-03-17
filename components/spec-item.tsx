@@ -31,7 +31,7 @@ export default function SpecTable({
           <span className="text-sm text-gray-500">{row.label}</span>
           <span
             className={cn(
-              "text-sm text-gray-900",
+              "text-sm text-gray-900 text-right",
               row.notBold ? "" : "font-semibold",
             )}
           >
