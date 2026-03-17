@@ -1,4 +1,7 @@
-import { useSearchParams } from "next/navigation";
+"use client";
+
+import { Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,29 +10,25 @@ import { CheckCircle2, AlertCircle } from "lucide-react";
 import { useGetOrderByReference } from "@/services/queries/orders";
 import { getBadgeVariant } from "@/lib/utils";
 
-export function ConfirmationStep() {
+function PaymentConfirmationContent() {
+  const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
 
-  // Paystack redirects back with these params after payment
   const reference = searchParams.get("reference") || searchParams.get("trxref");
-  const status = searchParams.get("status"); // "success" | "failed" | undefined
-  const orderId = searchParams.get("order_id");
+  const status = searchParams.get("status");
 
-  // Fetch order if order_id is in URL (backend may include it in callback URL)
-  const { data: order } = useGetOrderByReference(orderId ?? "");
+  const { data: order } = useGetOrderByReference(id ?? "");
 
-  const isSuccess = status === "success" || (!status && !!reference);
   const isFailed = status === "failed" || status === "cancelled";
 
   const displayOrderId =
-    order?.order_reference ?? order?.id ?? orderId ?? reference ?? "—";
+    order?.order_reference ?? order?.id ?? id ?? reference ?? "—";
 
   const qrValue =
-    order?.qr_code_token ?? order?.id ?? orderId ?? reference ?? displayOrderId;
+    order?.qr_code_token ?? order?.id ?? id ?? reference ?? displayOrderId;
 
   const customerEmail = order?.customer_email;
 
-  // ── Failed / Cancelled state ──
   if (isFailed) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-neutral-500 max-w-sm mx-auto text-center">
@@ -60,7 +59,6 @@ export function ConfirmationStep() {
     );
   }
 
-  // ── Success state ──
   return (
     <div className="flex flex-col md:max-w-max mx-auto py-8 mt-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="mb-8 flex items-start gap-3">
@@ -90,7 +88,7 @@ export function ConfirmationStep() {
 
             <div className="flex flex-col gap-3">
               <Badge
-                variant={getBadgeVariant("Paid")}
+                variant={getBadgeVariant("pending")}
                 className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full"
               >
                 Paid
@@ -107,7 +105,7 @@ export function ConfirmationStep() {
                 <p className="text-[15px] text-neutral-500 font-medium">
                   A confirmation email has been sent to{" "}
                   <span className="font-bold text-neutral-700">
-                    {customerEmail}
+                    {customerEmail || "your email"}
                   </span>
                   .
                 </p>
@@ -116,8 +114,8 @@ export function ConfirmationStep() {
           </div>
 
           <div className="flex items-center gap-3">
-            {(order?.id || orderId) && (
-              <Link href={`/${order?.id ?? orderId}`} passHref>
+            {(order?.id || id) && (
+              <Link href={`/${order?.id ?? id}`} passHref>
                 <Button className="bg-[#00AE4D] hover:bg-[#009b44] text-white rounded-md font-medium h-10 px-6">
                   View Order Details
                 </Button>
@@ -148,6 +146,22 @@ export function ConfirmationStep() {
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function PaymentConfirmationPage() {
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] p-6 md:p-12">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-24 text-neutral-400">
+            Loading...
+          </div>
+        }
+      >
+        <PaymentConfirmationContent />
+      </Suspense>
     </div>
   );
 }

@@ -14,6 +14,7 @@ export function proxy(request: NextRequest) {
   const isAdminPath = pathname.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
   const isUnauthorizedPage = pathname === "/unauthorized";
+  const isPaymentConfirmationPage = pathname.startsWith("/payment-confirmation");
 
   // Check for authentication tokens in cookies
   const accessToken = request.cookies.get("access_token")?.value;
@@ -45,8 +46,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protect Sales and Factory generic routes (all remaining app routes except unauthorized page)
-  if (!isUnauthorizedPage && !isDeviceAuthenticated) {
+  // Protect Sales and Factory generic routes (all remaining app routes except public pages)
+  if (!isUnauthorizedPage && !isPaymentConfirmationPage && !isDeviceAuthenticated) {
     const unauthUrl = new URL("/unauthorized", request.url);
     return NextResponse.redirect(unauthUrl);
   }

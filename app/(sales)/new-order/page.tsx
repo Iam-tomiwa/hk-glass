@@ -16,7 +16,6 @@ import { CustomerStep } from "./components/customer-step";
 import { GlassSpecsStep } from "./components/glass-specs-step";
 import { AddOnsStep } from "./components/add-ons-step";
 import { ReviewStep } from "./components/review-step";
-import { ConfirmationStep } from "./components/confirmation-step";
 import { Header } from "@/components/header";
 import { useCreateOrder, useReviewOrder } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
@@ -32,7 +31,6 @@ const steps = [
   { id: "glass-specs", label: "Glass Specs" },
   { id: "add-ons", label: "Add-ons" },
   { id: "review", label: "Review" },
-  { id: "confirmation", label: "Confirmation" },
 ];
 
 export default function NewOrderPage() {
@@ -64,12 +62,19 @@ function NewOrderForm() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (
-      searchParams.get("reference") ||
-      searchParams.get("paystack") === "success"
-    ) {
-      setHighestUnlockedIndex(steps.length - 1);
-      setActiveTab("confirmation");
+    const reference =
+      searchParams.get("reference") || searchParams.get("trxref");
+    const paystackSuccess = searchParams.get("paystack") === "success";
+    if (reference || paystackSuccess) {
+      const orderId = searchParams.get("order_id");
+      if (orderId) {
+        const params = new URLSearchParams(searchParams.toString());
+        router.replace(`/payment-confirmation/${orderId}?${params.toString()}`);
+      } else {
+        // Fallback if no order_id: show inline confirmation tab
+        setHighestUnlockedIndex(steps.length - 1);
+        setActiveTab("confirmation");
+      }
     }
   }, [searchParams]);
 
@@ -327,10 +332,6 @@ function NewOrderForm() {
                   signatureDataUrl={signatureDataUrl}
                   onSignatureChange={setSignatureDataUrl}
                 />
-
-                <TabsContent value="confirmation" className="mt-0 outline-none">
-                  <ConfirmationStep />
-                </TabsContent>
               </form>
             </Form>
           </div>
