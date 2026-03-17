@@ -16,7 +16,6 @@ import {
 } from "../api/factory";
 import {
   OrderResponse,
-  OrderDetailResponse,
   OrderStatus,
   OrderStatusUpdate,
   OrderDamageReport,
@@ -35,7 +34,7 @@ export function useListFactoryQueue(params?: {
 }
 
 export function useGetFactoryOrderDetail(order_id: string) {
-  return useQuery<OrderDetailResponse>({
+  return useQuery<OrderResponse>({
     queryKey: queryKeys.factory.detail(order_id),
     queryFn: () => getFactoryOrderDetail(order_id),
     enabled: !!order_id,
@@ -61,7 +60,8 @@ export function useUpdateFactoryOrderStatus() {
     }) => updateFactoryOrderStatus(order_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.factory.all });
-      toast.success("Action successful.");
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      toast.success("Order status updated successful.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));

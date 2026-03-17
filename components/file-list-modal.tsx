@@ -35,9 +35,6 @@ export function FileListModal({
         </DialogHeader>
 
         <div className="space-y-1">
-          <p className="text-sm text-neutral-500 font-medium mb-3">
-            Uploaded files
-          </p>
           {files.map((file, i) => (
             <div
               key={i}
@@ -47,7 +44,10 @@ export function FileListModal({
                 <FileText className="size-5 text-neutral-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-neutral-900 truncate">
+                <p
+                  style={{ textWrap: "wrap" }}
+                  className="text-sm font-semibold text-neutral-900"
+                >
                   {file.name}
                 </p>
                 {file.date && (

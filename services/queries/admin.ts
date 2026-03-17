@@ -8,9 +8,11 @@ import {
   createGlassType,
   listGlassTypes,
   updateGlassType,
+  deleteGlassType,
   createAddon,
   listAddons,
   updateAddon,
+  deleteAddon,
   getPricingSettings,
   updatePricingSettings,
   registerAdminDevice,
@@ -45,7 +47,6 @@ import {
   CombinedDeviceResponse,
   UserResponse,
   OrderResponse,
-  OrderDetailResponse,
   OrderFileLinksResponse,
   PaymentResponse,
   DashboardSummaryResponse,
@@ -94,6 +95,21 @@ export function useUpdateGlassType() {
   });
 }
 
+export function useDeleteGlassType() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ glass_type_id }: { glass_type_id: string }) =>
+      deleteGlassType(glass_type_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Glass type deleted successfully.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
 export function useCreateAddon() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -123,6 +139,20 @@ export function useUpdateAddon() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Addon updated successfully.");
+    },
+    onError: (error: any) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useDeleteAddon() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ addon_id }: { addon_id: string }) => deleteAddon(addon_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Addon deleted successfully.");
     },
     onError: (error: any) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
@@ -260,7 +290,7 @@ export function useListOrders(params?: {
 }
 
 export function useGetOrder(order_id: string) {
-  return useQuery<OrderDetailResponse>({
+  return useQuery<OrderResponse>({
     queryKey: queryKeys.admin.detail(order_id),
     queryFn: () => getOrder(order_id),
     enabled: !!order_id,

@@ -31,11 +31,7 @@ function getEventIcon(event_type: string) {
   const t = event_type.toLowerCase();
   if (t.includes("device") || t.includes("register") || t.includes("setup"))
     return <Monitor className="size-4 text-neutral-600" />;
-  if (
-    t.includes("revoke") ||
-    t.includes("access") ||
-    t.includes("deactivate")
-  )
+  if (t.includes("revoke") || t.includes("access") || t.includes("deactivate"))
     return <Check className="size-4 text-neutral-600" />;
   if (
     t.includes("order") ||
@@ -83,7 +79,7 @@ function NotificationItem({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-[#1E202E] leading-snug">
-          {notification.message}
+          {notification.title}
         </p>
         <p className="text-xs text-neutral-400 mt-1">
           {formatNotificationTime(notification.created_at)}

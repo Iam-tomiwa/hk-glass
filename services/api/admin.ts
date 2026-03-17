@@ -15,7 +15,6 @@ import {
   CombinedDeviceResponse,
   UserResponse,
   OrderResponse,
-  OrderDetailResponse,
   OrderFileLinksResponse,
   PaymentResponse,
   DashboardSummaryResponse,
@@ -46,6 +45,11 @@ export async function updateGlassType(
   );
 }
 
+// Delete Glass Type
+export async function deleteGlassType(glass_type_id: string): Promise<any> {
+  return await del<any>(`/api/admin/glass-types/${glass_type_id}`);
+}
+
 // Create Addon
 export async function createAddon(data: AddonCreate): Promise<AddonResponse> {
   return await post<AddonResponse>(`/api/admin/addons`, data);
@@ -62,6 +66,11 @@ export async function updateAddon(
   data: AddonUpdate,
 ): Promise<AddonResponse> {
   return await patch<AddonResponse>(`/api/admin/addons/${addon_id}`, data);
+}
+
+// Delete Addon
+export async function deleteAddon(addon_id: string): Promise<any> {
+  return await del<any>(`/api/admin/addons/${addon_id}`);
 }
 
 // Get Pricing Settings
@@ -151,8 +160,8 @@ export async function listOrders(params?: {
   });
 }
 
-export async function getOrder(order_id: string): Promise<OrderDetailResponse> {
-  return await get<OrderDetailResponse>(`/api/admin/orders/${order_id}`);
+export async function getOrder(order_id: string): Promise<OrderResponse> {
+  return await get<OrderResponse>(`/api/admin/orders/${order_id}`);
 }
 
 export async function getAdminOrderFiles(

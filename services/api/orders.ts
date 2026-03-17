@@ -145,6 +145,7 @@ export async function listStaffNotifications(
 ): Promise<NotificationListResponse> {
   return await get<NotificationListResponse>(
     `/api/orders/notifications?limit=${limit}`,
+    { _skipAuthRedirect: true } as any,
   );
 }
 

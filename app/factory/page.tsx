@@ -31,7 +31,7 @@ export default function OrdersPage() {
       valueGetter: (row) => row.id,
     },
     {
-      field: "date",
+      field: "created_at",
       headerName: "Date Inititated",
       renderCell: (row) => <DateTag date={row.created_at} />,
     },
@@ -170,7 +170,7 @@ export default function OrdersPage() {
                     data?.items.map((order) => ({
                       id: order.order_reference || order.id,
                       rowId: order.id,
-                      // date: new Date(order.).toLocaleDateString(),
+                      created_at: order.created_at,
                       dimensions: `${order.width} x ${order.length}`,
                       thickness: order.thickness ?? "-",
                       addons: [

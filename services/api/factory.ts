@@ -1,7 +1,6 @@
 import { get, post, put, patch, del } from "@/lib/axios-setup";
 import {
   OrderResponse,
-  OrderDetailResponse,
   OrderStats,
   OrderStatus,
   OrderStatusUpdate,
@@ -41,10 +40,8 @@ export async function updateFactoryOrderStatus(
 // Get Factory Order Detail
 export async function getFactoryOrderDetail(
   order_id: string,
-): Promise<OrderDetailResponse> {
-  return await get<OrderDetailResponse>(
-    `/api/factory/orders/${order_id}/detail`,
-  );
+): Promise<OrderResponse> {
+  return await get<OrderResponse>(`/api/factory/orders/${order_id}/detail`);
 }
 
 // Report Factory Order Damage
@@ -78,6 +75,7 @@ export async function listFactoryNotifications(
 ): Promise<NotificationListResponse> {
   return await get<NotificationListResponse>(
     `/api/factory/notifications?limit=${limit}`,
+    { _skipAuthRedirect: true } as any,
   );
 }
 

@@ -14,6 +14,7 @@ import { AddMaterialModal } from "./widgets/add-material-modal";
 import { AdjustStockModal } from "./widgets/adjust-stock-modal";
 import { useListInventory } from "@/services/queries/inventory";
 import { InventoryItemResponse } from "@/services/types/openapi";
+import DeleteEntityButton from "@/components/delete-entity-button";
 
 export default function InventoryPage() {
   const [page, setPage] = useState(1);
@@ -69,13 +70,20 @@ export default function InventoryPage() {
       field: "actions",
       headerName: " ",
       renderCell: (row) => (
-        <div className="flex justify-end pr-2">
+        <div className="flex justify-end gap-2 pr-2">
           <Button
             variant="outline"
             onClick={() => setAdjustTarget(row as InventoryItemResponse)}
           >
             Adjust Stock
           </Button>
+          <DeleteEntityButton
+            type="inventory-item"
+            id={(row as InventoryItemResponse).id}
+            name={(row as InventoryItemResponse).material_name}
+          >
+            Delete Item
+          </DeleteEntityButton>
         </div>
       ),
     },

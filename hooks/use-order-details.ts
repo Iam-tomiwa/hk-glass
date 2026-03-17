@@ -17,8 +17,15 @@ export function useOrderDetails(order: OrderResponse | undefined) {
       value: order ? `${order.width}" × ${order.length}"` : "—",
     },
     { label: "Area", value: order ? `${order.area} sqm` : "—" },
-    { label: "Sheet Size", value: order?.sheet_size ?? "Standard" },
+    { label: "Sheet Size", value: order?.sheet_size ?? "__" },
+    { label: "Shape", value: order?.shape_type ?? "__" },
+    ...(order?.curve_diameter
+      ? [{ label: "Curve Diameter", value: order.curve_diameter }]
+      : []),
     { label: "Thickness", value: order?.thickness ?? "—" },
+  ];
+
+  const addOns: SpecRow[] = [
     {
       label: "Drill Holes",
       value: order?.drill_holes_count
@@ -34,15 +41,13 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.engraving_text
       ? [{ label: "Engraving", value: order.engraving_text }]
       : []),
-  ];
-
-  const addOns: SpecRow[] =
-    (order as any)?.addons?.length > 0
+    ...((order as any)?.addons?.length > 0
       ? (order as any).addons.map((a: any) => ({
           label: a.addon?.name ?? "Add-on",
           value: `₦${a.calculated_price}`,
         }))
-      : [{ label: "No add-ons", value: "—" }];
+      : []),
+  ];
 
   return { glassSpecs, addOns };
 }

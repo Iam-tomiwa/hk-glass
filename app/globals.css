@@ -128,3 +128,7 @@
   @apply w-[95%];
   margin: 0 auto;
 }
+
+button {
+  cursor: pointer;
+}

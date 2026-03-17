@@ -1,4 +1,10 @@
-import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosRequestConfig as _AxiosRequestConfig } from "axios";
+
+// Extend AxiosRequestConfig to support skipping the global auth redirect for
+// background / polling requests (e.g. notification bell).
+interface AxiosRequestConfig extends _AxiosRequestConfig {
+  _skipAuthRedirect?: boolean;
+}
 import { toast } from "sonner";
 import Cookies from "js-cookie";
 
@@ -35,7 +41,11 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response?.status === 401 || error.response?.status === 403) {
-      if (typeof window !== "undefined") {
+      // Background/polling requests (e.g. notification bell) opt out of the
+      // global redirect so a single failed poll doesn't terminate the session.
+      const skipRedirect = (error.config as AxiosRequestConfig)?._skipAuthRedirect;
+
+      if (!skipRedirect && typeof window !== "undefined") {
         const { pathname } = window.location;
 
         // Let the login / unauthorized pages handle their own 401s
@@ -67,7 +77,7 @@ export async function get<T>(
   url: string,
   config?: AxiosRequestConfig,
 ): Promise<T> {
-  const response = await axiosInstance.get<T>(url, config);
+  const response = await axiosInstance.get<T>(url, config as _AxiosRequestConfig);
   return response.data;
 }
 

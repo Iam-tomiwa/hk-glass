@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
-import PriceTable, { PriceMap } from "./widgets/pricing-table";
+import PricingTable, { PricingRow } from "./widgets/pricing-table";
 import AddProductModal, { CustomProduct } from "./widgets/add-product";
 import {
   useGetPricingSettings,
@@ -16,18 +16,11 @@ import {
   useCreateAddon,
 } from "@/services/queries/admin";
 
-const RATE_FIELDS = [
-  { key: "insurance_rate", label: "Insurance Rate", unit: "% of subtotal" },
-  { key: "tax_rate", label: "Tax Rate", unit: "% of total" },
-];
+type Tab = "base-glass" | "addons" | "insurance";
 
 export default function PricingPage() {
-  const [saved, setSaved] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("base-glass");
   const [modalOpen, setModalOpen] = useState(false);
-
-  const [draftBase, setDraftBase] = useState<PriceMap>({});
-  const [draftAddon, setDraftAddon] = useState<PriceMap>({});
-  const [draftRates, setDraftRates] = useState<PriceMap>({});
 
   const {
     data: pricingSettings,
@@ -35,14 +28,12 @@ export default function PricingPage() {
     isError: isRatesError,
     error: ratesError,
   } = useGetPricingSettings();
-
   const {
     data: glassTypes = [],
     isLoading: isGlassLoading,
     isError: isGlassError,
     error: glassError,
   } = useListGlassTypes();
-
   const {
     data: addons = [],
     isLoading: isAddonsLoading,
@@ -56,108 +47,61 @@ export default function PricingPage() {
   const createGlassTypeMutation = useCreateGlassType();
   const createAddonMutation = useCreateAddon();
 
-  const isSaving =
-    updateGlassTypeMutation.isPending ||
-    updateAddonMutation.isPending ||
-    updatePricingSettingsMutation.isPending;
-
-  // ─── Derived values for display ───────────────────────────────────────────
-
-  const glassFields = glassTypes.map((g) => ({
-    key: g.id,
-    label: g.name,
+  const glassRows: PricingRow[] = glassTypes.map((g) => ({
+    id: g.id,
+    name: g.name,
     unit: "sq ft",
+    price: g.price_per_sqm,
   }));
 
-  const glassValues: PriceMap = saved
-    ? Object.fromEntries(glassTypes.map((g) => [g.id, g.price_per_sqm]))
-    : draftBase;
-
-  const addonFields = addons.map((a) => ({
-    key: a.id,
-    label: a.name,
-    unit: "per order",
+  const addonRows: PricingRow[] = addons.map((a) => ({
+    id: a.id,
+    name: a.name,
+    unit: a.price_type === "per_sqm" ? "per sq ft" : "per order",
+    price: a.price,
   }));
 
-  const addonValues: PriceMap = saved
-    ? Object.fromEntries(addons.map((a) => [a.id, a.price]))
-    : draftAddon;
+  const rateRows: PricingRow[] = [
+    {
+      id: "insurance_rate",
+      name: "Insurance Rate",
+      unit: "% of subtotal",
+      price: pricingSettings?.insurance_rate ?? "",
+    },
+    {
+      id: "tax_rate",
+      name: "Tax Rate",
+      unit: "% of total",
+      price: pricingSettings?.tax_rate ?? "",
+    },
+  ];
 
-  const rateValues: PriceMap = saved
-    ? {
-        insurance_rate: pricingSettings?.insurance_rate ?? "",
-        tax_rate: pricingSettings?.tax_rate ?? "",
-      }
-    : draftRates;
-
-  // ─── Handlers ─────────────────────────────────────────────────────────────
-
-  const handleManage = () => {
-    setDraftBase(
-      Object.fromEntries(glassTypes.map((g) => [g.id, g.price_per_sqm])),
-    );
-    setDraftAddon(Object.fromEntries(addons.map((a) => [a.id, a.price])));
-    setDraftRates({
-      insurance_rate: pricingSettings?.insurance_rate ?? "",
-      tax_rate: pricingSettings?.tax_rate ?? "",
+  const handleSaveGlass = async (id: string, newPrice: string) => {
+    await updateGlassTypeMutation.mutateAsync({
+      glass_type_id: id,
+      data: { price_per_sqm: newPrice },
     });
-    setSaved(false);
   };
 
-  const handleSave = async () => {
-    try {
-      const updates: Promise<any>[] = [];
-
-      glassTypes.forEach((g) => {
-        if (
-          draftBase[g.id] !== undefined &&
-          draftBase[g.id] !== g.price_per_sqm
-        ) {
-          updates.push(
-            updateGlassTypeMutation.mutateAsync({
-              glass_type_id: g.id,
-              data: { price_per_sqm: draftBase[g.id] },
-            }),
-          );
-        }
-      });
-
-      addons.forEach((a) => {
-        if (draftAddon[a.id] !== undefined && draftAddon[a.id] !== a.price) {
-          updates.push(
-            updateAddonMutation.mutateAsync({
-              addon_id: a.id,
-              data: { price: draftAddon[a.id] },
-            }),
-          );
-        }
-      });
-
-      if (
-        draftRates.tax_rate !== pricingSettings?.tax_rate ||
-        draftRates.insurance_rate !== pricingSettings?.insurance_rate
-      ) {
-        updates.push(
-          updatePricingSettingsMutation.mutateAsync({
-            data: {
-              tax_rate: draftRates.tax_rate,
-              insurance_rate: draftRates.insurance_rate,
-            },
-          }),
-        );
-      }
-
-      await Promise.all(updates);
-      setSaved(true);
-    } catch {
-      // errors handled by each mutation's onError toast
-    }
+  const handleSaveAddon = async (id: string, newPrice: string) => {
+    await updateAddonMutation.mutateAsync({
+      addon_id: id,
+      data: { price: newPrice },
+    });
   };
 
-  const updateDraft =
-    (setter: React.Dispatch<React.SetStateAction<PriceMap>>) =>
-    (key: string, val: string) =>
-      setter((prev) => ({ ...prev, [key]: val }));
+  const handleSaveRate = async (id: string, newValue: string) => {
+    await updatePricingSettingsMutation.mutateAsync({
+      data: {
+        insurance_rate:
+          id === "insurance_rate"
+            ? newValue
+            : (pricingSettings?.insurance_rate ?? ""),
+        tax_rate:
+          id === "tax_rate" ? newValue : (pricingSettings?.tax_rate ?? ""),
+      },
+    });
+  };
 
   const handleAddProduct = async (product: Omit<CustomProduct, "id">) => {
     if (product.category === "Base Glass") {
@@ -175,73 +119,73 @@ export default function PricingPage() {
     }
   };
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "base-glass", label: "Base Glass" },
+    { key: "addons", label: "Add - ons" },
+    { key: "insurance", label: "Insurance and Tax" },
+  ];
+
   return (
     <div className="bg-[#F8F9FA] min-h-screen">
       <Header
         title="Pricing"
         description="Manage pricing for glass and services"
+        className="mb-0"
       >
-        <div className="flex items-center gap-3">
-          <Button onClick={() => setModalOpen(true)}>Add new Product</Button>
-          {saved ? (
-            <Button onClick={handleManage} variant="outline">
-              Manage Pricing
-            </Button>
-          ) : (
-            <Button onClick={handleSave} variant="outline" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          )}
-        </div>
+        <Button onClick={() => setModalOpen(true)}>Add new Product</Button>
       </Header>
 
+      <div className="flex px-6 bg-background items-center border-b border-neutral-200 mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === tab.key
+                ? "border-[#1E202E] text-[#1E202E]"
+                : "border-transparent text-neutral-500 hover:text-[#1E202E]"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="container pb-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* Left column */}
-          <div className="flex flex-col gap-6">
-            <PriceTable
-              title="Base Glass Pricing"
-              fields={glassFields}
-              values={glassValues}
-              onChange={updateDraft(setDraftBase)}
-              disabled={saved}
-              prefix="₦"
-              isLoading={isGlassLoading}
-              isError={isGlassError}
-              error={glassError as Error | null}
-              variableName="Price (₦)"
-            />
+        {activeTab === "base-glass" && (
+          <PricingTable
+            rows={glassRows}
+            variableName="Price (₦)"
+            isLoading={isGlassLoading}
+            isError={isGlassError}
+            error={glassError as Error | null}
+            onSave={handleSaveGlass}
+            deleteType="glass-type"
+          />
+        )}
 
-            <PriceTable
-              title="Add-ons and Services Pricing"
-              fields={addonFields}
-              values={addonValues}
-              onChange={updateDraft(setDraftAddon)}
-              disabled={saved}
-              prefix="₦"
-              variableName="Price (₦)"
-              isLoading={isAddonsLoading}
-              isError={isAddonsError}
-              error={addonsError as Error | null}
-            />
-          </div>
+        {activeTab === "addons" && (
+          <PricingTable
+            rows={addonRows}
+            variableName="Price (₦)"
+            isLoading={isAddonsLoading}
+            isError={isAddonsError}
+            error={addonsError as Error | null}
+            onSave={handleSaveAddon}
+            deleteType="addon"
+          />
+        )}
 
-          {/* Right column */}
-          <div>
-            <PriceTable
-              title="Insurance & Tax Rates"
-              fields={RATE_FIELDS}
-              values={rateValues}
-              onChange={updateDraft(setDraftRates)}
-              disabled={saved}
-              variableName="Rate (%)"
-              suffix="%"
-              isLoading={isRatesLoading}
-              isError={isRatesError}
-              error={ratesError as Error | null}
-            />
-          </div>
-        </div>
+        {activeTab === "insurance" && (
+          <PricingTable
+            rows={rateRows}
+            variableName="Rate (%)"
+            isLoading={isRatesLoading}
+            isError={isRatesError}
+            error={ratesError as Error | null}
+            onSave={handleSaveRate}
+          />
+        )}
       </div>
 
       <AddProductModal

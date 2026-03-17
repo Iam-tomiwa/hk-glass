@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -10,33 +9,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import TimelineItem, { TimelineEvent } from "@/components/timeline-item";
-import SpecTable from "@/components/spec-item";
+import { TimelineEvent } from "@/components/timeline-item";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import {
   useGetOrderByReference,
   useGetOrderFiles,
 } from "@/services/queries/orders";
 import {
-  useGetFactoryOrderDetail,
   useUpdateFactoryOrderStatus,
   useReportFactoryOrderDamage,
 } from "@/services/queries/factory";
 import { useParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
-import { useOrderDetails } from "@/hooks/use-order-details";
 import { OrderDetailShell } from "@/components/order-detail-shell";
-import { OrderQRSection } from "@/components/order-qr-section";
+import { OrderLeftCard } from "@/components/order-left-card";
+import { OrderRightCard } from "@/components/order-right-card";
+import { DamageReportDialog } from "@/components/damage-report-dialog";
 import { Upload, X, Loader2 } from "lucide-react";
-import { ImageModal } from "@/components/image-modal";
-import { formatNaira } from "@/lib/utils";
 
 const ORDER_STATUSES = [
   "pending",
   "in_production",
   "ready_pickup",
   "completed",
-  "collected",
 ];
 
 const STATUS_CONFIRM_MESSAGE: Record<string, string> = {
@@ -44,7 +39,6 @@ const STATUS_CONFIRM_MESSAGE: Record<string, string> = {
     "Are you sure you want to start production for this order? The customer will be notified.",
   ready_pickup: `Are you sure you want to mark this order as "Ready for Pickup"? The customer will be notified.`,
   completed: `Are you sure you want to mark this order as "completed"? The customer will be notified.`,
-  collected: `Are you sure you want to mark this order as "collected"? The customer will be notified.`,
 };
 
 function formatDate(date: string | null | undefined): string {
@@ -56,32 +50,31 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.id as string;
 
-  const { data: orderRef, isLoading: isLoadingReference } =
-    useGetOrderByReference(orderId);
   const {
     data: order,
     isLoading,
     isError,
     error,
-  } = useGetFactoryOrderDetail(orderRef?.id ?? "");
-  const { data: orderFiles } = useGetOrderFiles(orderRef?.id ?? "");
+    refetch,
+  } = useGetOrderByReference(orderId);
+  const { data: orderFiles, refetch: refetchFiles } = useGetOrderFiles(
+    order?.id ?? "",
+  );
   const { mutate: updateStatus, isPending: isUpdating } =
     useUpdateFactoryOrderStatus();
   const { mutateAsync: reportDamage, isPending: isReporting } =
     useReportFactoryOrderDamage();
   const { openConfirmModal } = useConfirmations();
-  const { glassSpecs, addOns } = useOrderDetails(order);
 
-  // Report damage dialog
+  // Report damage dialog state
   const [reportOpen, setReportOpen] = useState(false);
   const [damageReason, setDamageReason] = useState("");
   const [damageNotes, setDamageNotes] = useState("");
   const [damageFile, setDamageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // View damage report dialog
+  // View damage report dialog state
   const [viewOpen, setViewOpen] = useState(false);
-  const [damageImagesOpen, setDamageImagesOpen] = useState(false);
 
   const currentStatusIndex = ORDER_STATUSES.indexOf(order?.order_status ?? "");
   const nextStatus =
@@ -101,7 +94,7 @@ export default function OrderDetailsPage() {
     },
     {
       title: "In Production",
-      description: "The customer completed payment",
+      description: "The order is in production",
       date: formatDate(order?.production_started_at),
       completed: currentStatusIndex >= 1,
       active: currentStatusIndex >= 1,
@@ -122,25 +115,18 @@ export default function OrderDetailsPage() {
         ]
       : []),
     {
-      title: "Production Completed",
-      description: "Factory station has completed production",
+      title: "Ready For Pickup",
+      description: "The item is ready for pickup",
       date: formatDate(order?.ready_pickup_at),
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex >= 2,
     },
     {
-      title: "Ready For Pickup",
-      description: "The item is ready for pickup",
-      date: formatDate(order?.ready_pickup_at),
+      title: "Production Completed",
+      description: "Order has been completed",
+      date: formatDate(order?.completed_at),
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex >= 3,
-    },
-    {
-      title: "Item Collected",
-      description: "This item has been picked up",
-      date: formatDate(order?.completed_at),
-      completed: currentStatusIndex >= 4,
-      active: currentStatusIndex >= 4,
     },
   ];
 
@@ -155,10 +141,18 @@ export default function OrderDetailsPage() {
       STATUS_CONFIRM_MESSAGE[nextStatus] ??
         `Update order status to "${nextStatus.split("_").join(" ")}"?`,
       () => {
-        updateStatus({
-          order_id: order?.id ?? "",
-          data: { order_status: nextStatus as any },
-        });
+        updateStatus(
+          {
+            order_id: order?.id ?? "",
+            data: { order_status: nextStatus as any },
+          },
+          {
+            onSuccess: () => {
+              refetch();
+              refetchFiles();
+            },
+          },
+        );
       },
       { title: "Confirm Status Update" },
     );
@@ -167,14 +161,22 @@ export default function OrderDetailsPage() {
   async function handleSubmitDamage() {
     if (!damageReason.trim() || !order?.id) return;
     try {
-      await reportDamage({
-        order_id: order.id,
-        data: {
-          damage_reason: damageReason.trim(),
-          damage_notes: damageNotes.trim() || undefined,
+      await reportDamage(
+        {
+          order_id: order.id,
+          data: {
+            damage_reason: damageReason.trim(),
+            damage_notes: damageNotes.trim() || undefined,
+          },
+          file: damageFile ?? undefined,
         },
-        file: damageFile ?? undefined,
-      });
+        {
+          onSuccess: () => {
+            refetch();
+            refetchFiles();
+          },
+        },
+      );
       setReportOpen(false);
       setDamageReason("");
       setDamageNotes("");
@@ -184,115 +186,42 @@ export default function OrderDetailsPage() {
     }
   }
 
-  const createdBy =
-    (order as any)?.created_by_user?.name ??
-    (order as any)?.created_by_user?.email ??
-    "Staff";
-
   return (
     <>
       <OrderDetailShell
         description={`Order ID: ${order?.order_reference ?? orderId}`}
         backHref="/factory"
-        isLoading={isLoading || isLoadingReference}
+        isLoading={isLoading}
         isError={isError}
         error={error}
-        leftCard={
-          <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 bg-white">
-            <CardContent className="pb-4 px-0 pt-6">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Glass Specifications
-              </h3>
-              <SpecTable rows={glassSpecs} />
-            </CardContent>
-
-            <CardContent className="py-4 px-0">
-              <h3 className="text-base font-bold text-gray-900 mb-2">
-                Add-ons &amp; Services
-              </h3>
-              <SpecTable rows={addOns} />
-            </CardContent>
-
-            {order?.delivery_method && (
-              <CardContent className="py-4 px-0">
-                <h3 className="text-base font-bold text-gray-900 mb-2">
-                  Delivery Details
-                </h3>
-                <SpecTable
-                  rows={[
-                    {
-                      label: "Delivery Method",
-                      value:
-                        order.delivery_method === "delivery"
-                          ? "Delivery"
-                          : "Pickup",
-                    },
-                    ...(order.delivery_method === "delivery" &&
-                    order.delivery_address
-                      ? [
-                          {
-                            label: "Delivery Address",
-                            value: order.delivery_address,
-                          },
-                        ]
-                      : []),
-                    ...(order.delivery_method === "delivery" &&
-                    order.delivery_fee
-                      ? [
-                          {
-                            label: "Delivery Fee",
-                            value: formatNaira(order.delivery_fee),
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              </CardContent>
-            )}
-          </Card>
-        }
+        leftCard={<OrderLeftCard order={order} orderFiles={orderFiles} />}
         rightCard={
-          <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 bg-white">
-            <CardContent className="px-0">
-              <OrderQRSection value={qrValue} />
-            </CardContent>
-
-            <CardContent className="px-0 pt-5 pb-4 flex-1">
-              <h3 className="text-base font-bold text-gray-900 mb-4">
-                Order Status &amp; Timeline
-              </h3>
-              <div>
-                {timeline.map((event, i) => (
-                  <TimelineItem
-                    key={event.title}
-                    event={event}
-                    isLast={i === timeline.length - 1}
-                  />
-                ))}
-              </div>
-            </CardContent>
-
-            <div className="px-0 pt-2 space-y-2">
-              {nextStatus && (
-                <Button
-                  onClick={handleUpdateStatus}
-                  disabled={isUpdating}
-                  className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
-                >
-                  {isUpdating ? "Updating..." : "Update Order Status"}
-                </Button>
-              )}
-              {!hasDamage && (
-                <Button
-                  variant="outline"
-                  onClick={() => setReportOpen(true)}
-                  className="w-full h-11 font-semibold text-sm rounded-lg"
-                >
-                  Report Item Damage
-                </Button>
-              )}
-            </div>
-          </Card>
+          <OrderRightCard
+            qrValue={qrValue}
+            timeline={timeline}
+            footer={
+              <>
+                {nextStatus && (
+                  <Button
+                    onClick={handleUpdateStatus}
+                    disabled={isUpdating}
+                    className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
+                  >
+                    {isUpdating ? "Updating..." : "Update Order Status"}
+                  </Button>
+                )}
+                {!hasDamage && order?.order_status !== "completed" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setReportOpen(true)}
+                    className="w-full h-11 font-semibold text-sm rounded-lg"
+                  >
+                    Report Item Damage
+                  </Button>
+                )}
+              </>
+            }
+          />
         }
       />
 
@@ -388,52 +317,19 @@ export default function OrderDetailsPage() {
         </DialogContent>
       </Dialog>
 
-      <ImageModal
-        images={(orderFiles?.damage_files ?? []).map((f) => ({
-          url: f.download_url,
-          name: f.file_path.split("/").pop(),
-        }))}
-        open={damageImagesOpen}
-        onOpenChange={setDamageImagesOpen}
-        title="Damage Report Images"
+      <DamageReportDialog
+        open={viewOpen}
+        onOpenChange={setViewOpen}
+        reportedAt={order?.damage_reported_at}
+        reason={order?.damage_reason}
+        notes={order?.damage_notes}
+        images={
+          orderFiles?.damage_files?.map((f) => ({
+            url: f.download_url,
+            name: f.file_path.split("/").pop(),
+          })) ?? []
+        }
       />
-
-      {/* View Damage Report Dialog */}
-      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Damage Report</DialogTitle>
-            <p className="text-sm text-neutral-500">
-              Reported on {formatDate(order?.damage_reported_at)}
-            </p>
-          </DialogHeader>
-          <div className="space-y-4 text-sm">
-            <div>
-              <p className="font-medium text-[#1E202E] mb-1">Damage Reason</p>
-              <p className="text-neutral-600">{order?.damage_reason ?? "—"}</p>
-            </div>
-            {order?.damage_notes && (
-              <div>
-                <p className="font-medium text-[#1E202E] mb-1">Notes</p>
-                <p className="text-neutral-600">{order.damage_notes}</p>
-              </div>
-            )}
-            {(orderFiles?.damage_files?.length ?? 0) > 0 && (
-              <div>
-                <p className="font-medium text-[#1E202E] mb-1">
-                  Attached Files ({orderFiles!.damage_files!.length})
-                </p>
-                <button
-                  onClick={() => setDamageImagesOpen(true)}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  View Images ({orderFiles!.damage_files!.length})
-                </button>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

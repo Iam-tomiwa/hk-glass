@@ -203,7 +203,7 @@ export interface OrderCreate {
   customer_notes?: string | null;
   delivery_method?: string | null;
   delivery_address?: string | null;
-  delivery_fee?: number | null;
+  delivery_fee?: number | string | null;
   specification_files?: string[];
   engraving_image_files?: string[];
   signature_file_path?: string | null;
@@ -238,22 +238,19 @@ export interface OrderResponse {
   glass_type: GlassTypeResponse;
   addons: OrderAddonResponse[];
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   created_by_user: UserResponse;
   damage_reported_at?: string | null;
   damage_reason?: string | null;
   damage_notes?: string | null;
   damage_files?: string[];
-}
-
-export interface OrderDetailResponse extends OrderResponse {
   shape_type?: string | null;
   curve_diameter?: string | null;
   custom_shape_spec?: string | null;
   customer_notes?: string | null;
   delivery_method?: string | null;
   delivery_address?: string | null;
-  delivery_fee?: number | null;
+  delivery_fee?: string | null;
   specification_files?: string[];
   engraving_image_files?: string[];
   signature_file_path?: string | null;
