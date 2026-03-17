@@ -90,8 +90,32 @@ export default function OrderDetailsPage() {
           showSignatureRow
           customerRows={[
             { label: "Full Name", value: order?.customer_name ?? "—" },
-            { label: "Email", value: order?.customer_email ?? "—" },
-            { label: "Phone", value: order?.customer_phone ?? "—" },
+            {
+              label: "Email",
+              value: order?.customer_email ? (
+                <a
+                  className="hover:underline"
+                  href={`mailto:${order?.customer_email}`}
+                >
+                  {order?.customer_email}
+                </a>
+              ) : (
+                "—"
+              ),
+            },
+            {
+              label: "Phone",
+              value: order?.customer_phone ? (
+                <a
+                  className="hover:underline"
+                  href={`tel:${order?.customer_phone}`}
+                >
+                  {order?.customer_phone}
+                </a>
+              ) : (
+                "—"
+              ),
+            },
           ]}
           bottomSlot={
             <>
