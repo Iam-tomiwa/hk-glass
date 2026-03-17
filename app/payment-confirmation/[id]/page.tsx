@@ -122,8 +122,8 @@ function PaymentConfirmationContent() {
                 <Button>View Order Details</Button>
               </Link>
             )}
-            <Link href="/new-order" passHref>
-              <Button variant="outline">Create New Order</Button>
+            <Link href="/" passHref>
+              <Button variant="outline">Back To Dashboard</Button>
             </Link>
           </div>
         </div>
