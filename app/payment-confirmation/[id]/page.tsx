@@ -118,7 +118,7 @@ function PaymentConfirmationContent() {
 
           <div className="flex items-center gap-3">
             {(order?.id || id) && (
-              <Link href={`/${order?.id ?? id}`} passHref>
+              <Link href={`/${order?.order_reference ?? id}`} passHref>
                 <Button>View Order Details</Button>
               </Link>
             )}
