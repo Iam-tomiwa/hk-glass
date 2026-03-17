@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,26 @@ import { StatsGrid } from "@/components/stats-grid";
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  const getStatusParam = () => {
+    switch (statusFilter) {
+      case "production":
+        return "in_production";
+      case "completed":
+        return "completed";
+      case "ready":
+        return "ready_for_pickup";
+      default:
+        return undefined;
+    }
+  };
 
   const columns: ColumnDef[] = [
     {
@@ -89,7 +109,9 @@ export default function OrdersPage() {
     },
   ];
   const { data: stats } = useGetFactoryStats();
-  const { data, isLoading, isError, error } = useListFactoryQueue();
+  const { data, isLoading, isError, error } = useListFactoryQueue({
+    order_status: getStatusParam(),
+  });
   return (
     <div className="bg-[#F8F9FA]">
       <div className="mx-auto">
@@ -146,6 +168,8 @@ export default function OrdersPage() {
                         type="text"
                         placeholder="Search by name or reference"
                         className="w-full pl-9 h-10 rounded-md"
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
                       />
                     </div>
 
@@ -167,7 +191,16 @@ export default function OrdersPage() {
 
                 <DataGrid
                   rows={
-                    data?.items.map((order) => ({
+                    (data?.items ?? [])
+                    .filter((order) => {
+                      if (!debouncedSearch) return true;
+                      const q = debouncedSearch.toLowerCase();
+                      return (
+                        order.order_reference?.toLowerCase().includes(q) ||
+                        order.customer_name?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((order) => ({
                       id: order.order_reference || order.id,
                       rowId: order.id,
                       created_at: order.created_at,
@@ -181,7 +214,7 @@ export default function OrdersPage() {
                           : null,
                       ].filter(Boolean),
                       status: order.order_status,
-                    })) ?? []
+                    }))
                   }
                   columns={columns}
                   page={page}

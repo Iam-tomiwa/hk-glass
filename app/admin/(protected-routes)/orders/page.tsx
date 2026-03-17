@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ComboBox } from "@/components/ui/combo-box-2";
 import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
@@ -18,6 +18,13 @@ import { Badge } from "@/components/ui/badge";
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchText), 400);
+    return () => clearTimeout(timer);
+  }, [searchText]);
 
   const columns: ColumnDef[] = [
     {
@@ -90,7 +97,10 @@ export default function OrdersPage() {
     },
   ];
 
-  const { data, isLoading, error, isError } = useListOrders();
+  const { data, isLoading, error, isError } = useListOrders({
+    search: debouncedSearch || undefined,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+  });
   return (
     <div className="space-y-8">
       <Header
@@ -109,6 +119,8 @@ export default function OrdersPage() {
                   <SearchInput
                     containerClass="w-[280px] flex-grow"
                     placeholder="Search by Order ID, customer name, or email..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
                   />
 
                   <ComboBox
