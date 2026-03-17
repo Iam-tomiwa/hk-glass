@@ -83,8 +83,24 @@ function LoginContent() {
             // Retry login; cookies will now be sent automatically (withCredentials)
             const response = await loginMutation({ data });
             Cookies.set("access_token", response.access_token);
-            router.push("/admin");
+            router.push(redirectTo);
           } catch (recoverError: any) {
+            const recoverStatus = recoverError.response?.status;
+            const recoverMsg = (
+              recoverError.response?.data?.detail || ""
+            ).toLowerCase();
+
+            if (
+              recoverStatus === 401 &&
+              (recoverMsg.includes("otp") || recoverMsg.includes("2fa"))
+            ) {
+              setShowOtp(true);
+              toast.info(
+                "Two-factor authentication is required to register this device. Please enter your code.",
+              );
+              return;
+            }
+
             toast.error(
               getErrorMessage(
                 recoverError,
