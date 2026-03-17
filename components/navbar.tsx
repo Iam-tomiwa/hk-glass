@@ -22,6 +22,7 @@ export const Navbar = ({
     Cookies.remove("access_token");
     Cookies.remove("admin_device_token");
     Cookies.remove("device_token");
+    Cookies.remove("device_auth");
     if (window.location.pathname.includes("admin")) {
       window.location.href = "/admin/login";
     } else {

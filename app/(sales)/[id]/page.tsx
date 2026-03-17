@@ -9,6 +9,7 @@ import {
   useGetOrderFiles,
 } from "@/services/queries/orders";
 import { useUpdateFactoryOrderStatus } from "@/services/queries/factory";
+import { useInitializePayment } from "@/services/queries/payments";
 import { useParams } from "next/navigation";
 import OrderStatusBadge from "@/components/order-status-badge";
 import { OrderDetailShell } from "@/components/order-detail-shell";
@@ -34,6 +35,22 @@ export default function OrderDetailsPage() {
   const { openConfirmModal } = useConfirmations();
 
   const isReadyForPickup = order?.order_status === "ready_pickup";
+  const isPaymentPending = order?.payment_status === "pending";
+
+  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
+    useInitializePayment();
+
+  async function handleMakePayment() {
+    if (!order?.id) return;
+    try {
+      const res = await initializePayment({ data: { order_id: order.id } });
+      if (res.authorization_url) {
+        window.location.href = res.authorization_url;
+      }
+    } catch {
+      // error already toasted by the mutation
+    }
+  }
 
   function handleCompleteOrder() {
     if (!order?.id) return;
@@ -155,17 +172,17 @@ export default function OrderDetailsPage() {
               },
             ],
           }}
-          // footer={
-          //   isReadyForPickup ? (
-          //     <Button
-          //       onClick={handleCompleteOrder}
-          //       disabled={isUpdating}
-          //       className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
-          //     >
-          //       {isUpdating ? "Completing..." : "Complete Order"}
-          //     </Button>
-          //   ) : undefined
-          // }
+          footer={
+            isPaymentPending ? (
+              <Button
+                onClick={handleMakePayment}
+                disabled={isInitializingPayment}
+                className={"w-full"}
+              >
+                {isInitializingPayment ? "Redirecting..." : "Make Payment"}
+              </Button>
+            ) : undefined
+          }
         />
       }
     />

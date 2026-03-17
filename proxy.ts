@@ -19,9 +19,14 @@ export function proxy(request: NextRequest) {
   const accessToken = request.cookies.get("access_token")?.value;
   const adminDeviceToken = request.cookies.get("admin_device_token")?.value;
   const deviceToken = request.cookies.get("device_token")?.value;
+  // device_auth is a SameSite=Lax mirror of device_token. SameSite=Strict
+  // cookies are stripped on cross-site top-level GET navigations (e.g. the
+  // browser returning from Paystack), but Lax cookies are included, so the
+  // middleware can correctly identify an authenticated session in that case.
+  const deviceAuth = request.cookies.get("device_auth")?.value;
 
   const isAdminAuthenticated = !!accessToken && !!adminDeviceToken;
-  const isDeviceAuthenticated = !!deviceToken;
+  const isDeviceAuthenticated = !!deviceToken || !!deviceAuth;
 
   // Protect Admin specific routes
   if (isAdminPath) {

@@ -58,6 +58,7 @@ axiosInstance.interceptors.response.use(
           Cookies.remove("access_token");
           Cookies.remove("admin_device_token");
           Cookies.remove("device_token");
+          Cookies.remove("device_auth");
           localStorage.setItem("session_expired", "1");
           if (pathname.startsWith("/admin")) {
             window.location.href = `/admin/login?redirectTo=${encodeURIComponent(from)}`;
