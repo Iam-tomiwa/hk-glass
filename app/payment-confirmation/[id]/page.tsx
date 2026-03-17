@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { useGetOrderByReference } from "@/services/queries/orders";
@@ -31,7 +32,7 @@ function PaymentConfirmationContent() {
 
   if (isFailed) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4 text-neutral-500 max-w-sm mx-auto text-center">
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-neutral-500 max-w-[700px] w-[95%] mx-auto text-center">
         <AlertCircle className="size-10 text-red-500" />
         <h2 className="text-xl font-bold text-[#1E202E]">Payment Failed</h2>
         <p className="text-sm text-neutral-500">
@@ -75,76 +76,75 @@ function PaymentConfirmationContent() {
 
       <div className="flex flex-col md:flex-row gap-4 items-start w-full">
         {/* Left: QR + order badge */}
-        <div className="flex flex-col gap-4 w-full md:w-[50%] shrink-0">
-          <div className="bg-white rounded-xl border border-neutral-100 p-6 flex flex-col gap-4">
-            <div className="w-full aspect-square flex items-center justify-center bg-white rounded-lg">
-              <QRCodeSVG
-                value={qrValue}
-                size={350}
-                level="M"
-                className="w-full h-auto"
-              />
-            </div>
+        <div className="flex flex-col gap-4 md:max-w-[500px]">
+          <Card>
+            <CardContent className="flex flex-col gap-4">
+              <div className="w-full aspect-square flex items-center justify-center">
+                <QRCodeSVG
+                  value={qrValue}
+                  size={250}
+                  level="M"
+                  className="w-full h-auto"
+                />
+              </div>
 
-            <div className="flex flex-col gap-3">
-              <Badge
-                variant={getBadgeVariant("pending")}
-                className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full"
-              >
-                Paid
-              </Badge>
-              <h3 className="text-3xl font-bold tracking-tight text-[#1E202E]">
-                {displayOrderId}
-              </h3>
-              {reference && (
-                <p className="text-xs font-mono text-neutral-400">
-                  Payment ref: {reference}
-                </p>
-              )}
-              {customerEmail && (
-                <p className="text-[15px] text-neutral-500 font-medium">
-                  A confirmation email has been sent to{" "}
-                  <span className="font-bold text-neutral-700">
-                    {customerEmail || "your email"}
-                  </span>
-                  .
-                </p>
-              )}
-            </div>
-          </div>
+              <div className="flex flex-col gap-3">
+                <Badge
+                  variant={getBadgeVariant("pending")}
+                  className="flex w-fit items-center gap-1.5 px-3 py-1 text-sm font-medium border-transparent shadow-none rounded-full"
+                >
+                  Paid
+                </Badge>
+                <h3 className="text-3xl font-bold tracking-tight text-[#1E202E]">
+                  {displayOrderId}
+                </h3>
+                {reference && (
+                  <p className="text-xs font-mono text-neutral-400">
+                    Payment ref: {reference}
+                  </p>
+                )}
+                {customerEmail && (
+                  <p className="text-[15px] text-neutral-500 font-medium">
+                    A confirmation email has been sent to{" "}
+                    <span className="font-bold text-neutral-700">
+                      {customerEmail || "your email"}
+                    </span>
+                    .
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="flex items-center gap-3">
             {(order?.id || id) && (
               <Link href={`/${order?.id ?? id}`} passHref>
-                <Button className="bg-[#00AE4D] hover:bg-[#009b44] text-white rounded-md font-medium h-10 px-6">
-                  View Order Details
-                </Button>
+                <Button>View Order Details</Button>
               </Link>
             )}
             <Link href="/new-order" passHref>
-              <Button
-                variant="outline"
-                className="h-10 px-6 rounded-md font-medium bg-white border-neutral-200 text-[#1E202E] hover:bg-neutral-50"
-              >
-                Create New Order
-              </Button>
+              <Button variant="outline">Create New Order</Button>
             </Link>
           </div>
         </div>
 
         {/* Right: Next steps */}
-        <div className="bg-white rounded-xl border border-neutral-100 p-6 w-full max-w-[420px]">
-          <h3 className="text-[17px] font-bold text-[#1E202E] mb-4">
-            Next Steps
-          </h3>
-          <p className="text-[15px] text-neutral-600 font-medium leading-relaxed mb-6">
-            The production team will receive this order via QR code scan and the
-            customer will be notified when the order is ready for pickup.
-          </p>
-          <p className="text-[15px] text-[#1E202E] font-semibold">
-            Estimated production time: 3-5 business days
-          </p>
-        </div>
+        <Card className="w-full md:min-w-[40%] md:max-w-[420px]">
+          <CardHeader>
+            <CardTitle className="text-[17px] font-bold text-[#1E202E]">
+              Next Steps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-[15px] text-neutral-600 font-medium leading-relaxed mb-4">
+              The production team will receive this order via QR code scan and
+              the customer will be notified when the order is ready for pickup.
+            </p>
+            <p className="text-[15px] text-[#1E202E] font-semibold">
+              Estimated production time: 3-5 business days
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
