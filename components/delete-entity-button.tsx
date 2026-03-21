@@ -102,7 +102,7 @@ export default function DeleteEntityButton({
       );
       onSuccess?.();
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(
         getErrorMessage(error, "Failed to delete. Please try again."),
       );

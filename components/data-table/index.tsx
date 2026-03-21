@@ -209,6 +209,121 @@ const DataGrid = function (props: VirtualDataGridProps) {
     [page, setPage, onSelectionChange],
   );
 
+  const renderBodyContent = () => {
+    if (loading) {
+      return (
+        <>
+          {Array.from(new Array(20)).map((_el, i) => (
+            <TableRow key={"row-" + i} role="checkbox">
+              {checkboxSelection && (
+                <TableCell className="w-12">
+                  <Skeleton className="w-4 h-4" />
+                </TableCell>
+              )}
+              {Array.from(new Array(columns.length)).map((_el, k) => (
+                <TableCell key={"col-" + k} align="left">
+                  <Skeleton className="w-full h-[10px]" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </>
+      );
+    }
+
+    if (isError) {
+      return (
+        <TableRow>
+          <TableCell
+            colSpan={columns.length + (checkboxSelection ? 1 : 0)}
+            className="h-24"
+          >
+            <ErrorMsg error={error} />
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    if (visibleRows.length <= 0) {
+      return (
+        <TableRow>
+          <TableCell
+            colSpan={columns.length + (checkboxSelection ? 1 : 0)}
+            className="h-24 text-center"
+          >
+            <EmptyState
+              title="No Data Found"
+              icon={<Braces />}
+              {...emptyStateProps}
+            />
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    return visibleRows.map((rowModel, i) => {
+      const actualIndex = enableVirtualScrolling ? visibleRange.start + i : i;
+      return (
+        <TableRow
+          key={`${actualIndex}-${rowModel?.id}`}
+          data-state={rowModel.selected ? "selected" : undefined}
+          style={enableVirtualScrolling ? { height: rowHeight } : undefined}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            if (disableSelectionOnClick) return;
+            handleRowClick(rowModel);
+          }}
+        >
+          {checkboxSelection && (
+            <TableCell className="w-12">
+              <Checkbox
+                checked={rowModel.selected}
+                onCheckedChange={() => handleRowClick(rowModel)}
+                onClick={(ev) => ev.stopPropagation()}
+                aria-label={`Select row ${actualIndex}`}
+              />
+            </TableCell>
+          )}
+
+          {columns.map((column, i) => (
+            <TableCell
+              key={column.field + i}
+              className={
+                column.align === "right"
+                  ? "text-right"
+                  : column.align === "center"
+                    ? "text-center"
+                    : "text-left"
+              }
+            >
+              {column.renderCell
+                ? column.renderCell(rowModel.data)
+                : column.valueGetter
+                  ? column.valueGetter(rowModel.data)
+                  : rowModel.data[column.field]}
+            </TableCell>
+          ))}
+
+          {rowModel?.data.actions && (
+            <TableCell>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger>
+                  <Button variant="outline" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {rowModel?.data.actions}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          )}
+        </TableRow>
+      );
+    });
+  };
+
   const tableContent = (
     <Table style={props.tableStyle}>
       <TableHeader className="sticky bg-card -top-1 z-10">
@@ -269,112 +384,7 @@ const DataGrid = function (props: VirtualDataGridProps) {
           </TableRow>
         )}
 
-        {loading ? (
-          <>
-            {Array.from(new Array(20)).map((_el, i) => (
-              <TableRow key={"row-" + i} role="checkbox">
-                {checkboxSelection && (
-                  <TableCell className="w-12">
-                    <Skeleton className="w-4 h-4" />
-                  </TableCell>
-                )}
-                {Array.from(new Array(columns.length)).map((_el, k) => (
-                  <TableCell key={"col-" + k} align="left">
-                    <Skeleton className="w-full h-[10px]" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </>
-        ) : isError ? (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length + (checkboxSelection ? 1 : 0)}
-              className="h-24"
-            >
-              <ErrorMsg error={error} />
-            </TableCell>
-          </TableRow>
-        ) : visibleRows.length <= 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length + (checkboxSelection ? 1 : 0)}
-              className="h-24 text-center"
-            >
-              <EmptyState
-                title="No Data Found"
-                icon={<Braces />}
-                {...emptyStateProps}
-              />
-            </TableCell>
-          </TableRow>
-        ) : (
-          visibleRows.map((rowModel, i) => {
-            const actualIndex = enableVirtualScrolling
-              ? visibleRange.start + i
-              : i;
-            return (
-              <TableRow
-                key={`${actualIndex}-${rowModel?.id}`}
-                data-state={rowModel.selected ? "selected" : undefined}
-                style={
-                  enableVirtualScrolling ? { height: rowHeight } : undefined
-                }
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  if (disableSelectionOnClick) return;
-                  handleRowClick(rowModel);
-                }}
-              >
-                {checkboxSelection && (
-                  <TableCell className="w-12">
-                    <Checkbox
-                      checked={rowModel.selected}
-                      onCheckedChange={() => handleRowClick(rowModel)}
-                      onClick={(ev) => ev.stopPropagation()}
-                      aria-label={`Select row ${actualIndex}`}
-                    />
-                  </TableCell>
-                )}
-
-                {columns.map((column, i) => (
-                  <TableCell
-                    key={column.field + i}
-                    className={
-                      column.align === "right"
-                        ? "text-right"
-                        : column.align === "center"
-                          ? "text-center"
-                          : "text-left"
-                    }
-                  >
-                    {column.renderCell
-                      ? column.renderCell(rowModel.data)
-                      : column.valueGetter
-                        ? column.valueGetter(rowModel.data)
-                        : rowModel.data[column.field]}
-                  </TableCell>
-                ))}
-
-                {rowModel?.data.actions && (
-                  <TableCell>
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {rowModel?.data.actions}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                )}
-              </TableRow>
-            );
-          })
-        )}
+        {renderBodyContent()}
 
         {/* Virtual scrolling spacer for items below visible area */}
         {enableVirtualScrolling && (

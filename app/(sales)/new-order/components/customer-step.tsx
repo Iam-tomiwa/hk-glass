@@ -82,7 +82,7 @@ export function CustomerStep({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Phone
+                  Phone <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input

@@ -15,6 +15,7 @@ import { AdjustStockModal } from "./widgets/adjust-stock-modal";
 import { useListInventory } from "@/services/queries/inventory";
 import { InventoryItemResponse } from "@/services/types/openapi";
 import DeleteEntityButton from "@/components/delete-entity-button";
+import Link from "next/link";
 
 export default function InventoryPage() {
   const [page, setPage] = useState(1);
@@ -66,27 +67,6 @@ export default function InventoryPage() {
         </Badge>
       ),
     },
-    {
-      field: "actions",
-      headerName: " ",
-      renderCell: (row) => (
-        <div className="flex justify-end gap-2 pr-2">
-          <Button
-            variant="outline"
-            onClick={() => setAdjustTarget(row as InventoryItemResponse)}
-          >
-            Adjust Stock
-          </Button>
-          <DeleteEntityButton
-            type="inventory-item"
-            id={(row as InventoryItemResponse).id}
-            name={(row as InventoryItemResponse).material_name}
-          >
-            Delete Item
-          </DeleteEntityButton>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -126,7 +106,33 @@ export default function InventoryPage() {
                 </div>
               </div>
             }
-            rows={data || []}
+            rows={(data || []).map((el) => ({
+              ...el,
+              actions: (
+                <div className="">
+                  <Button
+                    variant={"ghost"}
+                    className={"w-full"}
+                    onClick={() => setAdjustTarget(el)}
+                  >
+                    Adjust Stock
+                  </Button>
+
+                  <Button variant={"ghost"} className={"w-full"}>
+                    <Link href={`/admin/inventory/${el.id}`}>View Details</Link>
+                  </Button>
+
+                  <DeleteEntityButton
+                    btnProps={{ variant: "ghost", className: "w-full" }}
+                    type="inventory-item"
+                    id={el.id}
+                    name={el.material_name}
+                  >
+                    Delete Item
+                  </DeleteEntityButton>
+                </div>
+              ),
+            }))}
             columns={columns}
             page={page}
             setPage={setPage}

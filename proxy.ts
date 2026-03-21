@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const PUBLIC_ROUTES = ["/unauthorized", "/payment-confirmation", "/materials"];
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -13,12 +15,17 @@ export function proxy(request: NextRequest) {
 
   const isAdminPath = pathname.startsWith("/admin");
   const isLoginPage = pathname === "/admin/login";
-  const isUnauthorizedPage = pathname === "/unauthorized";
-  const isPaymentConfirmationPage = pathname.startsWith("/payment-confirmation");
-  
+
   // Public order details page (/ORD-123)
   const segments = pathname.split("/").filter(Boolean);
-  const isPublicOrderPage = segments.length === 1 && !["new-order", "unauthorized", "payment-confirmation", "factory"].includes(segments[0]);
+  const isPublicOrderPage =
+    segments.length === 1 &&
+    !["new-order", "factory", ...PUBLIC_ROUTES.map((r) => r.substring(1))].includes(
+      segments[0],
+    );
+
+  const isPublicPage =
+    PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) || isPublicOrderPage;
 
   // Check for authentication tokens in cookies
   const accessToken = request.cookies.get("access_token")?.value;
@@ -51,7 +58,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Protect Sales and Factory generic routes (all remaining app routes except public pages)
-  if (!isUnauthorizedPage && !isPaymentConfirmationPage && !isPublicOrderPage && !isDeviceAuthenticated) {
+  if (!isPublicPage && !isDeviceAuthenticated) {
     const unauthUrl = new URL("/unauthorized", request.url);
     return NextResponse.redirect(unauthUrl);
   }

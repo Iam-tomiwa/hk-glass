@@ -60,6 +60,7 @@ function NewOrderForm() {
     null,
   );
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const reference =
@@ -76,7 +77,7 @@ function NewOrderForm() {
         setActiveTab("confirmation");
       }
     }
-  }, [searchParams]);
+  }, [router, searchParams]);
 
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(orderFormSchema),
@@ -106,6 +107,7 @@ function NewOrderForm() {
       deliveryMethod: "pickup",
       deliveryAddress: "",
       deliveryFee: "",
+      unit: "mm",
     },
   });
 
@@ -183,12 +185,12 @@ function NewOrderForm() {
           glass_type_id: data.glassTypeId,
           addon_ids: data.selectedAddons,
           insurance_selected: data.insuranceCoverage,
-          shape_type: data.shape as any,
+          shape_type: data.shape,
           curve_diameter: data.curveDiameter
             ? Number(data.curveDiameter)
             : undefined,
           customer_notes: data.customerNotes,
-          delivery_method: data.deliveryMethod as any,
+          delivery_method: data.deliveryMethod,
           delivery_address:
             data.deliveryMethod === "delivery"
               ? data.deliveryAddress
@@ -225,7 +227,14 @@ function NewOrderForm() {
           uploadPromises.push(uploadSignature(orderId, sigFile));
         }
 
-        await Promise.all(uploadPromises);
+        if (uploadPromises.length > 0) {
+          setIsUploading(true);
+          try {
+            await Promise.all(uploadPromises);
+          } finally {
+            setIsUploading(false);
+          }
+        }
 
         const paymentRes = await initializePayment({
           data: { order_id: orderId },
@@ -328,7 +337,9 @@ function NewOrderForm() {
                   pricing={orderReview}
                   onBack={() => setActiveTab("add-ons")}
                   onProceedToPayment={handleProceedToPayment}
-                  isLoading={isCreatingOrder || isInitializingPayment}
+                  isLoading={
+                    isCreatingOrder || isUploading || isInitializingPayment
+                  }
                   signatureDataUrl={signatureDataUrl}
                   onSignatureChange={setSignatureDataUrl}
                 />

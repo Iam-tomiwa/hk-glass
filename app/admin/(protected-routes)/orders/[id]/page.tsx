@@ -13,6 +13,7 @@ import { OrderLeftCard } from "@/components/order-left-card";
 import { OrderRightCard } from "@/components/order-right-card";
 import OrderStatusBadge from "@/components/order-status-badge";
 import { DamageReportDialog } from "@/components/damage-report-dialog";
+import { OrderResponse } from "@/services/types/openapi";
 
 const ORDER_STATUSES = [
   "pending",
@@ -92,8 +93,8 @@ export default function OrderDetailsPage() {
       : order?.order_reference;
 
   const createdBy =
-    (order as any)?.created_by_user?.name ??
-    (order as any)?.created_by_user?.email ??
+    (order as OrderResponse)?.created_by_user?.name ??
+    (order as OrderResponse)?.created_by_user?.email ??
     "Customer";
 
   return (

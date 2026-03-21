@@ -38,6 +38,8 @@ export const orderFormSchema = z.object({
   deliveryMethod: z.enum(["pickup", "delivery"]),
   deliveryAddress: z.string().optional(),
   deliveryFee: z.string().optional(),
+
+  unit: z.enum(["mm", "cm"]),
 });
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;

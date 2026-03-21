@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import { OrderFormValues } from "../schema";
 import { TabsContent } from "@/components/ui/tabs";
@@ -79,7 +79,10 @@ export function ReviewStep({
     "draw" | "type" | "initials"
   >("draw");
   const [typedSignature, setTypedSignature] = useState("");
-  const [initialsSignature, setInitialsSignature] = useState("");
+  const [initialsSignature, setInitialsSignature] = useState(() => {
+    const parts = (values.customerName || "").trim().split(" ");
+    return parts.map((p) => p[0]?.toUpperCase() || "").join("");
+  });
   const [signatureConfirmed, setSignatureConfirmed] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -156,15 +159,7 @@ export function ReviewStep({
     }
   };
 
-  // Auto-fill initials from customer name
-  useEffect(() => {
-    if (signatureTab === "initials" && values.customerName) {
-      const parts = values.customerName.trim().split(" ");
-      setInitialsSignature(
-        parts.map((p) => p[0]?.toUpperCase() || "").join(""),
-      );
-    }
-  }, [signatureTab, values.customerName]);
+  // Removed effect that caused cascading renders. Initial fill is now handled by state initialization and tab/modal events.
 
   return (
     <TabsContent value="review" className="mt-0 outline-none max-w-5xl mx-auto">
@@ -224,13 +219,24 @@ export function ReviewStep({
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Dimensions:</span>
                       <span className="font-medium text-neutral-800">
-                        {values.length || 0}&quot; x {values.width || 0}&quot;
+                        {values.shape === "curved" ? (
+                          <>
+                            Diameter: {values.curveDiameter || 0}{" "}
+                            {values.unit || "mm"}
+                          </>
+                        ) : (
+                          <>
+                            {values.length || 0} {values.unit || "mm"} x{" "}
+                            {values.width || 0} {values.unit || "mm"}
+                          </>
+                        )}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Area:</span>
                       <span className="font-medium text-neutral-800">
-                        {pricing ? Number(pricing.area).toFixed(2) : "—"} sq ft
+                        {pricing ? Number(pricing.area).toFixed(2) : "—"} sq{" "}
+                        {values.unit || "mm"}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -486,7 +492,20 @@ export function ReviewStep({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setSignatureOpen(true)}
+                  onClick={() => {
+                    setSignatureOpen(true);
+                    // Pre-fill initials if switching to that tab or opening for the first time
+                    if (
+                      signatureTab === "initials" &&
+                      !initialsSignature &&
+                      values.customerName
+                    ) {
+                      const parts = values.customerName.trim().split(" ");
+                      setInitialsSignature(
+                        parts.map((p) => p[0]?.toUpperCase() || "").join(""),
+                      );
+                    }
+                  }}
                   className="h-9 text-sm font-medium"
                 >
                   {signatureDataUrl ? "Update Signature" : "Attach Signature"}
@@ -551,14 +570,6 @@ export function ReviewStep({
                       {formatNaira(pricing?.tax_amount)}
                     </span>
                   </div>
-                  {insuranceCoverage && pricing && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Insurance (5%):</span>
-                      <span className="font-medium text-neutral-800">
-                        {formatNaira(pricing.insurance_amount)}
-                      </span>
-                    </div>
-                  )}
                   {deliveryMethod === "delivery" && values.deliveryFee && (
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Delivery Fee:</span>
@@ -573,7 +584,7 @@ export function ReviewStep({
 
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-bold text-[#1E202E]">Total:</span>
-                  <span className="font-bold text-blue-600 text-base">
+                  <span className="font-bold text-base">
                     {formatNaira(pricing?.total_amount)}
                   </span>
                 </div>
@@ -626,7 +637,19 @@ export function ReviewStep({
                 <button
                   key={tab}
                   type="button"
-                  onClick={() => setSignatureTab(tab)}
+                  onClick={() => {
+                    setSignatureTab(tab);
+                    if (
+                      tab === "initials" &&
+                      !initialsSignature &&
+                      values.customerName
+                    ) {
+                      const parts = values.customerName.trim().split(" ");
+                      setInitialsSignature(
+                        parts.map((p) => p[0]?.toUpperCase() || "").join(""),
+                      );
+                    }
+                  }}
                   className={`flex justify-center items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
                     signatureTab === tab
                       ? "border-[#1E202E] text-[#1E202E]"

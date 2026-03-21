@@ -26,6 +26,7 @@ import { OrderLeftCard } from "@/components/order-left-card";
 import { OrderRightCard } from "@/components/order-right-card";
 import { DamageReportDialog } from "@/components/damage-report-dialog";
 import { Upload, X, Loader2 } from "lucide-react";
+import { OrderStatus } from "@/services/types/openapi";
 
 const ORDER_STATUSES = [
   "pending",
@@ -144,7 +145,7 @@ export default function OrderDetailsPage() {
         updateStatus(
           {
             order_id: order?.id ?? "",
-            data: { order_status: nextStatus as any },
+            data: { order_status: nextStatus as OrderStatus },
           },
           {
             onSuccess: () => {

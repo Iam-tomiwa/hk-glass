@@ -139,7 +139,7 @@ export default function AddProductModal({
               Product Pricing
             </Label>
             <Input
-              startIcon="$"
+              startIcon="₦"
               type="number"
               placeholder="Enter Amount"
               value={price}

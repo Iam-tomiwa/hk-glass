@@ -9,16 +9,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { OrderFormValues } from "../schema";
 import { useListGlassTypes } from "@/services/queries/orders";
-import { Loader2 } from "lucide-react";
+import { ComboBox } from "@/components/ui/combo-box-2";
 
 export function GlassSpecsStep({
   form,
@@ -37,8 +30,25 @@ export function GlassSpecsStep({
   const shape = useWatch({ control: form.control, name: "shape" });
   const sheetSize = useWatch({ control: form.control, name: "sheetSize" });
 
-  // Calculate area in sq ft assuming length and width are in inches
-  const area = ((Number(length) || 0) * (Number(width) || 0)) / 144;
+  const unit = useWatch({ control: form.control, name: "unit" }) || "mm";
+  const curveDiameter = useWatch({
+    control: form.control,
+    name: "curveDiameter",
+  });
+
+  // Calculate area based on shape and units
+  const calculateArea = () => {
+    const l = parseFloat(length || "0");
+    const w = parseFloat(width || "0");
+    const d = parseFloat(curveDiameter || "0");
+
+    if (shape === "curved") {
+      return Math.PI * Math.pow(d / 2, 2);
+    }
+    return l * w;
+  };
+
+  const area = calculateArea();
 
   return (
     <TabsContent
@@ -58,35 +68,45 @@ export function GlassSpecsStep({
         <div className="space-y-4">
           <FormField
             control={form.control}
+            name="unit"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Select Unit <span className="text-red-500">*</span>
+                </FormLabel>
+                <ComboBox
+                  className="w-full"
+                  value={field.value}
+                  options={[
+                    { label: "mm", value: "mm" },
+                    { label: "cm", value: "cm" },
+                    { label: "m", value: "m" },
+                  ]}
+                  onValueChange={field.onChange}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="glassTypeId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Glass Type <span className="text-red-500">*</span>
                 </FormLabel>
-                <Select
+                <ComboBox
+                  className="w-full"
+                  value={field.value}
+                  isLoading={isLoadingGlassTypes}
+                  options={(glassTypes || [])?.map((type) => ({
+                    value: type.id,
+                    label: type.name,
+                  }))}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                      {isLoadingGlassTypes ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="animate-spin size-4" /> Loading...
-                        </div>
-                      ) : (
-                        <SelectValue placeholder="Select glass type" />
-                      )}
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {glassTypes?.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -110,7 +130,7 @@ export function GlassSpecsStep({
                       value={field.value || ""}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
-                      inches
+                      {unit}
                     </span>
                   </div>
                 </FormControl>
@@ -137,7 +157,7 @@ export function GlassSpecsStep({
                       value={field.value || ""}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
-                      inches
+                      {unit}
                     </span>
                   </div>
                 </FormControl>
@@ -145,15 +165,6 @@ export function GlassSpecsStep({
               </FormItem>
             )}
           />
-
-          {area > 0 && (
-            <div className="bg-[#eff6ff] rounded-lg px-4 py-3 flex items-center justify-between border border-blue-100">
-              <span className="text-neutral-600 text-sm">Calculated Area</span>
-              <span className="font-bold text-blue-800 text-lg">
-                {area.toFixed(2)} sq ft
-              </span>
-            </div>
-          )}
 
           <FormField
             control={form.control}
@@ -163,20 +174,15 @@ export function GlassSpecsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Select Shape
                 </FormLabel>
-                <Select
+                <ComboBox
+                  className="w-full"
+                  value={field.value}
+                  options={[
+                    { value: "rectangular", label: "Rectangular" },
+                    { value: "curved", label: "Curved" },
+                  ]}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                      <SelectValue placeholder="Select shape" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="rectangular">Rectangular</SelectItem>
-                    <SelectItem value="curved">Curved</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -201,7 +207,7 @@ export function GlassSpecsStep({
                         value={field.value || ""}
                       />
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
-                        inches
+                        {unit}
                       </span>
                     </div>
                   </FormControl>
@@ -219,25 +225,19 @@ export function GlassSpecsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Sheet Size
                 </FormLabel>
-                <Select
+                <ComboBox
+                  className="w-full"
+                  value={field.value}
+                  options={[
+                    {
+                      value: "standard",
+                      label: `Standard (48" x 72")`,
+                    },
+                    { value: "large", label: `Large (60" x 84")` },
+                    { value: "custom", label: `Custom` },
+                  ]}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                      <SelectValue placeholder="Select sheet size" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="standard">
-                      Standard (48&quot; x 72&quot;)
-                    </SelectItem>
-                    <SelectItem value="large">
-                      Large (60&quot; x 96&quot;)
-                    </SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -250,7 +250,8 @@ export function GlassSpecsStep({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[#1E202E] font-medium text-sm">
-                    Input Custom Sheet Size <span className="text-red-500">*</span>
+                    Input Custom Sheet Size{" "}
+                    <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
@@ -262,7 +263,7 @@ export function GlassSpecsStep({
                         value={field.value || ""}
                       />
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
-                        inches
+                        {unit}
                       </span>
                     </div>
                   </FormControl>
@@ -280,26 +281,30 @@ export function GlassSpecsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Sheet thickness
                 </FormLabel>
-                <Select
+                <ComboBox
+                  className="w-full"
+                  value={field.value}
+                  options={[
+                    { value: "1/8", label: `1/8" (3mm)` },
+                    { value: "1/4", label: `1/4" (6mm)` },
+                    { value: "3/8", label: `3/8" (10mm)` },
+                    { value: "1/2", label: `1/2" (12mm)` },
+                  ]}
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-background shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                      <SelectValue placeholder="Select thickness" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="1/8">1/8&quot; (3mm)</SelectItem>
-                    <SelectItem value="1/4">1/4&quot; (6mm)</SelectItem>
-                    <SelectItem value="3/8">3/8&quot; (10mm)</SelectItem>
-                    <SelectItem value="1/2">1/2&quot; (12mm)</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
+          {area > 0 && (
+            <div className="bg-[#eff6ff] rounded-lg px-4 py-3 flex items-center justify-between border border-blue-100">
+              <span className="text-neutral-600 text-sm">Calculated Area</span>
+              <span className="font-bold text-blue-800 text-lg">
+                {area.toLocaleString(undefined, { maximumFractionDigits: 2 })}{" "}
+                sq {unit}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="pt-6 flex items-center gap-3">

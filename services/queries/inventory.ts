@@ -10,6 +10,7 @@ import {
   updateInventoryItem,
   deleteInventoryItem,
   adjustInventoryItem,
+  getInventoryItem,
 } from "../api/inventory";
 import {
   InventoryItemResponse,
@@ -22,6 +23,14 @@ export function useListInventory() {
   return useQuery<InventoryItemResponse[]>({
     queryKey: queryKeys.inventory.list(undefined),
     queryFn: () => listInventory(),
+  });
+}
+
+export function useGetInventoryItem(item_id: string) {
+  return useQuery<InventoryItemResponse>({
+    queryKey: queryKeys.inventory.detail(item_id),
+    queryFn: () => getInventoryItem(item_id),
+    enabled: !!item_id,
   });
 }
 
@@ -50,7 +59,7 @@ export function useUpdateInventoryItem() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -65,7 +74,7 @@ export function useDeleteInventoryItem() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -85,7 +94,7 @@ export function useAdjustInventoryItem() {
       queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });

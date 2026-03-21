@@ -35,7 +35,7 @@ export default function PricingTable({
   error = null,
   onSave,
   deleteType,
-  variableName = "Price ($)",
+  variableName = "Price (₦)",
 }: {
   rows: PricingRow[];
   isLoading?: boolean;
