@@ -41,12 +41,15 @@ export const inventoryAdjustRequestSchema = z.object({
 });
 
 export const inventoryItemCreateSchema = z.object({
-    material_name: z.string(),
-    size: z.union([z.string(), z.any()]).optional().nullable(),
-    thickness: z.union([z.string(), z.any()]).optional().nullable(),
-    unit: z.union([z.string(), z.any()]).optional().nullable(),
+    item_type: z.enum(["glass", "hardware", "others"], { required_error: "Material type is required" }),
+    material_name: z.string().min(1, "Item name is required"),
+    description: z.string().optional().nullable(),
+    size: z.string().optional().nullable(),
+    thickness: z.string().optional().nullable(),
+    unit: z.string().optional().nullable(),
+    price: z.union([z.number(), z.string()]).optional().nullable(),
     stock_count: z.number().optional(),
-    low_stock_threshold: z.number().optional()
+    low_stock_threshold: z.number().optional(),
 });
 
 export const inventoryItemUpdateSchema = z.object({

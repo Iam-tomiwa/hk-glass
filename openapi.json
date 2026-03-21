@@ -232,6 +232,35 @@
         }
       }
     },
+    "/api/auth/2fa/disable": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Disable Totp",
+        "operationId": "disable_totp_api_auth_2fa_disable_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/recovery-codes": {
       "post": {
         "tags": ["auth"],
@@ -401,18 +430,48 @@
         }
       }
     },
+    "/api/orders/stats": {
+      "get": {
+        "tags": ["orders"],
+        "summary": "Get Staff Stats",
+        "operationId": "get_staff_stats_api_orders_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryOrderStatsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/orders": {
       "post": {
         "tags": ["orders"],
         "summary": "Create Order",
         "operationId": "create_order_api_orders_post",
+        "parameters": [
+          {
+            "name": "device_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Device Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/OrderCreate" }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -519,6 +578,15 @@
         "summary": "Search Orders",
         "operationId": "search_orders_api_orders_search_get",
         "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
           {
             "name": "customer_name",
             "in": "query",
@@ -1095,6 +1163,51 @@
         }
       }
     },
+    "/api/orders/{order_id}/send-review-email": {
+      "post": {
+        "tags": ["orders"],
+        "summary": "Send Order Review Email",
+        "operationId": "send_order_review_email_api_orders__order_id__send_review_email_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Order Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderReviewEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReviewEmailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/payments/initialize": {
       "post": {
         "tags": ["payments"],
@@ -1437,6 +1550,15 @@
             }
           },
           {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -1687,6 +1809,138 @@
         }
       }
     },
+    "/api/admin/notifications": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "List Admin Notifications",
+        "operationId": "list_admin_notifications_api_admin_notifications_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/notifications/{notification_id}/read": {
+      "patch": {
+        "tags": ["admin"],
+        "summary": "Mark Admin Notification Read",
+        "operationId": "mark_admin_notification_read_api_admin_notifications__notification_id__read_patch",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Notification Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkReadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/notifications/unread-count": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Get Admin Unread Notification Count",
+        "operationId": "get_admin_unread_notification_count_api_admin_notifications_unread_count_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationUnreadCountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/glass-types": {
       "post": {
         "tags": ["admin"],
@@ -1821,6 +2075,43 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["admin"],
+        "summary": "Delete Glass Type",
+        "operationId": "delete_glass_type_api_admin_glass_types__glass_type_id__delete",
+        "parameters": [
+          {
+            "name": "glass_type_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Glass Type Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
       }
     },
     "/api/admin/addons": {
@@ -1936,6 +2227,97 @@
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/AddonUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddonResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["admin"],
+        "summary": "Delete Addon",
+        "operationId": "delete_addon_api_admin_addons__addon_id__delete",
+        "parameters": [
+          {
+            "name": "addon_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Addon Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/addons/{addon_id}/price": {
+      "patch": {
+        "tags": ["admin"],
+        "summary": "Update Addon Price",
+        "operationId": "update_addon_price_api_admin_addons__addon_id__price_patch",
+        "parameters": [
+          {
+            "name": "addon_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Addon Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddonPriceUpdate" }
             }
           }
         },
@@ -2416,6 +2798,52 @@
         }
       }
     },
+    "/api/admin/staff-devices/{device_id}/reactivate": {
+      "post": {
+        "tags": ["admin"],
+        "summary": "Reactivate Staff Device",
+        "operationId": "reactivate_staff_device_api_admin_staff_devices__device_id__reactivate_post",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeviceSetupResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/staff-devices/{device_id}": {
       "delete": {
         "tags": ["admin"],
@@ -2501,6 +2929,48 @@
         "summary": "List Orders",
         "operationId": "list_orders_api_admin_orders_get",
         "parameters": [
+          {
+            "name": "order_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/OrderStatus" },
+                { "type": "null" }
+              ],
+              "title": "Order Status"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "staff",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Staff"
+            }
+          },
+          {
+            "name": "staff_device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "uuid" },
+                { "type": "null" }
+              ],
+              "title": "Staff Device Id"
+            }
+          },
           {
             "name": "page",
             "in": "query",
@@ -2906,6 +3376,18 @@
         "operationId": "list_inventory_api_admin_inventory_get",
         "parameters": [
           {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/InventoryItemType" },
+                { "type": "null" }
+              ],
+              "title": "Type"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -2970,6 +3452,282 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InventoryItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/notifications": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "List Inventory Notifications",
+        "operationId": "list_inventory_notifications_api_admin_inventory_notifications_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryLowStockNotificationResponse"
+                  },
+                  "title": "Response List Inventory Notifications Api Admin Inventory Notifications Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/scan/item/{item_id}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Item",
+        "operationId": "scan_inventory_item_api_admin_inventory_scan_item__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/scan/sheet/{sheet_id}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Sheet",
+        "operationId": "scan_inventory_sheet_api_admin_inventory_scan_sheet__sheet_id__get",
+        "parameters": [
+          {
+            "name": "sheet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sheet Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/scan/{serial_code}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Serial",
+        "operationId": "scan_inventory_serial_api_admin_inventory_scan__serial_code__get",
+        "parameters": [
+          {
+            "name": "serial_code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Serial Code" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/labels/{serial_code}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Build Serial Label",
+        "operationId": "build_serial_label_api_admin_inventory_labels__serial_code__get",
+        "parameters": [
+          {
+            "name": "serial_code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Serial Code" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialLabelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/{item_id}/glass-sheets/generate": {
+      "post": {
+        "tags": ["inventory"],
+        "summary": "Generate Glass Sheet Serials",
+        "operationId": "generate_glass_sheet_serials_api_admin_inventory__item_id__glass_sheets_generate_post",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GlassSheetSerialGenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlassSheetSerialGenerateResponse"
                 }
               }
             }
@@ -3059,6 +3817,58 @@
         ],
         "responses": {
           "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/inventory/{item_id}/price": {
+      "patch": {
+        "tags": ["inventory"],
+        "summary": "Update Inventory Item Price",
+        "operationId": "update_inventory_item_price_api_admin_inventory__item_id__price_patch",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/InventoryPriceUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponse"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3216,6 +4026,7 @@
           "structural",
           "thermal_film",
           "decorative",
+          "hardware",
           "other"
         ],
         "title": "AddonCategory"
@@ -3223,6 +4034,10 @@
       "AddonCreate": {
         "properties": {
           "name": { "type": "string", "title": "Name" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
           "category": {
             "anyOf": [
               { "$ref": "#/components/schemas/AddonCategory" },
@@ -3252,13 +4067,67 @@
       },
       "AddonPriceType": {
         "type": "string",
-        "enum": ["flat", "per_sqm"],
+        "enum": ["flat", "per_sqm", "per_side"],
         "title": "AddonPriceType"
+      },
+      "AddonPriceUpdate": {
+        "properties": {
+          "price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price"
+          },
+          "price_per_unit": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Unit"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          },
+          "price_per_side": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Side"
+          }
+        },
+        "type": "object",
+        "title": "AddonPriceUpdate"
       },
       "AddonResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "name": { "type": "string", "title": "Name" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
           "category": { "$ref": "#/components/schemas/AddonCategory" },
           "price_type": { "$ref": "#/components/schemas/AddonPriceType" },
           "price": {
@@ -3272,6 +4141,7 @@
         "required": [
           "id",
           "name",
+          "description",
           "category",
           "price_type",
           "price",
@@ -3284,6 +4154,10 @@
           "name": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
           },
           "category": {
             "anyOf": [
@@ -3370,6 +4244,22 @@
             ],
             "title": "Curve Diameter"
           },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
+          },
           "custom_shape_spec": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Custom Shape Spec"
@@ -3432,6 +4322,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
+          "glass_inventory_sheet_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Glass Inventory Sheet Id"
+          },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
           "subtotal_amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -3483,7 +4384,19 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Qr Code Token"
           },
-          "glass_type": { "$ref": "#/components/schemas/GlassTypeResponse" },
+          "created_by_device_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Created By Device Id"
+          },
+          "glass_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GlassTypeResponse" },
+              { "type": "null" }
+            ]
+          },
           "created_by_user": {
             "anyOf": [
               { "$ref": "#/components/schemas/UserResponse" },
@@ -3519,6 +4432,8 @@
           "specification_files",
           "engraving_image_files",
           "signature_file_path",
+          "glass_inventory_sheet_id",
+          "glass_inventory_serial_code",
           "subtotal_amount",
           "tax_amount",
           "insurance_amount",
@@ -3530,6 +4445,7 @@
           "payment_status",
           "insurance_selected",
           "qr_code_token",
+          "created_by_device_id",
           "glass_type",
           "has_damage"
         ],
@@ -3893,6 +4809,29 @@
         ],
         "title": "FactoryOrderStatsResponse"
       },
+      "GlassSheetSerialGenerateRequest": {
+        "properties": {
+          "prefix": { "type": "string", "title": "Prefix" },
+          "count": { "type": "integer", "title": "Count" }
+        },
+        "type": "object",
+        "required": ["prefix", "count"],
+        "title": "GlassSheetSerialGenerateRequest"
+      },
+      "GlassSheetSerialGenerateResponse": {
+        "properties": {
+          "item_id": { "type": "string", "format": "uuid", "title": "Item Id" },
+          "generated_serials": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Generated Serials"
+          },
+          "total_generated": { "type": "integer", "title": "Total Generated" }
+        },
+        "type": "object",
+        "required": ["item_id", "generated_serials", "total_generated"],
+        "title": "GlassSheetSerialGenerateResponse"
+      },
       "GlassTypeCreate": {
         "properties": {
           "name": { "type": "string", "title": "Name" },
@@ -3969,9 +4908,26 @@
         "required": ["adjustment"],
         "title": "InventoryAdjustRequest"
       },
+      "InventoryGlassSheetStatus": {
+        "type": "string",
+        "enum": ["available", "used", "damaged", "retired"],
+        "title": "InventoryGlassSheetStatus"
+      },
       "InventoryItemCreate": {
         "properties": {
+          "item_type": {
+            "$ref": "#/components/schemas/InventoryItemType",
+            "default": "others"
+          },
           "material_name": { "type": "string", "title": "Material Name" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Serial Code"
+          },
           "size": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Size"
@@ -3984,10 +4940,47 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Unit"
           },
+          "price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price"
+          },
+          "unit_price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Unit Price"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          },
           "stock_count": {
             "type": "integer",
             "title": "Stock Count",
             "default": 0
+          },
+          "initial_stock_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Initial Stock Count"
           },
           "low_stock_threshold": {
             "type": "integer",
@@ -4002,7 +4995,16 @@
       "InventoryItemResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "item_type": { "$ref": "#/components/schemas/InventoryItemType" },
           "material_name": { "type": "string", "title": "Material Name" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Serial Code"
+          },
           "size": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Size"
@@ -4015,7 +5017,41 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Unit"
           },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Unit Price"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          },
           "stock_count": { "type": "integer", "title": "Stock Count" },
+          "initial_stock_count": {
+            "type": "integer",
+            "title": "Initial Stock Count"
+          },
           "low_stock_threshold": {
             "type": "integer",
             "title": "Low Stock Threshold"
@@ -4035,11 +5071,18 @@
         "type": "object",
         "required": [
           "id",
+          "item_type",
           "material_name",
+          "description",
+          "serial_code",
           "size",
           "thickness",
           "unit",
+          "price",
+          "unit_price",
+          "price_per_sqm",
           "stock_count",
+          "initial_stock_count",
           "low_stock_threshold",
           "status",
           "created_at",
@@ -4047,11 +5090,30 @@
         ],
         "title": "InventoryItemResponse"
       },
+      "InventoryItemType": {
+        "type": "string",
+        "enum": ["others", "glass", "hardware"],
+        "title": "InventoryItemType"
+      },
       "InventoryItemUpdate": {
         "properties": {
+          "item_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/InventoryItemType" },
+              { "type": "null" }
+            ]
+          },
           "material_name": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Material Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Serial Code"
           },
           "size": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -4065,9 +5127,46 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Unit"
           },
+          "price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price"
+          },
+          "unit_price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Unit Price"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          },
           "stock_count": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Stock Count"
+          },
+          "initial_stock_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Initial Stock Count"
           },
           "low_stock_threshold": {
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
@@ -4076,6 +5175,207 @@
         },
         "type": "object",
         "title": "InventoryItemUpdate"
+      },
+      "InventoryLowStockNotificationResponse": {
+        "properties": {
+          "item_id": { "type": "string", "format": "uuid", "title": "Item Id" },
+          "item_type": { "$ref": "#/components/schemas/InventoryItemType" },
+          "material_name": { "type": "string", "title": "Material Name" },
+          "serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Serial Code"
+          },
+          "stock_count": { "type": "integer", "title": "Stock Count" },
+          "initial_stock_count": {
+            "type": "integer",
+            "title": "Initial Stock Count"
+          },
+          "level": { "type": "string", "title": "Level" },
+          "percent_remaining": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Percent Remaining"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "material_name",
+          "serial_code",
+          "stock_count",
+          "initial_stock_count",
+          "level",
+          "percent_remaining"
+        ],
+        "title": "InventoryLowStockNotificationResponse"
+      },
+      "InventoryPriceUpdate": {
+        "properties": {
+          "price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price"
+          },
+          "unit_price": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Unit Price"
+          },
+          "price_per_unit": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Unit"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          }
+        },
+        "type": "object",
+        "title": "InventoryPriceUpdate"
+      },
+      "InventorySerialLabelResponse": {
+        "properties": {
+          "serial_code": { "type": "string", "title": "Serial Code" },
+          "label_image_base64": {
+            "type": "string",
+            "title": "Label Image Base64"
+          }
+        },
+        "type": "object",
+        "required": ["serial_code", "label_image_base64"],
+        "title": "InventorySerialLabelResponse"
+      },
+      "InventorySerialScanResponse": {
+        "properties": {
+          "sheet_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sheet Id"
+          },
+          "serial_code": { "type": "string", "title": "Serial Code" },
+          "status": {
+            "$ref": "#/components/schemas/InventoryGlassSheetStatus"
+          },
+          "item_id": { "type": "string", "format": "uuid", "title": "Item Id" },
+          "item_name": { "type": "string", "title": "Item Name" },
+          "item_type": { "$ref": "#/components/schemas/InventoryItemType" },
+          "item_size": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Item Size"
+          },
+          "item_thickness": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Item Thickness"
+          },
+          "price_per_sqm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Price Per Sqm"
+          },
+          "unit_price": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Unit Price"
+          },
+          "order_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Order Id"
+          },
+          "order_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Order Reference"
+          },
+          "linked_order_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Linked Order Id"
+          },
+          "linked_order_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Linked Order Reference"
+          },
+          "damage_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Damage Reason"
+          },
+          "used_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Used At"
+          },
+          "damaged_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Damaged At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sheet_id",
+          "serial_code",
+          "status",
+          "item_id",
+          "item_name",
+          "item_type",
+          "item_size",
+          "item_thickness",
+          "price_per_sqm",
+          "unit_price",
+          "order_id",
+          "order_reference",
+          "linked_order_id",
+          "linked_order_reference",
+          "damage_reason",
+          "used_at",
+          "damaged_at"
+        ],
+        "title": "InventorySerialScanResponse"
       },
       "LoginRequest": {
         "properties": {
@@ -4092,7 +5392,7 @@
       },
       "NotificationAudience": {
         "type": "string",
-        "enum": ["factory", "staff"],
+        "enum": ["admin", "factory", "staff"],
         "title": "NotificationAudience"
       },
       "NotificationListResponse": {
@@ -4174,6 +5474,28 @@
         "required": ["unread_count"],
         "title": "NotificationUnreadCountResponse"
       },
+      "OrderAddonInput": {
+        "properties": {
+          "addon_id": { "type": "string", "title": "Addon Id" },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Quantity",
+            "default": 1
+          },
+          "custom_input": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Custom Input"
+          },
+          "notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": ["addon_id"],
+        "title": "OrderAddonInput"
+      },
       "OrderAddonResponse": {
         "properties": {
           "addon": { "$ref": "#/components/schemas/AddonResponse" },
@@ -4181,10 +5503,19 @@
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Calculated Price"
+          },
+          "quantity": { "type": "integer", "title": "Quantity" },
+          "custom_input": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Custom Input"
+          },
+          "notes": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Notes"
           }
         },
         "type": "object",
-        "required": ["addon", "calculated_price"],
+        "required": ["addon", "calculated_price", "quantity"],
         "title": "OrderAddonResponse"
       },
       "OrderCreate": {
@@ -4215,6 +5546,22 @@
           "shape_type": {
             "$ref": "#/components/schemas/ShapeType",
             "default": "rectangular"
+          },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
           },
           "curve_diameter": {
             "anyOf": [
@@ -4301,11 +5648,24 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
-          "glass_type_id": { "type": "string", "title": "Glass Type Id" },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
+          "glass_type_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Type Id"
+          },
           "addon_ids": {
             "items": { "type": "string" },
             "type": "array",
             "title": "Addon Ids",
+            "default": []
+          },
+          "addon_items": {
+            "items": { "$ref": "#/components/schemas/OrderAddonInput" },
+            "type": "array",
+            "title": "Addon Items",
             "default": []
           },
           "insurance_selected": {
@@ -4320,8 +5680,7 @@
           "customer_email",
           "customer_phone",
           "width",
-          "length",
-          "glass_type_id"
+          "length"
         ],
         "title": "OrderCreate"
       },
@@ -4384,6 +5743,22 @@
               { "type": "null" }
             ],
             "title": "Curve Diameter"
+          },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
           },
           "custom_shape_spec": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -4467,6 +5842,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
+          "glass_inventory_sheet_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Glass Inventory Sheet Id"
+          },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
           "subtotal_amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -4518,7 +5904,19 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Qr Code Token"
           },
-          "glass_type": { "$ref": "#/components/schemas/GlassTypeResponse" },
+          "created_by_device_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Created By Device Id"
+          },
+          "glass_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GlassTypeResponse" },
+              { "type": "null" }
+            ]
+          },
           "addons": {
             "items": { "$ref": "#/components/schemas/OrderAddonResponse" },
             "type": "array",
@@ -4562,6 +5960,8 @@
           "specification_files",
           "engraving_image_files",
           "signature_file_path",
+          "glass_inventory_sheet_id",
+          "glass_inventory_serial_code",
           "subtotal_amount",
           "tax_amount",
           "insurance_amount",
@@ -4573,6 +5973,7 @@
           "payment_status",
           "insurance_selected",
           "qr_code_token",
+          "created_by_device_id",
           "glass_type",
           "addons"
         ],
@@ -4638,11 +6039,28 @@
             ],
             "title": "Length"
           },
-          "glass_type_id": { "type": "string", "title": "Glass Type Id" },
+          "glass_type_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Type Id"
+          },
+          "shape_type": {
+            "$ref": "#/components/schemas/ShapeType",
+            "default": "rectangular"
+          },
+          "drill_holes_count": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Drill Holes Count"
+          },
           "addon_ids": {
             "items": { "type": "string" },
             "type": "array",
             "title": "Addon Ids",
+            "default": []
+          },
+          "addon_items": {
+            "items": { "$ref": "#/components/schemas/OrderAddonInput" },
+            "type": "array",
+            "title": "Addon Items",
             "default": []
           },
           "insurance_selected": {
@@ -4652,7 +6070,7 @@
           }
         },
         "type": "object",
-        "required": ["width", "length", "glass_type_id"],
+        "required": ["width", "length"],
         "title": "OrderPriceReviewRequest"
       },
       "OrderPriceReviewResponse": {
@@ -4738,6 +6156,22 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Custom Shape Spec"
           },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
+          },
           "sheet_size": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Sheet Size"
@@ -4796,6 +6230,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
+          "glass_inventory_sheet_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Glass Inventory Sheet Id"
+          },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
           "subtotal_amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -4847,7 +6292,19 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Qr Code Token"
           },
-          "glass_type": { "$ref": "#/components/schemas/GlassTypeResponse" },
+          "created_by_device_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Created By Device Id"
+          },
+          "glass_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GlassTypeResponse" },
+              { "type": "null" }
+            ]
+          },
           "addons": {
             "items": { "$ref": "#/components/schemas/OrderAddonResponse" },
             "type": "array",
@@ -4881,6 +6338,8 @@
           "specification_files",
           "engraving_image_files",
           "signature_file_path",
+          "glass_inventory_sheet_id",
+          "glass_inventory_serial_code",
           "subtotal_amount",
           "tax_amount",
           "insurance_amount",
@@ -4892,6 +6351,7 @@
           "payment_status",
           "insurance_selected",
           "qr_code_token",
+          "created_by_device_id",
           "glass_type",
           "addons"
         ],
@@ -4937,6 +6397,22 @@
               { "type": "null" }
             ],
             "title": "Curve Diameter"
+          },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
           },
           "custom_shape_spec": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5000,6 +6476,17 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
+          "glass_inventory_sheet_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Glass Inventory Sheet Id"
+          },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
           "subtotal_amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -5051,7 +6538,19 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Qr Code Token"
           },
-          "glass_type": { "$ref": "#/components/schemas/GlassTypeResponse" },
+          "created_by_device_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Created By Device Id"
+          },
+          "glass_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/GlassTypeResponse" },
+              { "type": "null" }
+            ]
+          },
           "created_by_user": {
             "anyOf": [
               { "$ref": "#/components/schemas/UserResponse" },
@@ -5086,6 +6585,8 @@
           "specification_files",
           "engraving_image_files",
           "signature_file_path",
+          "glass_inventory_sheet_id",
+          "glass_inventory_serial_code",
           "subtotal_amount",
           "tax_amount",
           "insurance_amount",
@@ -5097,9 +6598,46 @@
           "payment_status",
           "insurance_selected",
           "qr_code_token",
+          "created_by_device_id",
           "glass_type"
         ],
         "title": "OrderResponse"
+      },
+      "OrderReviewEmailRequest": {
+        "properties": {
+          "review_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Review Url"
+          }
+        },
+        "type": "object",
+        "title": "OrderReviewEmailRequest"
+      },
+      "OrderReviewEmailResponse": {
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Order Id"
+          },
+          "customer_email": { "type": "string", "title": "Customer Email" },
+          "review_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Review Url"
+          },
+          "email_provider_configured": {
+            "type": "boolean",
+            "title": "Email Provider Configured"
+          }
+        },
+        "type": "object",
+        "required": [
+          "order_id",
+          "customer_email",
+          "review_url",
+          "email_provider_configured"
+        ],
+        "title": "OrderReviewEmailResponse"
       },
       "OrderStatus": {
         "type": "string",
@@ -5170,6 +6708,22 @@
           "custom_shape_spec": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Custom Shape Spec"
+          },
+          "Glazing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glazing"
+          },
+          "Warping resistance": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Warping Resistance"
+          },
+          "Waxing": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Waxing"
+          },
+          "Door Knobs": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Door Knobs"
           },
           "sheet_size": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5245,6 +6799,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Signature File Path"
           },
+          "glass_inventory_serial_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Glass Inventory Serial Code"
+          },
           "glass_type_id": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Glass Type Id"
@@ -5255,6 +6813,16 @@
               { "type": "null" }
             ],
             "title": "Addon Ids"
+          },
+          "addon_items": {
+            "anyOf": [
+              {
+                "items": { "$ref": "#/components/schemas/OrderAddonInput" },
+                "type": "array"
+              },
+              { "type": "null" }
+            ],
+            "title": "Addon Items"
           },
           "order_status": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],

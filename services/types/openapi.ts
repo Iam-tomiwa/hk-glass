@@ -147,12 +147,21 @@ export interface InventoryAdjustRequest {
   reason?: string | any | null;
 }
 
+export type InventoryItemType = "glass" | "hardware" | "others";
+
 export interface InventoryItemCreate {
+  item_type?: InventoryItemType;
   material_name: string;
-  size?: string | any | null;
-  thickness?: string | any | null;
-  unit?: string | any | null;
+  description?: string | null;
+  serial_code?: string | null;
+  size?: string | null;
+  thickness?: string | null;
+  unit?: string | null;
+  price?: number | string | null;
+  unit_price?: number | string | null;
+  price_per_sqm?: number | string | null;
   stock_count?: number;
+  initial_stock_count?: number | null;
   low_stock_threshold?: number;
 }
 
