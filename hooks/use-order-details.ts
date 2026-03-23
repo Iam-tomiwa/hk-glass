@@ -46,7 +46,16 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.addons?.map((a: OrderAddonResponse) => {
       const parts: string[] = [];
       if (a.custom_input) parts.push(a.custom_input);
-      if (a.quantity != null) parts.push(`${a.quantity} side${a.quantity !== 1 ? "s" : ""}`);
+      // Show quantity for addons that collect a meaningful count in the form
+      const QUANTITY_ADDON_CODES = ["glass_drilling", "edging"];
+      if (
+        a.quantity != null &&
+        a.quantity > 1 &&
+        QUANTITY_ADDON_CODES.includes(a.addon?.code ?? "")
+      ) {
+        const label = a.addon?.code === "edging" ? "sides" : "holes";
+        parts.push(`${a.quantity} ${label}`);
+      }
       if (a.notes) parts.push(a.notes);
       return {
         label: a.addon?.name ?? "Add-on",

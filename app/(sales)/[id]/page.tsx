@@ -8,7 +8,6 @@ import {
   useGetOrderByReference,
   useGetOrderFiles,
 } from "@/services/queries/orders";
-import { useUpdateFactoryOrderStatus } from "@/services/queries/factory";
 import { useInitializePayment } from "@/services/queries/payments";
 import { useParams } from "next/navigation";
 import OrderStatusBadge from "@/components/order-status-badge";
@@ -16,7 +15,6 @@ import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderLeftCard } from "@/components/order-left-card";
 import { OrderRightCard } from "@/components/order-right-card";
 import { AmountDisplay } from "@/components/amount-display";
-import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -30,11 +28,7 @@ export default function OrderDetailsPage() {
   } = useGetOrderByReference(orderId);
 
   const { data: orderFiles } = useGetOrderFiles(order?.id ?? "");
-  const { mutate: updateStatus, isPending: isUpdating } =
-    useUpdateFactoryOrderStatus();
-  const { openConfirmModal } = useConfirmations();
 
-  const isReadyForPickup = order?.order_status === "ready_pickup";
   const isPaymentPending = order?.payment_status === "pending";
 
   const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
@@ -52,24 +46,8 @@ export default function OrderDetailsPage() {
     }
   }
 
-  function handleCompleteOrder() {
-    if (!order?.id) return;
-    openConfirmModal(
-      "Are you sure you want to mark this order as completed? The customer will be notified.",
-      () => {
-        updateStatus({
-          order_id: order.id,
-          data: { order_status: "completed" },
-        });
-      },
-      { title: "Complete Order" },
-    );
-  }
-
   const createdBy =
-    (order as any)?.created_by_user?.name ??
-    (order as any)?.created_by_user?.email ??
-    "Staff";
+    order?.created_by_user?.name ?? order?.created_by_user?.email ?? "Staff";
 
   const qrValue =
     typeof window !== "undefined"

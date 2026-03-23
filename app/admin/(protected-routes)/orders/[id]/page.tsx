@@ -41,13 +41,26 @@ export default function OrderDetailsPage() {
 
   const currentStatusIndex = ORDER_STATUSES.indexOf(order?.order_status ?? "");
 
+  const isPendingPayment = order?.payment_status === "pending";
+
   const timeline: TimelineEvent[] = [
+    ...(isPendingPayment
+      ? [
+          {
+            title: "Awaiting Payment",
+            description: "Waiting for the customer to complete payment",
+            date: "",
+            completed: true,
+            active: true,
+          },
+        ]
+      : []),
     {
       title: "Payment Completed",
       description: "The customer completed payment",
       date: formatDate(order?.created_at),
-      completed: currentStatusIndex >= 0,
-      active: currentStatusIndex >= 0,
+      completed: !isPendingPayment && currentStatusIndex >= 0,
+      active: !isPendingPayment && currentStatusIndex >= 0,
     },
     {
       title: "In Production",

@@ -25,7 +25,10 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [searchText]);
 
-  const getStatusParams = () => {
+  const getStatusParams = (): {
+    order_status?: "in_production" | "completed" | "ready_pickup";
+    payment_status?: "paid";
+  } => {
     switch (statusFilter) {
       case "production":
         return { order_status: "in_production" };
@@ -34,7 +37,7 @@ export default function OrdersPage() {
       case "completed":
         return { order_status: "completed" };
       case "ready":
-        return { order_status: "ready_for_pickup" };
+        return { order_status: "ready_pickup" };
       default:
         return {};
     }

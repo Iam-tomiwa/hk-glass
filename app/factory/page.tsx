@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ComboBox } from "@/components/ui/combo-box-2";
-import { Search, Info, ShoppingBag } from "lucide-react";
+import { Search, ShoppingBag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScanOrderPage from "./scan-order";
@@ -19,10 +18,11 @@ import { Header } from "@/components/header";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
 import { StatsGrid } from "@/components/stats-grid";
+import { OrderStatus } from "@/services/types/openapi";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -51,29 +51,6 @@ export default function OrdersPage() {
       field: "thickness",
       headerName: "Thickness",
       valueGetter: (row) => row.thickness,
-    },
-    {
-      field: "add-ons",
-      headerName: "Add Ons",
-      renderCell: (row) => (
-        <div className="flex gap-1 flex-wrap">
-          {row.addons.slice(0, 3).map((el: string) => (
-            <Badge
-              key={el}
-              hideDot
-              variant="secondary"
-              className="bg-[#F1F5F9] rounded"
-            >
-              {el}
-            </Badge>
-          ))}
-          {row.addons.slice(3).length > 0 && (
-            <Badge variant="secondary" hideDot className="bg-[#F1F5F9] rounded">
-              +{row.addons.slice(3).length}
-            </Badge>
-          )}
-        </div>
-      ),
     },
     {
       field: "status",
@@ -162,7 +139,7 @@ export default function OrdersPage() {
 
                     <ComboBox
                       value={statusFilter}
-                      onValueChange={(v) => setStatusFilter(v)}
+                      onValueChange={(v) => setStatusFilter(v as OrderStatus | "all")}
                       options={[
                         { value: "all", label: "All statuses" },
                         { value: "pending", label: "Pending" },

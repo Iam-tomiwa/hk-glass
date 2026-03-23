@@ -465,7 +465,7 @@ export interface PaymentResponse {
   paid_at: string;
 }
 
-export type PaymentStatus = object;
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 export interface PaystackCallback {
   reference: string;
