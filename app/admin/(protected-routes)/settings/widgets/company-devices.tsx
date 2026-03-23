@@ -6,14 +6,19 @@ import DataGrid from "@/components/data-table";
 import { ColumnDef } from "@/components/data-table/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { ComboBox } from "@/components/ui/combo-box-2";
 import {
-  useDeactivateAdminDevice,
   useDeactivateStaffDevice,
-  useReactivateAdminDevice,
   useReactivateStaffDevice,
-  useDeleteAdminDevice,
   useDeleteStaffDevice,
   useListStaffDevices,
 } from "@/services/queries/admin";
@@ -42,27 +47,20 @@ function formatDate(dateStr?: string | null) {
 export default function CompanyDevices() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
-  const { openConfirmModal } = useConfirmations();
   const { data = [], isLoading } = useListStaffDevices();
-  const deactivateAdmin = useDeactivateAdminDevice();
+  const [reactivateCode, setReactivateCode] = useState<string | null>(null);
   const deactivateStaff = useDeactivateStaffDevice();
-  const reactivateAdmin = useReactivateAdminDevice();
   const reactivateStaff = useReactivateStaffDevice();
-  const deleteAdmin = useDeleteAdminDevice();
   const deleteStaff = useDeleteStaffDevice();
-
-  const isAdmin = (device: CombinedDeviceResponse) =>
-    device.device_type.toLowerCase() === "admin";
+  const { openConfirmModal, setLoading } = useConfirmations();
 
   const handleDeactivate = (device: CombinedDeviceResponse) => {
     openConfirmModal(
       `Are you sure you want to deactivate "${device.name}"?`,
-      () => {
-        if (isAdmin(device)) {
-          deactivateAdmin.mutate({ device_id: device.id });
-        } else {
-          deactivateStaff.mutate({ device_id: device.id });
-        }
+      async () => {
+        setLoading(true);
+        await deactivateStaff.mutateAsync({ device_id: device.id });
+        setLoading(false);
       },
       { title: "Deactivate Device", isDelete: true, confirmText: "Deactivate" },
     );
@@ -71,12 +69,11 @@ export default function CompanyDevices() {
   const handleReactivate = (device: CombinedDeviceResponse) => {
     openConfirmModal(
       `Are you sure you want to reactivate "${device.name}"?`,
-      () => {
-        if (isAdmin(device)) {
-          reactivateAdmin.mutate({ device_id: device.id });
-        } else {
-          reactivateStaff.mutate({ device_id: device.id });
-        }
+      async () => {
+        setLoading(true);
+        const res = await reactivateStaff.mutateAsync({ device_id: device.id });
+        setReactivateCode(res.setup_code);
+        setLoading(false);
       },
       { title: "Reactivate Device", confirmText: "Reactivate" },
     );
@@ -86,21 +83,19 @@ export default function CompanyDevices() {
     openConfirmModal(
       `Are you sure you want to delete "${device.name}"? This action cannot be undone.`,
       () => {
-        if (isAdmin(device)) {
-          deleteAdmin.mutate({ device_id: device.id });
-        } else {
-          deleteStaff.mutate({ device_id: device.id });
-        }
+        deleteStaff.mutate({ device_id: device.id });
       },
       { title: "Delete Device", isDelete: true, confirmText: "Delete" },
     );
   };
 
-  const filtered = data.filter((d) => {
-    if (statusFilter === "active") return d.is_active;
-    if (statusFilter === "inactive") return !d.is_active;
-    return true;
-  });
+  const filtered = (data as CombinedDeviceResponse[])
+    .filter((d) => d.device_type?.toLowerCase() !== "admin")
+    .filter((d) => {
+      if (statusFilter === "active") return d.is_active;
+      if (statusFilter === "inactive") return !d.is_active;
+      return true;
+    });
 
   const columns: ColumnDef[] = [
     {
@@ -143,7 +138,7 @@ export default function CompanyDevices() {
               size="sm"
               className="px-4"
               onClick={() => handleDeactivate(row as CombinedDeviceResponse)}
-              disabled={deactivateAdmin.isPending || deactivateStaff.isPending}
+              disabled={deactivateStaff.isPending}
             >
               Deactivate
             </Button>
@@ -154,9 +149,7 @@ export default function CompanyDevices() {
                 size="sm"
                 className="px-4"
                 onClick={() => handleReactivate(row as CombinedDeviceResponse)}
-                disabled={
-                  reactivateAdmin.isPending || reactivateStaff.isPending
-                }
+                disabled={reactivateStaff.isPending}
               >
                 Reactivate
               </Button>
@@ -165,7 +158,7 @@ export default function CompanyDevices() {
                 size="sm"
                 className="px-4 text-red-600 border-red-200 hover:bg-red-50"
                 onClick={() => handleDelete(row as CombinedDeviceResponse)}
-                disabled={deleteAdmin.isPending || deleteStaff.isPending}
+                disabled={deleteStaff.isPending}
               >
                 Delete
               </Button>
@@ -212,6 +205,53 @@ export default function CompanyDevices() {
           className="w-full"
         />
       </div>
+
+      <Dialog
+        open={!!reactivateCode}
+        onOpenChange={(open) => !open && setReactivateCode(null)}
+      >
+        <DialogContent className="max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Device Reactivated</DialogTitle>
+            <DialogDescription>
+              The authentication key has been regenerated.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center gap-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Share this code with the device operator to authenticate.
+            </p>
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 flex items-center justify-center gap-1.5 bg-muted rounded-lg px-4 py-3">
+                {reactivateCode?.split("").map((char, i) => (
+                  <span
+                    key={i}
+                    className="font-mono text-2xl font-bold tracking-widest text-foreground"
+                  >
+                    {char}
+                  </span>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() =>
+                  navigator.clipboard.writeText(reactivateCode || "")
+                }
+              >
+                <Copy className="size-4" />
+              </Button>
+            </div>
+            <Button
+              className="w-full mt-2 bg-[#00B412] hover:bg-[#00B412]/90 text-white"
+              onClick={() => setReactivateCode(null)}
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

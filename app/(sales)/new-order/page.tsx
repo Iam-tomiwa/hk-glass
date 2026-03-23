@@ -145,8 +145,8 @@ function NewOrderForm() {
       // Calculate pricing preview
       const result = await reviewOrder({
         data: {
-          width: Number(values.width),
-          length: Number(values.length),
+          width: `${values.width}${values.unit}`,
+          length: `${values.length}${values.unit}`,
           glass_type_id: values.glassTypeId,
           shape_type: values.shape,
           drill_holes_count: values.drillHoles
@@ -164,8 +164,8 @@ function NewOrderForm() {
           customer_name: values.customerName,
           customer_email: values.email,
           customer_phone: values.phone || "",
-          width: Number(values.width),
-          length: Number(values.length),
+          width: `${values.width}${values.unit}`,
+          length: `${values.length}${values.unit}`,
           sheet_size: values.sheetSize,
           thickness: values.thickness,
           drill_holes_count: values.drillHoles ? Number(values.numberOfHoles) : 0,

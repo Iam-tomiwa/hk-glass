@@ -49,8 +49,8 @@ export async function updateGlassType(
 }
 
 // Delete Glass Type
-export async function deleteGlassType(glass_type_id: string): Promise<any> {
-  return await del<any>(`/api/admin/glass-types/${glass_type_id}`);
+export async function deleteGlassType(glass_type_id: string) {
+  return await del(`/api/admin/glass-types/${glass_type_id}`);
 }
 
 // Create Addon
@@ -83,8 +83,8 @@ export async function updateAddonPrice(
 }
 
 // Delete Addon
-export async function deleteAddon(addon_id: string): Promise<any> {
-  return await del<any>(`/api/admin/addons/${addon_id}`);
+export async function deleteAddon(addon_id: string) {
+  return await del(`/api/admin/addons/${addon_id}`);
 }
 
 // Get Pricing Settings
@@ -117,7 +117,7 @@ export async function listAdminDevices(): Promise<DeviceResponse[]> {
 // Deactivate Admin Device
 export async function deactivateAdminDevice(
   device_id: string,
-  data?: any,
+  data?: unknown,
 ): Promise<DeviceResponse> {
   return await patch<DeviceResponse>(
     `/api/admin/devices/${device_id}/deactivate`,
@@ -149,7 +149,7 @@ export async function getCurrentDevice(): Promise<CombinedDeviceResponse> {
 // Deactivate Staff Device
 export async function deactivateStaffDevice(
   device_id: string,
-  data?: any,
+  data?: unknown,
 ): Promise<DeviceResponse> {
   return await patch<DeviceResponse>(
     `/api/admin/staff-devices/${device_id}/deactivate`,
@@ -160,8 +160,8 @@ export async function deactivateStaffDevice(
 // Reactivate Admin Device
 export async function reactivateAdminDevice(
   device_id: string,
-): Promise<DeviceResponse> {
-  return await post<DeviceResponse>(
+): Promise<DeviceSetupResponse> {
+  return await post<DeviceSetupResponse>(
     `/api/admin/devices/${device_id}/reactivate`,
     {},
   );
@@ -170,21 +170,21 @@ export async function reactivateAdminDevice(
 // Reactivate Staff Device
 export async function reactivateStaffDevice(
   device_id: string,
-): Promise<DeviceResponse> {
-  return await post<DeviceResponse>(
+): Promise<DeviceSetupResponse> {
+  return await post<DeviceSetupResponse>(
     `/api/admin/staff-devices/${device_id}/reactivate`,
     {},
   );
 }
 
 // Delete Admin Device
-export async function deleteAdminDevice(device_id: string): Promise<any> {
-  return await del<any>(`/api/admin/devices/${device_id}`);
+export async function deleteAdminDevice(device_id: string) {
+  return await del(`/api/admin/devices/${device_id}`);
 }
 
 // Delete Staff Device
-export async function deleteStaffDevice(device_id: string): Promise<any> {
-  return await del<any>(`/api/admin/staff-devices/${device_id}`);
+export async function deleteStaffDevice(device_id: string) {
+  return await del(`/api/admin/staff-devices/${device_id}`);
 }
 
 // List Staff
@@ -262,8 +262,8 @@ export async function markAdminNotificationRead(
 
 // Setup Admin Device
 export async function setupDevice(params?: {
-  token?: string | any | null;
-  code?: string | any | null;
-}): Promise<any> {
-  return await get<any>(`/api/setup-device`, { params });
+  token?: string | null;
+  code?: string | null;
+}) {
+  return await get(`/api/setup-device`, { params });
 }

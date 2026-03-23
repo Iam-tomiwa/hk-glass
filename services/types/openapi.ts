@@ -149,8 +149,8 @@ export interface AddonItem {
 }
 
 export interface OrderReviewRequest {
-  width: number;
-  length: number;
+  width: number | string;
+  length: number | string;
   glass_type_id?: string | null;
   shape_type?: string | null;
   drill_holes_count?: number | null;

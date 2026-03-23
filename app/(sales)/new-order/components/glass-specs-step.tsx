@@ -95,7 +95,7 @@ export function GlassSpecsStep({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Glass Type <span className="text-red-500">*</span>
+                  Glass Type
                 </FormLabel>
                 <ComboBox
                   className="w-full"
@@ -229,12 +229,9 @@ export function GlassSpecsStep({
                   className="w-full"
                   value={field.value}
                   options={[
-                    {
-                      value: "standard",
-                      label: `Standard (48" x 72")`,
-                    },
-                    { value: "large", label: `Large (60" x 84")` },
-                    { value: "custom", label: `Custom` },
+                    { value: "standard", label: "Standard" },
+                    { value: "large", label: "Large" },
+                    { value: "custom", label: "Custom" },
                   ]}
                   onValueChange={field.onChange}
                 />
