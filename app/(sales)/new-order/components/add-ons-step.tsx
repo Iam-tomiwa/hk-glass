@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import {
   FormControl,
@@ -14,16 +14,57 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ComboBox } from "@/components/ui/combo-box-2";
 import { OrderFormValues } from "../schema";
 import { useListAddons } from "@/services/queries/orders";
+import { useListInventory } from "@/services/queries/inventory";
+import { AddonResponse } from "@/services/types/openapi";
 import { Loader2, Upload, X } from "lucide-react";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  edge_surface: "Edge & Surface",
+  structural: "Structural",
+  thermal_film: "Thermal & Film",
+  decorative: "Decorative",
+  fabrication_processing: "Fabrication & Processing",
+  strength_insulation: "Strength & Insulation",
+  assembly: "Assembly",
+  hardware: "Hardware Add-ons",
+  other: "Other Services",
+};
+
+const CATEGORY_ORDER = [
+  "edge_surface",
+  "structural",
+  "thermal_film",
+  "decorative",
+  "fabrication_processing",
+  "strength_insulation",
+  "assembly",
+  "hardware",
+  "other",
+];
+
+const EDGING_OPTIONS = ["Single", "Double"];
+const BEVELING_OPTIONS = ["Single", "Double", "Triple"];
+const GLAZING_OPTIONS = ["Single", "Double", "Triple"];
+const TINT_OPTIONS = [
+  { value: "dark", label: "Dark Tint" },
+  { value: "medium", label: "Medium Tint" },
+  { value: "light", label: "Light Tint" },
+  { value: "frosted", label: "Frosted" },
+];
+const ENGRAVING_OPTIONS = [
+  { value: "laser", label: "Laser Engraving" },
+  { value: "sand_blast", label: "Sand Blast" },
+  { value: "hand_carved", label: "Hand Carved" },
+];
+const HOLE_DIAMETER_OPTIONS = [
+  { value: "1/4", label: '1/4"' },
+  { value: "1/2", label: '1/2"' },
+  { value: "3/4", label: '3/4"' },
+  { value: "1", label: '1"' },
+];
 
 export function AddOnsStep({
   form,
@@ -44,14 +85,41 @@ export function AddOnsStep({
   engravingImageFile: File | null;
   onEngravingImageChange: (file: File | null) => void;
 }) {
-  const { data: addons, isLoading: isLoadingAddons } = useListAddons();
+  const { data: addons = [], isLoading: isLoadingAddons } = useListAddons();
+  const { data: hardwareItems = [], isLoading: isLoadingHardware } =
+    useListInventory("hardware", false);
 
-  const drillHoles = useWatch({ control: form.control, name: "drillHoles" });
-  const addTintFilm = useWatch({ control: form.control, name: "addTintFilm" });
-  const engraving = useWatch({ control: form.control, name: "engraving" });
+  const [addonExtras, setAddonExtras] = useState<Record<string, string>>({});
+  const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});
 
   const engravingImageRef = useRef<HTMLInputElement>(null);
   const specFilesRef = useRef<HTMLInputElement>(null);
+
+  const selectedAddons = useWatch({
+    control: form.control,
+    name: "selectedAddons",
+  });
+
+  const grouped = useMemo(() => {
+    const activeAddons = addons.filter((a) => a.is_active);
+    const map: Record<string, AddonResponse[]> = {};
+    for (const addon of activeAddons) {
+      const cat = addon.category || "other";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push(addon);
+    }
+    for (const cat of Object.keys(map)) {
+      map[cat].sort(
+        (a, b) => (a.display_order ?? 99) - (b.display_order ?? 99),
+      );
+    }
+    return map;
+  }, [addons]);
+
+  const sortedCategories = CATEGORY_ORDER.filter((c) => grouped[c]);
+  const extraCategories = Object.keys(grouped).filter(
+    (c) => !CATEGORY_ORDER.includes(c),
+  );
 
   const handleEngravingImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -68,6 +136,291 @@ export function AddOnsStep({
   const removeSpecFile = (index: number) => {
     onSpecFilesChange(specFiles.filter((_, i) => i !== index));
   };
+
+  const isSelected = (addonId: string) =>
+    (selectedAddons || []).includes(addonId);
+
+  const handleToggle = (addon: AddonResponse, checked: boolean) => {
+    const current = selectedAddons || [];
+    const next = checked
+      ? [...current, addon.id]
+      : current.filter((id) => id !== addon.id);
+    form.setValue("selectedAddons", next);
+
+    if (addon.code === "glass_drilling") {
+      form.setValue("drillHoles", checked);
+    }
+    if (addon.code === "cnc_glass_engraving") {
+      form.setValue("engraving", checked);
+    }
+    if (addon.category === "thermal_film") {
+      form.setValue("addTintFilm", checked);
+    }
+  };
+
+  const renderAddonExtraFields = (addon: AddonResponse) => {
+    if (!isSelected(addon.id)) return null;
+
+    if (addon.code === "glass_drilling") {
+      return (
+        <div className="space-y-4 pt-3 pl-1">
+          <FormField
+            control={form.control}
+            name="numberOfHoles"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Number of Holes <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                      {...field}
+                      value={field.value || ""}
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                      holes
+                    </span>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="holeDiameter"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Hole Diameter
+                </FormLabel>
+                <ComboBox
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v)}
+                  options={HOLE_DIAMETER_OPTIONS}
+                  placeholder="Select diameter"
+                  className="w-full"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      );
+    }
+
+    if (addon.code === "cnc_glass_engraving") {
+      return (
+        <div className="space-y-4 pt-3 pl-1">
+          <FormField
+            control={form.control}
+            name="engravingType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Engraving Type
+                </FormLabel>
+                <ComboBox
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v)}
+                  options={ENGRAVING_OPTIONS}
+                  placeholder="Select engraving type"
+                  className="w-full"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="engravingText"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Engraving Text <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter text to engrave"
+                    className="shadow-none px-4 placeholder:text-neutral-400 font-medium text-neutral-800 resize-none min-h-[80px]"
+                    maxLength={100}
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <p className="text-xs text-neutral-500 mt-1.5">
+                  {(field.value || "").length}/100 characters
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div>
+            <p className="text-[#1E202E] font-medium text-sm mb-2">
+              Engraving Image
+            </p>
+            <input
+              ref={engravingImageRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={handleEngravingImageChange}
+            />
+            {engravingImageFile ? (
+              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
+                <span className="text-sm text-neutral-700 flex-1 truncate">
+                  {engravingImageFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onEngravingImageChange(null)}
+                  className="text-neutral-400 hover:text-neutral-600"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => engravingImageRef.current?.click()}
+                className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
+              >
+                <Upload className="size-5 text-neutral-400" />
+                <p className="text-sm text-neutral-500">Click to upload</p>
+                <p className="text-xs text-neutral-400">PNG or JPG</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (addon.category === "thermal_film") {
+      return (
+        <div className="pt-3 pl-1">
+          <FormField
+            control={form.control}
+            name="tintType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Tint Type
+                </FormLabel>
+                <ComboBox
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v)}
+                  options={TINT_OPTIONS}
+                  placeholder="Select tint type"
+                  className="w-full"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      );
+    }
+
+    if (addon.code === "edging") {
+      return (
+        <div className="pt-3 pl-1 space-y-1.5">
+          <label className="text-[#1E202E] font-medium text-sm">
+            Edging Type
+          </label>
+          <ComboBox
+            value={addonExtras[`${addon.id}:type`] || ""}
+            onValueChange={(v) =>
+              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
+            }
+            options={EDGING_OPTIONS.map((o) => ({ value: o, label: o }))}
+            placeholder="Select edging type"
+            className="w-full"
+          />
+        </div>
+      );
+    }
+
+    if (addon.code === "beveling") {
+      return (
+        <div className="pt-3 pl-1 space-y-1.5">
+          <label className="text-[#1E202E] font-medium text-sm">
+            Bevel Angle
+          </label>
+          <ComboBox
+            value={addonExtras[`${addon.id}:type`] || ""}
+            onValueChange={(v) =>
+              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
+            }
+            options={BEVELING_OPTIONS.map((o) => ({ value: o, label: o }))}
+            placeholder="Select bevel angle"
+            className="w-full"
+          />
+        </div>
+      );
+    }
+
+    if (addon.code === "glass_glazing") {
+      return (
+        <div className="pt-3 pl-1 space-y-1.5">
+          <label className="text-[#1E202E] font-medium text-sm">
+            Glazing Type
+          </label>
+          <ComboBox
+            value={addonExtras[`${addon.id}:type`] || ""}
+            onValueChange={(v) =>
+              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
+            }
+            options={GLAZING_OPTIONS.map((o) => ({ value: o, label: o }))}
+            placeholder="Select glazing type"
+            className="w-full"
+          />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderCategorySection = (category: string) => {
+    const categoryAddons = grouped[category];
+    if (!categoryAddons?.length) return null;
+
+    return (
+      <div key={category}>
+        <h3 className="text-base font-bold text-[#1E202E] mb-3">
+          {CATEGORY_LABELS[category] || category.replace(/_/g, " ")}
+        </h3>
+        <div className="space-y-3">
+          {categoryAddons.map((addon) => (
+            <div key={addon.id}>
+              <div className="flex flex-row items-center justify-between py-2">
+                <div className="space-y-0.5">
+                  <p className="text-[#1E202E] font-medium text-sm">
+                    {addon.name}
+                  </p>
+                  {addon.description && (
+                    <p className="text-sm text-neutral-500">
+                      {addon.description}
+                    </p>
+                  )}
+                </div>
+                <Switch
+                  checked={isSelected(addon.id)}
+                  onCheckedChange={(checked) => handleToggle(addon, checked)}
+                />
+              </div>
+              {renderAddonExtraFields(addon)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const allCategories = [...sortedCategories, ...extraCategories];
 
   return (
     <TabsContent
@@ -87,369 +440,106 @@ export function AddOnsStep({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {/* Left Column */}
           <div className="space-y-6 bg-card p-6 rounded-lg">
-            {/* Edge & Surface (Dynamic Addons) */}
-            <div>
-              <h3 className="text-lg font-bold text-[#1E202E] mb-2">
-                Edge & Surface
-              </h3>
-              {isLoadingAddons ? (
-                <div className="flex items-center gap-2 py-4 text-neutral-500 text-sm">
-                  <Loader2 className="animate-spin size-4" /> Loading add-ons...
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="selectedAddons"
-                    render={() => (
-                      <FormItem>
-                        {addons?.map((addon) => (
-                          <FormField
-                            key={addon.id}
-                            control={form.control}
-                            name="selectedAddons"
-                            render={({ field }) => (
-                              <FormItem
-                                key={addon.id}
-                                className="flex flex-row items-center justify-between rounded-lg p-0 py-2"
-                              >
-                                <div className="space-y-0.5">
-                                  <FormLabel className="text-[#1E202E] font-medium text-sm">
-                                    {addon.name}
-                                  </FormLabel>
-                                  <p className="text-sm text-neutral-500 capitalize">
-                                    {String(addon.category)
-                                      .toLowerCase()
-                                      .replace("_", " ")}
-                                  </p>
-                                </div>
-                                <FormControl>
-                                  <Switch
-                                    checked={
-                                      field.value?.includes(addon.id) || false
-                                    }
-                                    onCheckedChange={(checked) =>
-                                      checked
-                                        ? field.onChange([
-                                            ...(field.value || []),
-                                            addon.id,
-                                          ])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (v) => v !== addon.id,
-                                            ),
-                                          )
-                                    }
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        ))}
-                        <FormMessage />
-                      </FormItem>
+            {isLoadingAddons ? (
+              <div className="flex items-center gap-2 py-4 text-neutral-500 text-sm">
+                <Loader2 className="animate-spin size-4" /> Loading add-ons...
+              </div>
+            ) : (
+              <>
+                {allCategories.map((cat, i) => (
+                  <div key={cat}>
+                    {renderCategorySection(cat)}
+                    {i < allCategories.length - 1 && (
+                      <hr className="border-neutral-100 mt-6" />
                     )}
-                  />
-                </div>
-              )}
-            </div>
-
-            <hr className="border-neutral-100" />
-
-            {/* Structural */}
-            <div>
-              <h3 className="text-lg font-bold text-[#1E202E] mb-2">
-                Structural
-              </h3>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="drillHoles"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-[#1E202E] font-medium text-sm">
-                          Drill Holes
-                        </FormLabel>
-                        <p className="text-sm text-neutral-500">
-                          Add mounting or drainage holes
-                        </p>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {drillHoles && (
-                  <div className="space-y-4 pt-2">
-                    <FormField
-                      control={form.control}
-                      name="numberOfHoles"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#1E202E] font-medium text-sm">
-                            Number of Holes{" "}
-                            <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                type="number"
-                                placeholder="0"
-                                className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
-                                holes
-                              </span>
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="holeDiameter"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#1E202E] font-medium text-sm">
-                            Hole Diameter
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                                <SelectValue placeholder="Select thickness" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="1/4">1/4&quot;</SelectItem>
-                              <SelectItem value="1/2">1/2&quot;</SelectItem>
-                              <SelectItem value="3/4">3/4&quot;</SelectItem>
-                              <SelectItem value="1">1&quot;</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-                )}
-              </div>
-            </div>
+                ))}
 
-            <hr className="border-neutral-100" />
-
-            {/* Thermal & Film */}
-            <div>
-              <h3 className="text-lg font-bold text-[#1E202E] mb-2">
-                Thermal & Film
-              </h3>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="addTintFilm"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-[#1E202E] font-medium text-sm">
-                          Add Tint Film
-                        </FormLabel>
-                        <p className="text-sm text-neutral-500">
-                          Privacy or UV protection tint
-                        </p>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {addTintFilm && (
-                  <div className="space-y-4 pt-2">
-                    <FormField
-                      control={form.control}
-                      name="tintType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#1E202E] font-medium text-sm">
-                            Tint Type
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                                <SelectValue placeholder="Select tint type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="dark">Dark Tint</SelectItem>
-                              <SelectItem value="medium">
-                                Medium Tint
-                              </SelectItem>
-                              <SelectItem value="light">Light Tint</SelectItem>
-                              <SelectItem value="frosted">Frosted</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <hr className="border-neutral-100" />
-
-            {/* Decorative */}
-            <div>
-              <h3 className="text-lg font-bold text-[#1E202E] mb-2">
-                Decorative
-              </h3>
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="engraving"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg p-0">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-[#1E202E] font-medium text-sm">
-                          Engraving
-                        </FormLabel>
-                        <p className="text-sm text-neutral-500">
-                          Custom text or image engraving
-                        </p>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {engraving && (
-                  <div className="space-y-4 pt-2">
-                    <FormField
-                      control={form.control}
-                      name="engravingType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#1E202E] font-medium text-sm">
-                            Engraving Type
-                          </FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="shadow-none h-11 px-4 text-neutral-800 font-medium font-sans">
-                                <SelectValue placeholder="Select Engraving Type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="laser">
-                                Laser Engraving
-                              </SelectItem>
-                              <SelectItem value="sand_blast">
-                                Sand Blast
-                              </SelectItem>
-                              <SelectItem value="hand_carved">
-                                Hand Carved
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="engravingText"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[#1E202E] font-medium text-sm">
-                            Engraving Text{" "}
-                            <span className="text-red-500">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Enter text to engrave"
-                              className="shadow-none px-4 placeholder:text-neutral-400 font-medium text-neutral-800 resize-none min-h-[80px]"
-                              maxLength={100}
-                              {...field}
-                              value={field.value || ""}
-                            />
-                          </FormControl>
-                          <p className="text-xs text-neutral-500 mt-1.5">
-                            {(field.value || "").length}/100 characters
-                          </p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
+                {/* Hardware from Inventory */}
+                {(isLoadingHardware || hardwareItems.length > 0) && (
+                  <>
+                    {allCategories.length > 0 && (
+                      <hr className="border-neutral-100" />
+                    )}
                     <div>
-                      <p className="text-[#1E202E] font-medium text-sm mb-2">
-                        Engraving Image
-                      </p>
-                      <input
-                        ref={engravingImageRef}
-                        type="file"
-                        accept="image/png,image/jpeg"
-                        className="hidden"
-                        onChange={handleEngravingImageChange}
-                      />
-                      {engravingImageFile ? (
-                        <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
-                          <span className="text-sm text-neutral-700 flex-1 truncate">
-                            {engravingImageFile.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => onEngravingImageChange(null)}
-                            className="text-neutral-400 hover:text-neutral-600"
-                          >
-                            <X className="size-4" />
-                          </button>
+                      <h3 className="text-base font-bold text-[#1E202E] mb-3">
+                        Hardware
+                      </h3>
+                      {isLoadingHardware ? (
+                        <div className="flex items-center gap-2 py-2 text-neutral-500 text-sm">
+                          <Loader2 className="animate-spin size-4" /> Loading...
                         </div>
                       ) : (
-                        <div
-                          onClick={() => engravingImageRef.current?.click()}
-                          className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
-                        >
-                          <Upload className="size-5 text-neutral-400" />
-                          <p className="text-sm text-neutral-500">
-                            Click to upload
-                          </p>
-                          <p className="text-xs text-neutral-400">PNG or JPG</p>
+                        <div className="space-y-3">
+                          {hardwareItems.map((item) => {
+                            const qty = hardwareQty[item.id] || "";
+                            const enabled = !!qty && qty !== "0";
+                            return (
+                              <div key={item.id}>
+                                <div className="flex flex-row items-center justify-between py-2">
+                                  <div className="space-y-0.5">
+                                    <p className="text-[#1E202E] font-medium text-sm">
+                                      {item.material_name}
+                                    </p>
+                                    {item.description && (
+                                      <p className="text-sm text-neutral-500">
+                                        {item.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Switch
+                                    checked={enabled}
+                                    onCheckedChange={(checked) => {
+                                      setHardwareQty((prev) => ({
+                                        ...prev,
+                                        [item.id]: checked ? "1" : "",
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                {enabled && (
+                                  <div className="pt-2 pl-1 space-y-1.5">
+                                    <label className="text-[#1E202E] font-medium text-sm">
+                                      Quantity
+                                    </label>
+                                    <div className="relative">
+                                      <Input
+                                        type="number"
+                                        min="1"
+                                        placeholder="1"
+                                        value={qty}
+                                        onChange={(e) =>
+                                          setHardwareQty((prev) => ({
+                                            ...prev,
+                                            [item.id]: e.target.value,
+                                          }))
+                                        }
+                                        className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                                      />
+                                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                                        {item.unit || "units"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                  </div>
+                  </>
                 )}
-              </div>
-            </div>
+
+                {!isLoadingAddons &&
+                  allCategories.length === 0 &&
+                  hardwareItems.length === 0 && (
+                    <p className="text-sm text-neutral-500 py-4">
+                      No add-ons available.
+                    </p>
+                  )}
+              </>
+            )}
           </div>
 
           {/* Right Column */}
@@ -492,7 +582,7 @@ export function AddOnsStep({
             </div>
 
             {/* Upload Specifications */}
-            <div className="space-y-4">
+            <div className="space-y-4 pt-4">
               <div>
                 <h3 className="text-base font-bold text-[#1E202E]">
                   Upload Specifications

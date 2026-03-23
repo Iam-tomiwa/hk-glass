@@ -1,4 +1,4 @@
-import { OrderResponse } from "@/services/types/openapi";
+import { OrderResponse, OrderAddonResponse } from "@/services/types/openapi";
 
 type SpecRow = {
   label: string;
@@ -11,7 +11,7 @@ type SpecRow = {
  */
 export function useOrderDetails(order: OrderResponse | undefined) {
   const glassSpecs: SpecRow[] = [
-    { label: "Glass Type", value: (order as any)?.glass_type?.name ?? "—" },
+    { label: "Glass Type", value: order?.glass_type?.name ?? "—" },
     {
       label: "Dimensions",
       value: order ? `${order.width}" × ${order.length}"` : "—",
@@ -22,29 +22,31 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.curve_diameter
       ? [{ label: "Curve Diameter", value: order.curve_diameter }]
       : []),
+    ...(order?.custom_shape_spec
+      ? [{ label: "Custom Shape", value: order.custom_shape_spec }]
+      : []),
     { label: "Thickness", value: order?.thickness ?? "—" },
   ];
 
   const addOns: SpecRow[] = [
-    {
-      label: "Drill Holes",
-      value: order?.drill_holes_count
-        ? String(order.drill_holes_count)
-        : "None",
-    },
-    ...(order?.hole_diameter
-      ? [{ label: "Hole Diameter", value: String(order.hole_diameter) }]
+    ...(order?.drill_holes_count
+      ? [
+          { label: "Drill Holes", value: String(order.drill_holes_count) },
+          ...(order.hole_diameter
+            ? [{ label: "Hole Diameter", value: String(order.hole_diameter) }]
+            : []),
+        ]
       : []),
     ...(order?.tint_type
-      ? [{ label: "Tint Type", value: order.tint_type }]
+      ? [{ label: "Tint Type", value: String(order.tint_type) }]
       : []),
     ...(order?.engraving_text
-      ? [{ label: "Engraving", value: order.engraving_text }]
+      ? [{ label: "Engraving", value: String(order.engraving_text) }]
       : []),
-    ...((order as any)?.addons?.length > 0
-      ? (order as any).addons.map((a: any) => ({
+    ...(order?.addons?.length > 0
+      ? order.addons.map((a: OrderAddonResponse) => ({
           label: a.addon?.name ?? "Add-on",
-          value: `₦${a.calculated_price}`,
+          value: "Yes",
         }))
       : []),
   ];

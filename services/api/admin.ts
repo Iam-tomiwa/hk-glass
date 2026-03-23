@@ -143,6 +143,26 @@ export async function deactivateStaffDevice(
   );
 }
 
+// Reactivate Admin Device
+export async function reactivateAdminDevice(
+  device_id: string,
+): Promise<DeviceResponse> {
+  return await post<DeviceResponse>(
+    `/api/admin/devices/${device_id}/reactivate`,
+    {},
+  );
+}
+
+// Reactivate Staff Device
+export async function reactivateStaffDevice(
+  device_id: string,
+): Promise<DeviceResponse> {
+  return await post<DeviceResponse>(
+    `/api/admin/staff-devices/${device_id}/reactivate`,
+    {},
+  );
+}
+
 // Delete Admin Device
 export async function deleteAdminDevice(device_id: string): Promise<any> {
   return await del<any>(`/api/admin/devices/${device_id}`);

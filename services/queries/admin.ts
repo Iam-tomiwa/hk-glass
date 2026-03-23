@@ -23,6 +23,8 @@ import {
   listStaffDevices,
   listCombinedDevices,
   deactivateStaffDevice,
+  reactivateAdminDevice,
+  reactivateStaffDevice,
   deleteStaffDevice,
   listStaff,
   listOrders,
@@ -64,7 +66,7 @@ export function useCreateGlassType() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -91,7 +93,7 @@ export function useUpdateGlassType() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Glass type updated successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -106,7 +108,7 @@ export function useDeleteGlassType() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Glass type deleted successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -120,7 +122,7 @@ export function useCreateAddon() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Addon created successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -142,7 +144,7 @@ export function useUpdateAddon() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Addon updated successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -156,7 +158,7 @@ export function useDeleteAddon() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Addon deleted successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -178,7 +180,7 @@ export function useUpdatePricingSettings() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Pricing settings updated successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -193,7 +195,7 @@ export function useRegisterAdminDevice() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Admin device registered successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -209,13 +211,13 @@ export function useListAdminDevices() {
 export function useDeactivateAdminDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) =>
+    mutationFn: ({ device_id, data }: { device_id: string; data?: unknown }) =>
       deactivateAdminDevice(device_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Admin device deactivated successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -230,7 +232,7 @@ export function useRegisterStaffDevice() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -260,13 +262,13 @@ export function useCurrentDevice() {
 export function useDeactivateStaffDevice() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ device_id, data }: { device_id: string; data?: any }) =>
+    mutationFn: ({ device_id, data }: { device_id: string; data?: unknown }) =>
       deactivateStaffDevice(device_id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -281,7 +283,7 @@ export function useDeleteAdminDevice() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Device deleted successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -296,7 +298,37 @@ export function useDeleteStaffDevice() {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
       toast.success("Device deleted successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useReactivateAdminDevice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ device_id }: { device_id: string }) =>
+      reactivateAdminDevice(device_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Device reactivated successfully.");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useReactivateStaffDevice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ device_id }: { device_id: string }) =>
+      reactivateStaffDevice(device_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Device reactivated successfully.");
+    },
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -363,10 +395,10 @@ export function useListRecentOrders(params?: { limit?: number }) {
 }
 
 export function useGetDevices(params?: {
-  token?: string | any | null;
-  code?: string | any | null;
+  token?: string | null;
+  code?: string | null;
 }) {
-  return useQuery<any>({
+  return useQuery({
     queryKey: queryKeys.admin.list(params),
     queryFn: () => setupDevice(params),
   });

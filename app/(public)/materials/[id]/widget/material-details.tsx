@@ -1,22 +1,174 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { useRef, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Loader2, MirrorRectangular, X } from "lucide-react";
+import { Loader2, MirrorRectangular, X, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
-  // useGetInventoryItem,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  useGetInventoryItem,
   useDeleteInventoryItem,
+  useListGlassSheets,
 } from "@/services/queries/inventory";
-import { InventoryItemResponse } from "@/services/types/openapi";
+import {
+  GlassSheetResponse,
+  InventoryGlassSheetStatus,
+} from "@/services/types/openapi";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import EmptyState from "@/components/empty-state";
 import { Header } from "@/components/header";
 import { AdjustStockModal } from "@/app/admin/(protected-routes)/inventory/widgets/adjust-stock-modal";
+import { ComboBox } from "@/components/ui/combo-box-2";
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  glass: "Glass Sheet",
+  hardware: "Hardware",
+  others: "Others",
+};
+
+const SHEET_STATUS_CONFIG: Record<
+  InventoryGlassSheetStatus,
+  { label: string; className: string; dotClass: string }
+> = {
+  available: {
+    label: "In Stock",
+    className: "bg-[#B8FAB2] text-[#327C3F]",
+    dotClass: "bg-[#327C3F]",
+  },
+  used: {
+    label: "Used",
+    className: "bg-[#FAEEB2] text-[#7C6032]",
+    dotClass: "bg-[#7C6032]",
+  },
+  damaged: {
+    label: "Damage",
+    className: "bg-[#FAB2B2] text-[#7C3232]",
+    dotClass: "bg-[#7C3232]",
+  },
+  retired: {
+    label: "Retired",
+    className: "bg-neutral-100 text-neutral-500",
+    dotClass: "bg-neutral-400",
+  },
+};
+
+function SheetStatusBadge({ status }: { status: InventoryGlassSheetStatus }) {
+  const cfg = SHEET_STATUS_CONFIG[status] ?? SHEET_STATUS_CONFIG.available;
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        "capitalize rounded-full text-xs font-semibold border-none",
+        cfg.className,
+      )}
+    >
+      {cfg.label}
+    </Badge>
+  );
+}
+
+function QRModal({
+  sheet,
+  open,
+  onClose,
+}: {
+  sheet: GlassSheetResponse | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !sheet) return;
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.download = `${sheet.serial_code}-qr.png`;
+    a.href = url;
+    a.click();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[320px] gap-4">
+        <DialogHeader className="gap-1">
+          <DialogTitle className="text-base font-bold text-[#1E202E]">
+            View QR Code
+          </DialogTitle>
+          <DialogDescription>
+            View QR Code for item {sheet?.serial_code}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex justify-center p-4">
+          <QRCodeCanvas
+            ref={canvasRef}
+            value={sheet?.serial_code ?? ""}
+            size={200}
+            level="M"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <Button className="flex-1" onClick={handleDownload}>
+            Download QR
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SheetCard({
+  sheet,
+  onViewQR,
+}: {
+  sheet: GlassSheetResponse;
+  onViewQR: (sheet: GlassSheetResponse) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3">
+      <p className="font-semibold text-sm text-[#1E202E]">
+        {sheet.serial_code}
+      </p>
+
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-neutral-500">Status</span>
+        <SheetStatusBadge status={sheet.status} />
+      </div>
+
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-neutral-500">Order:</span>
+        <span className="text-[#1E202E] font-medium">
+          {sheet.order_reference ?? "—"}
+        </span>
+      </div>
+
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-neutral-500">QR Code:</span>
+        <button
+          onClick={() => onViewQR(sheet)}
+          className="text-[#1E202E] font-medium underline underline-offset-2 text-sm"
+        >
+          View QR code
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function MaterialDetailsPage({
   isAdmin,
@@ -28,24 +180,16 @@ export default function MaterialDetailsPage({
   const itemId = params.id as string;
   const { openConfirmModal } = useConfirmations();
 
-  // const { data: item, isLoading, isError } = useGetInventoryItem(itemId);
-  const item: InventoryItemResponse = {
-    id: itemId,
-    material_name: "Glass Sheet",
-    size: "3m x 2m",
-    thickness: "10",
-    stock_count: 42,
-    low_stock_threshold: 5,
-    unit: "sheets",
-    status: "in_stock",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-  const isLoading = false;
-  const isError = false;
+  const { data: item, isLoading, isError } = useGetInventoryItem(itemId);
+  const { data: sheets = [], isLoading: sheetsLoading } = useListGlassSheets(
+    item?.item_type === "glass" ? itemId : "",
+  );
   const { mutate: deleteItem } = useDeleteInventoryItem();
 
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const [qrSheet, setQrSheet] = useState<GlassSheetResponse | null>(null);
+  const [sheetSearch, setSheetSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   if (isLoading) {
     return (
@@ -65,26 +209,42 @@ export default function MaterialDetailsPage({
     );
   }
 
-  const qrValue = typeof window !== "undefined" ? window.location.href : itemId;
-
   const handleDelete = () => {
     openConfirmModal(
       `Are you sure you want to delete "${item.material_name}"? This action cannot be undone.`,
       () => {
         deleteItem(
           { item_id: item.id },
-          {
-            onSuccess: () => router.push("/admin/inventory"),
-          },
+          { onSuccess: () => router.push("/admin/inventory") },
         );
       },
       { title: "Delete Material" },
     );
   };
 
+  const filteredSheets = sheets.filter((s) => {
+    const matchesSearch = s.serial_code
+      .toLowerCase()
+      .includes(sheetSearch.toLowerCase());
+    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const itemStatusCfg =
+    item.status === "in_stock"
+      ? {
+          label: "In Stock",
+          className: "bg-[#B8FAB2] text-[#327C3F]",
+          dotClass: "bg-[#327C3F]",
+        }
+      : {
+          label: item.status.split("_").join(" "),
+          className: "bg-[#FAEEB2] text-[#7C6632]",
+          dotClass: "bg-[#7C6632]",
+        };
+
   return (
-    <div className=" bg-[#F8F9FA] flex flex-col">
-      {/* Header */}
+    <div className="bg-[#F8F9FA] flex flex-col min-h-screen">
       <Header title="Material Details" description={`Material ID: ${itemId}`}>
         <Button
           variant="ghost"
@@ -96,94 +256,128 @@ export default function MaterialDetailsPage({
         </Button>
       </Header>
 
-      {/* Main Content Card */}
-      <Card className="max-w-md w-full my-10 mx-auto">
-        <CardContent className="flex flex-col items-center">
-          <div className="mb-6 w-full text-center">
-            <h3 className="font-bold text-[#1E202E] mb-1">Item QR Code</h3>
-            <p className="text-sm text-neutral-500">
-              Scan to view item details in the system
-            </p>
+      <div className="container max-w-3xl py-8 space-y-6">
+        {/* Stock Information Card */}
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 space-y-4">
+          <h3 className="font-bold text-[#1E202E]">Stock Information</h3>
+
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-neutral-500 font-medium">Status:</span>
+            <Badge
+              variant="secondary"
+              className={cn(
+                "capitalize rounded-full text-xs font-semibold border-none",
+                itemStatusCfg.className,
+              )}
+            >
+              {itemStatusCfg.label}
+            </Badge>
           </div>
 
-          <div className="bg-white p-4 mb-5">
-            <QRCodeSVG
-              value={qrValue}
-              size={200}
-              level="M"
-              className="w-full h-auto"
-            />
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-neutral-500 font-medium">Material Type:</span>
+            <span className="font-semibold text-[#1E202E]">
+              {ITEM_TYPE_LABELS[item.item_type] ?? item.item_type}
+            </span>
           </div>
 
-          <div className="w-full space-y-6 border-t pt-5">
-            <h3 className="font-bold text-[#1E202E]">Item Information</h3>
+          {item.size && (
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-neutral-500 font-medium">Item Size:</span>
+              <span className="font-semibold text-[#1E202E]">{item.size}</span>
+            </div>
+          )}
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral-500 font-medium">Material:</span>
-                <span className="font-semibold text-[#1E202E]">
-                  {item.material_name}
-                </span>
-              </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-neutral-500 font-medium">Item Quantity</span>
+            <span className="font-semibold text-[#1E202E]">
+              {item.stock_count} {item.unit ?? "units"}
+            </span>
+          </div>
 
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral-500 font-medium">Size:</span>
-                <span className="font-semibold text-[#1E202E]">
-                  {item.size || "—"}
-                </span>
-              </div>
+          {item.description && (
+            <div className="flex flex-col gap-1.5 text-sm">
+              <span className="text-neutral-500 font-medium">
+                Item Description
+              </span>
+              <p className="text-[#1E202E] leading-relaxed">
+                {item.description}
+              </p>
+            </div>
+          )}
 
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral-500 font-medium">
-                  Thickness/Type:
-                </span>
-                <span className="font-semibold text-[#1E202E]">
-                  {item.thickness ? `${item.thickness}mm` : "—"}
-                </span>
-              </div>
+          {isAdmin && (
+            <div className="flex gap-3 pt-2">
+              <Button onClick={() => setAdjustOpen(true)}>
+                Adjust Stock Level
+              </Button>
+              <Button variant="outline" onClick={handleDelete}>
+                Delete Stock
+              </Button>
+            </div>
+          )}
+        </div>
 
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral-500 font-medium">
-                  Stock Level:
-                </span>
-                <span className="font-semibold text-[#1E202E]">
-                  {item.stock_count} {item.unit || "units"}
-                </span>
+        {/* Glass Sheets Grid — glass items only */}
+        {item.item_type === "glass" && (
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 space-y-4">
+            {/* Filters */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 size-4" />
+                <Input
+                  placeholder="Search by name or reference"
+                  value={sheetSearch}
+                  onChange={(e) => setSheetSearch(e.target.value)}
+                  className="pl-9 h-9"
+                />
               </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral-500 font-medium">Status:</span>
-                <Badge
-                  variant="secondary"
-                  className={cn(
-                    "capitalize px-3 py-1 rounded-full text-xs font-semibold",
-                    item.status === "in_stock"
-                      ? "bg-[#B8FAB2] text-[#327C3F] border-none"
-                      : "bg-[#FAEEB2] text-[#7C6632] border-none",
-                  )}
-                >
-                  {item.status.split("_").join(" ")}
-                </Badge>
-              </div>
+              <ComboBox
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "available", label: "In Stock" },
+                  { value: "used", label: "Used" },
+                  { value: "damaged", label: "Damaged" },
+                  { value: "retired", label: "Retired" },
+                ]}
+                className="w-[150px]"
+              />
             </div>
 
-            {isAdmin && (
-              <div className="flex gap-3 pt-5 border-t">
-                <Button onClick={() => setAdjustOpen(true)}>
-                  Adjust Stock Level
-                </Button>
-                <Button variant="destructive" onClick={handleDelete}>
-                  Delete Stock
-                </Button>
+            {sheetsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="size-6 animate-spin text-neutral-400" />
+              </div>
+            ) : filteredSheets.length === 0 ? (
+              <p className="text-sm text-neutral-400 text-center py-8">
+                No sheets found
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {filteredSheets.map((sheet) => (
+                  <SheetCard
+                    key={sheet.sheet_id}
+                    sheet={sheet}
+                    onViewQR={setQrSheet}
+                  />
+                ))}
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       <AdjustStockModal
         item={adjustOpen ? item : null}
         onClose={() => setAdjustOpen(false)}
+      />
+
+      <QRModal
+        sheet={qrSheet}
+        open={!!qrSheet}
+        onClose={() => setQrSheet(null)}
       />
     </div>
   );

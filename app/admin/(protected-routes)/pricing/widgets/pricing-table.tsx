@@ -1,23 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Blocks, Search } from "lucide-react";
+import { Blocks } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import SuspenseContainer from "@/components/custom-suspense";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import DeleteEntityButton, {
   DeleteEntityType,
 } from "@/components/delete-entity-button";
+import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
+import SearchInput from "@/components/search-input";
 
 export type PriceMap = Record<string, string>;
 
@@ -36,24 +28,26 @@ export default function PricingTable({
   onSave,
   deleteType,
   variableName = "Price (₦)",
+  nameHeader = "Service",
+  title,
+  showUnit = true,
 }: {
   rows: PricingRow[];
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
   onSave: (id: string, newPrice: string) => Promise<void>;
-  /** When provided, each row shows a Delete button backed by DeleteEntityButton */
   deleteType?: DeleteEntityType;
   variableName?: string;
+  nameHeader?: string;
+  title?: string;
+  showUnit?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
-  const [confirmSave, setConfirmSave] = useState<{
-    id: string;
-    value: string;
-  } | null>(null);
+  const { openConfirmModal } = useConfirmations();
 
   const filtered = rows.filter((r) =>
     r.name.toLowerCase().includes(search.toLowerCase()),
@@ -64,42 +58,45 @@ export default function PricingTable({
     setEditValue(String(row.price));
   };
 
-  const handleConfirmSave = async () => {
-    if (!confirmSave) return;
-    setPendingSaveId(confirmSave.id);
-    setConfirmSave(null);
-    try {
-      await onSave(confirmSave.id, confirmSave.value);
-      setEditingId(null);
-    } finally {
-      setPendingSaveId(null);
-    }
+  const handleSavePrice = (id: string, value: string) => {
+    openConfirmModal(
+      "Are you sure you want to update this price? This will affect new orders.",
+      async () => {
+        setPendingSaveId(id);
+        try {
+          await onSave(id, value);
+          setEditingId(null);
+        } finally {
+          setPendingSaveId(null);
+        }
+      },
+      { title: "Save Price Change", confirmText: "Save" },
+    );
   };
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
-        <h2 className="text-[15px] font-semibold text-[#1E202E]">Inventory</h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
-          <Input
-            placeholder="Search by name or reference"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 w-64 text-sm"
-          />
-        </div>
+        <h2 className="text-[15px] font-semibold text-[#1E202E]">{title}</h2>
+        <SearchInput
+          containerClass="min-w-64"
+          placeholder="Search by name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
       <table className="w-full">
         <thead>
           <tr className="border-b border-neutral-100 bg-neutral-50/60">
             <th className="text-left text-[13px] font-semibold px-6 py-3 w-1/3">
-              Service
+              {nameHeader}
             </th>
-            <th className="text-left text-[13px] font-semibold px-4 py-3 w-1/4">
-              Unit
-            </th>
+            {showUnit && (
+              <th className="text-left text-[13px] font-semibold px-4 py-3 w-1/4">
+                Unit
+              </th>
+            )}
             <th className="text-left text-[13px] font-semibold px-4 py-3">
               {variableName}
             </th>
@@ -140,9 +137,11 @@ export default function PricingTable({
                   <td className="px-6 py-4 text-sm font-medium text-[#1E202E]">
                     {row.name}
                   </td>
-                  <td className="px-4 py-4 text-sm text-neutral-500">
-                    {row.unit}
-                  </td>
+                  {showUnit && (
+                    <td className="px-4 py-4 text-sm text-neutral-500">
+                      {row.unit}
+                    </td>
+                  )}
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       {isEditing ? (
@@ -161,13 +160,12 @@ export default function PricingTable({
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-2 justify-end">
+                    <div className="flex items-center gap-2 justify-center">
                       <Button
                         variant="outline"
-                        size="sm"
                         onClick={() =>
                           isEditing
-                            ? setConfirmSave({ id: row.id, value: editValue })
+                            ? handleSavePrice(row.id, editValue)
                             : handleEditClick(row)
                         }
                         disabled={isSaving}
@@ -175,8 +173,8 @@ export default function PricingTable({
                         {isSaving
                           ? "Saving..."
                           : isEditing
-                            ? "Save Price"
-                            : "Edit Price"}
+                            ? `Save ${variableName.split(" ")[0]}`
+                            : `Edit ${variableName.split(" ")[0]}`}
                       </Button>
                       {deleteType && (
                         <DeleteEntityButton
@@ -195,27 +193,6 @@ export default function PricingTable({
             })}
         </tbody>
       </table>
-
-      <AlertDialog
-        open={!!confirmSave}
-        onOpenChange={(v) => !v && setConfirmSave(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Save Price Change</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to update this price? This will affect new
-              orders.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmSave}>
-              Save
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

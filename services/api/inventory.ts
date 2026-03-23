@@ -4,11 +4,26 @@ import {
   InventoryItemCreate,
   InventoryItemUpdate,
   InventoryAdjustRequest,
+  InventoryItemType,
+  GlassSheetResponse,
 } from "../types/openapi";
 
+export interface InventoryItemPriceUpdate {
+  price?: number | string | null;
+  unit_price?: number | string | null;
+  price_per_unit?: number | string | null;
+  price_per_sqm?: number | string | null;
+}
+
 // List Inventory
-export async function listInventory(): Promise<InventoryItemResponse[]> {
-  return await get<InventoryItemResponse[]>(`/api/admin/inventory`);
+export async function listInventory(
+  type?: InventoryItemType,
+  isAdmin?: boolean,
+): Promise<InventoryItemResponse[]> {
+  const params = type ? `?type=${type}` : "";
+  return await get<InventoryItemResponse[]>(
+    isAdmin ? `/api/admin/inventory${params}` : `/api/inventory${params}`,
+  );
 }
 
 // Create Inventory Item
@@ -45,9 +60,32 @@ export async function adjustInventoryItem(
   );
 }
 
-// Get Inventory Item
+// Update Inventory Item Price
+export async function updateInventoryItemPrice(
+  item_id: string,
+  data: InventoryItemPriceUpdate,
+): Promise<InventoryItemResponse> {
+  return await patch<InventoryItemResponse>(
+    `/api/admin/inventory/${item_id}/price`,
+    data,
+  );
+}
+
+// Get Inventory Item (via scan/item endpoint)
 export async function getInventoryItem(
   item_id: string,
 ): Promise<InventoryItemResponse> {
-  return await get<InventoryItemResponse>(`/api/admin/inventory/${item_id}`);
+  return await get<InventoryItemResponse>(
+    `/api/admin/inventory/scan/item/${item_id}`,
+  );
+}
+
+// List Glass Sheets for an inventory item
+// Backend endpoint: GET /admin/inventory/{item_id}/glass-sheets
+export async function listGlassSheets(
+  item_id: string,
+): Promise<GlassSheetResponse[]> {
+  return await get<GlassSheetResponse[]>(
+    `/api/admin/inventory/${item_id}/glass-sheets`,
+  );
 }

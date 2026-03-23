@@ -10,12 +10,72 @@ import { ColumnDef } from "@/components/data-table/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ComboBox } from "@/components/ui/combo-box-2";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { AddMaterialModal } from "./widgets/add-material-modal";
 import { AdjustStockModal } from "./widgets/adjust-stock-modal";
-import { useListInventory } from "@/services/queries/inventory";
+import {
+  useListInventory,
+  useDeleteInventoryItem,
+} from "@/services/queries/inventory";
 import { InventoryItemResponse } from "@/services/types/openapi";
-import DeleteEntityButton from "@/components/delete-entity-button";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  glass: "Glass Sheet",
+  hardware: "Hardware",
+  others: "Others",
+};
+
+function formatCurrency(value?: string | null) {
+  if (!value) return "—";
+  const num = parseFloat(value);
+  if (isNaN(num)) return "—";
+  return `₦ ${num.toLocaleString("en-NG", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function RowActions({
+  row,
+  onAdjust,
+}: {
+  row: InventoryItemResponse;
+  onAdjust: (row: InventoryItemResponse) => void;
+}) {
+  const router = useRouter();
+  const { mutate: deleteItem } = useDeleteInventoryItem();
+  return (
+    <>
+      <DropdownMenuItem onClick={() => onAdjust(row)}>
+        Adjust Stock
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onClick={() => router.push(`/admin/inventory/${row.id}`)}
+      >
+        View Details
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        className="text-red-600 focus:text-red-600"
+        onClick={() => deleteItem({ item_id: row.id })}
+      >
+        Delete Item
+      </DropdownMenuItem>
+    </>
+  );
+}
 
 export default function InventoryPage() {
   const [page, setPage] = useState(1);
@@ -29,26 +89,32 @@ export default function InventoryPage() {
 
   const columns: ColumnDef[] = [
     {
+      field: "material_id",
+      headerName: "Material ID",
+    },
+    {
+      field: "item_type",
+      headerName: "Material Type",
+      valueGetter: (row) => ITEM_TYPE_LABELS[row.item_type] ?? row.item_type,
+    },
+    {
       field: "material_name",
-      headerName: "Material",
+      headerName: "Item Name",
     },
     {
-      field: "size",
-      headerName: "Size",
+      field: "stock_count",
+      headerName: "Item Quantity",
+      renderCell: (row) => <span>{row.stock_count}</span>,
     },
     {
-      field: "thickness",
-      headerName: "Thickness/Type",
-      valueGetter: (row) => `${row.thickness}mm`,
+      field: "price",
+      headerName: "Stock Amount",
+      valueGetter: (row) => formatCurrency(row.unit_price ?? row.price),
     },
     {
-      field: "stockLevel",
-      headerName: "Stock Level",
-      renderCell: (row) => (
-        <span>
-          {row.stock_count} {row.unit}
-        </span>
-      ),
+      field: "created_at",
+      headerName: "Created on:",
+      valueGetter: (row) => formatDate(row.created_at),
     },
     {
       field: "status",
@@ -68,6 +134,12 @@ export default function InventoryPage() {
       ),
     },
   ];
+
+  const rows = (data || []).map((el, index) => ({
+    ...el,
+    material_id: `MAT-${new Date(el.created_at).getFullYear()}-${String(index + 1).padStart(3, "0")}`,
+    actions: <RowActions row={el} onAdjust={(r) => setAdjustTarget(r)} />,
+  }));
 
   return (
     <div className="space-y-0 bg-[#F8F9FA] min-h-screen">
@@ -97,8 +169,8 @@ export default function InventoryPage() {
                     onValueChange={(v) => setStatusFilter(v)}
                     options={[
                       { value: "all", label: "All statuses" },
-                      { value: "in-stock", label: "In Stock" },
-                      { value: "low-stock", label: "Low Stock" },
+                      { value: "in_stock", label: "In Stock" },
+                      { value: "low_stock", label: "Low Stock" },
                     ]}
                     placeholder="All statuses"
                     className="w-[150px]"
@@ -106,33 +178,7 @@ export default function InventoryPage() {
                 </div>
               </div>
             }
-            rows={(data || []).map((el) => ({
-              ...el,
-              actions: (
-                <div className="">
-                  <Button
-                    variant={"ghost"}
-                    className={"w-full"}
-                    onClick={() => setAdjustTarget(el)}
-                  >
-                    Adjust Stock
-                  </Button>
-
-                  <Button variant={"ghost"} className={"w-full"}>
-                    <Link href={`/admin/inventory/${el.id}`}>View Details</Link>
-                  </Button>
-
-                  <DeleteEntityButton
-                    btnProps={{ variant: "ghost", className: "w-full" }}
-                    type="inventory-item"
-                    id={el.id}
-                    name={el.material_name}
-                  >
-                    Delete Item
-                  </DeleteEntityButton>
-                </div>
-              ),
-            }))}
+            rows={rows}
             columns={columns}
             page={page}
             setPage={setPage}

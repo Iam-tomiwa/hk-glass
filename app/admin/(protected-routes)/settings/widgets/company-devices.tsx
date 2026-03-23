@@ -9,26 +9,16 @@ import { Button } from "@/components/ui/button";
 
 import { ComboBox } from "@/components/ui/combo-box-2";
 import {
-  useListCombinedDevices,
   useDeactivateAdminDevice,
   useDeactivateStaffDevice,
+  useReactivateAdminDevice,
+  useReactivateStaffDevice,
   useDeleteAdminDevice,
   useDeleteStaffDevice,
+  useListStaffDevices,
 } from "@/services/queries/admin";
 import { CombinedDeviceResponse } from "@/services/types/openapi";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
-
-function RoleBadge({ role }: { role: string }) {
-  const isAdmin = role.toLowerCase() === "admin";
-  return (
-    <Badge
-      variant={isAdmin ? "secondary" : "info"}
-      className={isAdmin ? "bg-[#F3E8FF] text-[#7E22CE]" : undefined}
-    >
-      {role}
-    </Badge>
-  );
-}
 
 function StatusBadge({ isActive }: { isActive: boolean }) {
   return (
@@ -53,26 +43,57 @@ export default function CompanyDevices() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
   const { openConfirmModal } = useConfirmations();
-  const { data = [], isLoading } = useListCombinedDevices();
+  const { data = [], isLoading } = useListStaffDevices();
   const deactivateAdmin = useDeactivateAdminDevice();
   const deactivateStaff = useDeactivateStaffDevice();
+  const reactivateAdmin = useReactivateAdminDevice();
+  const reactivateStaff = useReactivateStaffDevice();
   const deleteAdmin = useDeleteAdminDevice();
   const deleteStaff = useDeleteStaffDevice();
 
-  const handleRevoke = (device: CombinedDeviceResponse) => {
-    if (device.device_type.toLowerCase() === "admin") {
-      deactivateAdmin.mutate({ device_id: device.id });
-    } else {
-      deactivateStaff.mutate({ device_id: device.id });
-    }
+  const isAdmin = (device: CombinedDeviceResponse) =>
+    device.device_type.toLowerCase() === "admin";
+
+  const handleDeactivate = (device: CombinedDeviceResponse) => {
+    openConfirmModal(
+      `Are you sure you want to deactivate "${device.name}"?`,
+      () => {
+        if (isAdmin(device)) {
+          deactivateAdmin.mutate({ device_id: device.id });
+        } else {
+          deactivateStaff.mutate({ device_id: device.id });
+        }
+      },
+      { title: "Deactivate Device", isDelete: true, confirmText: "Deactivate" },
+    );
+  };
+
+  const handleReactivate = (device: CombinedDeviceResponse) => {
+    openConfirmModal(
+      `Are you sure you want to reactivate "${device.name}"?`,
+      () => {
+        if (isAdmin(device)) {
+          reactivateAdmin.mutate({ device_id: device.id });
+        } else {
+          reactivateStaff.mutate({ device_id: device.id });
+        }
+      },
+      { title: "Reactivate Device", confirmText: "Reactivate" },
+    );
   };
 
   const handleDelete = (device: CombinedDeviceResponse) => {
-    if (device.device_type.toLowerCase() === "admin") {
-      deleteAdmin.mutate({ device_id: device.id });
-    } else {
-      deleteStaff.mutate({ device_id: device.id });
-    }
+    openConfirmModal(
+      `Are you sure you want to delete "${device.name}"? This action cannot be undone.`,
+      () => {
+        if (isAdmin(device)) {
+          deleteAdmin.mutate({ device_id: device.id });
+        } else {
+          deleteStaff.mutate({ device_id: device.id });
+        }
+      },
+      { title: "Delete Device", isDelete: true, confirmText: "Delete" },
+    );
   };
 
   const filtered = data.filter((d) => {
@@ -84,31 +105,26 @@ export default function CompanyDevices() {
   const columns: ColumnDef[] = [
     {
       field: "email",
-      headerName: "Staff Name",
+      headerName: "Name",
       renderCell: (row) => (
-        <span className="text-[#4B5563] text-sm">{row.email || "-"}</span>
+        <span className="text-[#4B5563] text-sm">{row.name || "-"}</span>
       ),
     },
     {
       field: "name",
-      headerName: "Device Name",
+      headerName: "Email",
       renderCell: (row) => (
-        <span className="text-[#4B5563] text-sm">{row.name}</span>
+        <span className="text-[#4B5563] text-sm">{row.email || "_"}</span>
       ),
     },
     {
       field: "last_used_at",
-      headerName: "Last Login",
+      headerName: "Last Used At",
       renderCell: (row) => (
         <span className="text-[#4B5563] text-sm">
           {formatDate(row.last_used_at)}
         </span>
       ),
-    },
-    {
-      field: "device_type",
-      headerName: "Role",
-      renderCell: (row) => <RoleBadge role={row.device_type} />,
     },
     {
       field: "is_active",
@@ -120,47 +136,40 @@ export default function CompanyDevices() {
       headerName: " ",
       align: "right",
       renderCell: (row) => (
-        <div className="flex justify-end pr-2">
+        <div className="flex justify-end gap-2 pr-2">
           {row.is_active ? (
             <Button
               variant="outline"
               size="sm"
               className="px-4"
-              onClick={() => {
-                openConfirmModal(
-                  "Are you sure you want to revoke this device?",
-                  () => handleRevoke(row as CombinedDeviceResponse),
-                  {
-                    title: "Revoke Device",
-                    isDelete: true,
-                    confirmText: "Confirm",
-                  },
-                );
-              }}
+              onClick={() => handleDeactivate(row as CombinedDeviceResponse)}
               disabled={deactivateAdmin.isPending || deactivateStaff.isPending}
             >
-              Revoke
+              Deactivate
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="px-4 text-red-600 border-red-200 hover:bg-red-50"
-              onClick={() => {
-                openConfirmModal(
-                  "Are you sure you want to delete this device?",
-                  () => handleDelete(row as CombinedDeviceResponse),
-                  {
-                    title: "Delete Device",
-                    isDelete: true,
-                    confirmText: "Delete",
-                  },
-                );
-              }}
-              disabled={deleteAdmin.isPending || deleteStaff.isPending}
-            >
-              Delete
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-4"
+                onClick={() => handleReactivate(row as CombinedDeviceResponse)}
+                disabled={
+                  reactivateAdmin.isPending || reactivateStaff.isPending
+                }
+              >
+                Reactivate
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-4 text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => handleDelete(row as CombinedDeviceResponse)}
+                disabled={deleteAdmin.isPending || deleteStaff.isPending}
+              >
+                Delete
+              </Button>
+            </>
           )}
         </div>
       ),

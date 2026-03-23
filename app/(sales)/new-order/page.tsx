@@ -153,6 +153,10 @@ function NewOrderForm() {
           width: Number(values.width),
           length: Number(values.length),
           glass_type_id: values.glassTypeId,
+          shape_type: values.shape,
+          drill_holes_count: values.drillHoles
+            ? Number(values.numberOfHoles) || 0
+            : 0,
           addon_ids: values.selectedAddons ?? [],
           insurance_selected: values.insuranceCoverage ?? false,
         },
@@ -284,7 +288,7 @@ function NewOrderForm() {
                   <TabsTrigger
                     key={step.id}
                     value={step.id}
-                    disabled={isLocked}
+                    // disabled={isLocked}
                     className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
                   >
                     <span className="flex items-center gap-2">

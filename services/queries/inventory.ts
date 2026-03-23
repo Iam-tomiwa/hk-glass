@@ -11,18 +11,23 @@ import {
   deleteInventoryItem,
   adjustInventoryItem,
   getInventoryItem,
+  updateInventoryItemPrice,
+  listGlassSheets,
+  InventoryItemPriceUpdate,
 } from "../api/inventory";
 import {
   InventoryItemResponse,
   InventoryItemCreate,
   InventoryItemUpdate,
   InventoryAdjustRequest,
+  InventoryItemType,
+  GlassSheetResponse,
 } from "../types/openapi";
 
-export function useListInventory() {
+export function useListInventory(type?: InventoryItemType, isAdmin?: boolean) {
   return useQuery<InventoryItemResponse[]>({
-    queryKey: queryKeys.inventory.list(undefined),
-    queryFn: () => listInventory(),
+    queryKey: queryKeys.inventory.list(type),
+    queryFn: () => listInventory(type, isAdmin),
   });
 }
 
@@ -30,6 +35,14 @@ export function useGetInventoryItem(item_id: string) {
   return useQuery<InventoryItemResponse>({
     queryKey: queryKeys.inventory.detail(item_id),
     queryFn: () => getInventoryItem(item_id),
+    enabled: !!item_id,
+  });
+}
+
+export function useListGlassSheets(item_id: string) {
+  return useQuery<GlassSheetResponse[]>({
+    queryKey: [...queryKeys.inventory.detail(item_id), "glass-sheets"],
+    queryFn: () => listGlassSheets(item_id),
     enabled: !!item_id,
   });
 }
@@ -76,6 +89,26 @@ export function useDeleteInventoryItem() {
     },
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useUpdateInventoryItemPrice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      item_id,
+      data,
+    }: {
+      item_id: string;
+      data: InventoryItemPriceUpdate;
+    }) => updateInventoryItemPrice(item_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+      toast.success("Price updated.");
+    },
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, "Failed to update price."));
     },
   });
 }

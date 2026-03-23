@@ -14,10 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import {
-  useRegisterAdminDevice,
-  useRegisterStaffDevice,
-} from "@/services/queries/admin";
+import { useRegisterStaffDevice } from "@/services/queries/admin";
 
 export default function RegisterDeviceModal({
   children,
@@ -26,20 +23,19 @@ export default function RegisterDeviceModal({
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [deviceName, setDeviceName] = useState("");
+  const [deviceEmail, setDeviceEmail] = useState("");
   const [open, setOpen] = useState(false);
   const [setupCode, setSetupCode] = useState<string[]>([]);
-
-  const registerAdmin = useRegisterAdminDevice();
   const registerStaff = useRegisterStaffDevice();
 
-  const isLoading = registerAdmin.isPending || registerStaff.isPending;
+  const isLoading = registerStaff.isPending;
 
   const handleGenerate = async () => {
-    if (!deviceName) return;
+    if (!deviceName || !deviceEmail) return;
 
     try {
       const response = await registerStaff.mutateAsync({
-        data: { name: deviceName },
+        data: { name: deviceName, email: deviceEmail },
       });
 
       setSetupCode(response.setup_code.split(""));
@@ -55,6 +51,7 @@ export default function RegisterDeviceModal({
       setTimeout(() => {
         setStep(1);
         setDeviceName("");
+        setDeviceEmail("");
         setSetupCode([]);
       }, 300);
     }
@@ -63,7 +60,7 @@ export default function RegisterDeviceModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       {children && <DialogTrigger render={children as React.ReactElement} />}
-      <DialogContent className="max-w-[450px]">
+      <DialogContent className="max-w-[450px] gap-2">
         <DialogHeader>
           <DialogTitle>Register New Device</DialogTitle>
           <DialogDescription>Add a new device to the system.</DialogDescription>
@@ -93,7 +90,7 @@ export default function RegisterDeviceModal({
           <div className="py-2 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="deviceName" className="text-sm font-medium">
-                Device Name
+                Staff Name
               </Label>
               <Input
                 id="deviceName"
@@ -103,11 +100,24 @@ export default function RegisterDeviceModal({
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="deviceEmail" className="text-sm font-medium">
+                Staff Email
+              </Label>
+              <Input
+                id="deviceEmail"
+                type="email"
+                placeholder="e.g., operator@company.com"
+                value={deviceEmail}
+                onChange={(e) => setDeviceEmail(e.target.value)}
+              />
+            </div>
+
             <div className="flex gap-2 pt-2">
               <Button
                 className="bg-[#00B412] hover:bg-[#00B412]/90 text-white"
                 onClick={handleGenerate}
-                disabled={!deviceName || isLoading}
+                disabled={!deviceName || !deviceEmail || isLoading}
               >
                 {isLoading ? "Generating..." : "Generate Auth Key"}
               </Button>

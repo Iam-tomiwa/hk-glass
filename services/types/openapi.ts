@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -6,24 +7,35 @@ export interface PaginatedResponse<T> {
   total_pages: number;
 }
 
-export interface AddonCategory {}
+export type AddonCategory =
+  | "edge_surface"
+  | "structural"
+  | "thermal_film"
+  | "decorative"
+  | "other";
 export interface AddonCreate {
   name: string;
-  category?: AddonCategory | any | null;
-  price_type: AddonPriceType;
+  description?: string | null;
+  category?: string | null;
+  price_type: string;
   price: number | string | null;
   is_active?: boolean;
 }
 
-export interface AddonPriceType {}
+export type AddonPriceType = object;
 
 export interface AddonResponse {
   id: string;
   name: string;
-  category: AddonCategory;
-  price_type: AddonPriceType;
+  description?: string | null;
+  category: string;
+  price_type: string;
   price: string;
+  code?: string | null;
+  is_builtin: boolean;
   is_active: boolean;
+  display_order?: number | null;
+  input_schema?: AddonInputSchema | null;
 }
 
 export interface AddonUpdate {
@@ -36,6 +48,7 @@ export interface AddonUpdate {
 
 export interface AdminDeviceCreate {
   name: string;
+  email?: string | null;
   is_active?: boolean;
 }
 
@@ -57,6 +70,18 @@ export interface CombinedDeviceResponse {
   last_used_at?: string | any | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AddonInputField {
+  key: string;
+  label: string;
+  type: "select" | "text" | "number" | "file";
+  unit?: string | null;
+  options?: string[] | null;
+}
+
+export interface AddonInputSchema {
+  fields: AddonInputField[];
 }
 
 export interface DashboardOrderResponse {
@@ -110,11 +135,21 @@ export interface DeviceSetupResponse {
   setup_url?: string | any | null;
 }
 
+export interface AddonItem {
+  addon_id: string;
+  quantity?: number | null;
+  custom_input?: string | null;
+  notes?: string | null;
+}
+
 export interface OrderReviewRequest {
   width: number;
   length: number;
-  glass_type_id: string;
-  addon_ids: string[];
+  glass_type_id?: string | null;
+  shape_type?: string | null;
+  drill_holes_count?: number | null;
+  addon_ids?: string[];
+  addon_items?: AddonItem[];
   insurance_selected: boolean;
 }
 
@@ -167,15 +202,59 @@ export interface InventoryItemCreate {
 
 export interface InventoryItemResponse {
   id: string;
+  item_type: InventoryItemType;
   material_name: string;
-  size?: string | any | null;
-  thickness?: string | any | null;
-  unit?: string | any | null;
+  description?: string | null;
+  serial_code?: string | null;
+  size?: string | null;
+  thickness?: string | null;
+  unit?: string | null;
+  price?: string | null;
+  unit_price?: string | null;
+  price_per_sqm?: string | null;
   stock_count: number;
+  initial_stock_count: number;
   low_stock_threshold: number;
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+export type InventoryGlassSheetStatus =
+  | "available"
+  | "used"
+  | "damaged"
+  | "retired";
+
+export interface InventorySerialScanResponse {
+  sheet_id: string;
+  serial_code: string;
+  status: InventoryGlassSheetStatus;
+  item_id: string;
+  item_name: string;
+  item_type: InventoryItemType;
+  item_size?: string | null;
+  item_thickness?: string | null;
+  price_per_sqm?: string | null;
+  unit_price?: string | null;
+  order_id?: string | null;
+  order_reference?: string | null;
+  linked_order_id?: string | null;
+  linked_order_reference?: string | null;
+  damage_reason?: string | null;
+  used_at?: string | null;
+  damaged_at?: string | null;
+}
+
+export interface GlassSheetResponse {
+  sheet_id: string;
+  serial_code: string;
+  status: InventoryGlassSheetStatus;
+  order_id?: string | null;
+  order_reference?: string | null;
+  used_at?: string | null;
+  damaged_at?: string | null;
+  damage_reason?: string | null;
 }
 
 export interface InventoryItemUpdate {
@@ -216,8 +295,10 @@ export interface OrderCreate {
   hole_diameter?: number | string | any | null;
   tint_type?: string | any | null;
   engraving_text?: string | any | null;
-  glass_type_id: string;
+  glass_type_id?: string | null;
   addon_ids?: string[];
+  addon_items?: AddonItem[];
+  glass_inventory_serial_code?: string | null;
   insurance_selected?: boolean;
   shape_type?: string | null;
   curve_diameter?: number | null;
@@ -363,7 +444,7 @@ export interface PaymentResponse {
   paid_at: string;
 }
 
-export interface PaymentStatus {}
+export type PaymentStatus = object;
 
 export interface PaystackCallback {
   reference: string;
@@ -429,4 +510,4 @@ export interface UserResponse {
   is_2fa_enabled: boolean;
 }
 
-export interface UserRole {}
+export type UserRole = object;

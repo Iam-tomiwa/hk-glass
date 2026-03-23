@@ -2163,6 +2163,34 @@
         "operationId": "list_addons_api_admin_addons_get",
         "parameters": [
           {
+            "name": "include_inactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Inactive"
+            }
+          },
+          {
+            "name": "builtin_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "title": "Builtin Only"
+            }
+          },
+          {
+            "name": "extra_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+              "title": "Extra Only"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -3381,7 +3409,10 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "$ref": "#/components/schemas/InventoryItemType" },
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/InventoryItemType" }
+                },
                 { "type": "null" }
               ],
               "title": "Type"
@@ -3743,6 +3774,54 @@
         }
       }
     },
+    "/api/admin/inventory/{item_id}/glass-sheets": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "List Glass Sheets",
+        "operationId": "list_glass_sheets_api_admin_inventory__item_id__glass_sheets_get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GlassSheetResponse"
+                  },
+                  "title": "Response List Glass Sheets Api Admin Inventory  Item Id  Glass Sheets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/inventory/{item_id}": {
       "patch": {
         "tags": ["inventory"],
@@ -3934,6 +4013,198 @@
         }
       }
     },
+    "/api/inventory": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "List Inventory Staff",
+        "operationId": "list_inventory_staff_api_inventory_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/InventoryItemType" }
+                },
+                { "type": "null" }
+              ],
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryItemResponse"
+                  },
+                  "title": "Response List Inventory Staff Api Inventory Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/scan/item/{item_id}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Item Staff",
+        "operationId": "scan_inventory_item_staff_api_inventory_scan_item__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryItemResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/scan/sheet/{sheet_id}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Sheet Staff",
+        "operationId": "scan_inventory_sheet_staff_api_inventory_scan_sheet__sheet_id__get",
+        "parameters": [
+          {
+            "name": "sheet_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Sheet Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/scan/{serial_code}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Scan Inventory Serial Staff",
+        "operationId": "scan_inventory_serial_staff_api_inventory_scan__serial_code__get",
+        "parameters": [
+          {
+            "name": "serial_code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Serial Code" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/labels/{serial_code}": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Build Serial Label Staff",
+        "operationId": "build_serial_label_staff_api_inventory_labels__serial_code__get",
+        "parameters": [
+          {
+            "name": "serial_code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Serial Code" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventorySerialLabelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setup-device": {
       "get": {
         "tags": ["devices"],
@@ -4019,18 +4290,6 @@
   },
   "components": {
     "schemas": {
-      "AddonCategory": {
-        "type": "string",
-        "enum": [
-          "edge_surface",
-          "structural",
-          "thermal_film",
-          "decorative",
-          "hardware",
-          "other"
-        ],
-        "title": "AddonCategory"
-      },
       "AddonCreate": {
         "properties": {
           "name": { "type": "string", "title": "Name" },
@@ -4039,10 +4298,8 @@
             "title": "Description"
           },
           "category": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/AddonCategory" },
-              { "type": "null" }
-            ]
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Category"
           },
           "price_type": { "$ref": "#/components/schemas/AddonPriceType" },
           "price": {
@@ -4128,12 +4385,33 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description"
           },
-          "category": { "$ref": "#/components/schemas/AddonCategory" },
+          "category": { "type": "string", "title": "Category" },
           "price_type": { "$ref": "#/components/schemas/AddonPriceType" },
           "price": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Price"
+          },
+          "code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Code"
+          },
+          "is_builtin": {
+            "type": "boolean",
+            "title": "Is Builtin",
+            "default": false
+          },
+          "display_order": {
+            "type": "integer",
+            "title": "Display Order",
+            "default": 1000
+          },
+          "input_schema": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Input Schema"
           },
           "is_active": { "type": "boolean", "title": "Is Active" }
         },
@@ -4160,10 +4438,8 @@
             "title": "Description"
           },
           "category": {
-            "anyOf": [
-              { "$ref": "#/components/schemas/AddonCategory" },
-              { "type": "null" }
-            ]
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Category"
           },
           "price_type": {
             "anyOf": [
@@ -4809,6 +5085,60 @@
         ],
         "title": "FactoryOrderStatsResponse"
       },
+      "GlassSheetResponse": {
+        "properties": {
+          "sheet_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sheet Id"
+          },
+          "serial_code": { "type": "string", "title": "Serial Code" },
+          "status": {
+            "$ref": "#/components/schemas/InventoryGlassSheetStatus"
+          },
+          "order_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Order Id"
+          },
+          "order_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Order Reference"
+          },
+          "used_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Used At"
+          },
+          "damaged_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Damaged At"
+          },
+          "damage_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Damage Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sheet_id",
+          "serial_code",
+          "status",
+          "order_id",
+          "order_reference",
+          "used_at",
+          "damaged_at",
+          "damage_reason"
+        ],
+        "title": "GlassSheetResponse"
+      },
       "GlassSheetSerialGenerateRequest": {
         "properties": {
           "prefix": { "type": "string", "title": "Prefix" },
@@ -5057,6 +5387,13 @@
             "title": "Low Stock Threshold"
           },
           "status": { "type": "string", "title": "Status" },
+          "glass_type_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Glass Type Id"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -5490,6 +5827,13 @@
           "notes": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Notes"
+          },
+          "custom_payload": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Custom Payload"
           }
         },
         "type": "object",
@@ -5512,6 +5856,13 @@
           "notes": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Notes"
+          },
+          "custom_payload": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Custom Payload"
           }
         },
         "type": "object",

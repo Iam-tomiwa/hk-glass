@@ -4,22 +4,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/header";
 import PricingTable, { PricingRow } from "./widgets/pricing-table";
-import AddProductModal, { CustomProduct } from "./widgets/add-product";
+import AddAddonModal, { NewAddon } from "./widgets/add-product";
+import AddonsTable from "./widgets/addons-table";
 import {
   useGetPricingSettings,
   useUpdatePricingSettings,
-  useListGlassTypes,
-  useUpdateGlassType,
-  useCreateGlassType,
   useListAddons,
   useUpdateAddon,
   useCreateAddon,
 } from "@/services/queries/admin";
+import {
+  useListInventory,
+  useUpdateInventoryItemPrice,
+} from "@/services/queries/inventory";
 
-type Tab = "base-glass" | "addons" | "insurance";
+type Tab = "addons" | "glass-sheets" | "hardware" | "insurance";
 
 export default function PricingPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("base-glass");
+  const [activeTab, setActiveTab] = useState<Tab>("addons");
   const [modalOpen, setModalOpen] = useState(false);
 
   const {
@@ -28,12 +30,7 @@ export default function PricingPage() {
     isError: isRatesError,
     error: ratesError,
   } = useGetPricingSettings();
-  const {
-    data: glassTypes = [],
-    isLoading: isGlassLoading,
-    isError: isGlassError,
-    error: glassError,
-  } = useListGlassTypes();
+
   const {
     data: addons = [],
     isLoading: isAddonsLoading,
@@ -41,24 +38,37 @@ export default function PricingPage() {
     error: addonsError,
   } = useListAddons();
 
-  const updateGlassTypeMutation = useUpdateGlassType();
+  const {
+    data: glassItems = [],
+    isLoading: isGlassLoading,
+    isError: isGlassError,
+    error: glassError,
+  } = useListInventory("glass");
+
+  const {
+    data: hardwareItems = [],
+    isLoading: isHardwareLoading,
+    isError: isHardwareError,
+    error: hardwareError,
+  } = useListInventory("hardware");
+
   const updateAddonMutation = useUpdateAddon();
   const updatePricingSettingsMutation = useUpdatePricingSettings();
-  const createGlassTypeMutation = useCreateGlassType();
   const createAddonMutation = useCreateAddon();
+  const updateInventoryPriceMutation = useUpdateInventoryItemPrice();
 
-  const glassRows: PricingRow[] = glassTypes.map((g) => ({
+  const glassRows: PricingRow[] = glassItems.map((g) => ({
     id: g.id,
-    name: g.name,
-    unit: "sq ft",
-    price: g.price_per_sqm,
+    name: g.material_name,
+    unit: g.unit ?? "sheets",
+    price: g.price_per_sqm ?? "",
   }));
 
-  const addonRows: PricingRow[] = addons.map((a) => ({
-    id: a.id,
-    name: a.name,
-    unit: a.price_type === "per_sqm" ? "per sq ft" : "per order",
-    price: a.price,
+  const hardwareRows: PricingRow[] = hardwareItems.map((h) => ({
+    id: h.id,
+    name: h.material_name,
+    unit: h.unit ?? "units",
+    price: h.unit_price ?? "",
   }));
 
   const rateRows: PricingRow[] = [
@@ -76,10 +86,17 @@ export default function PricingPage() {
     },
   ];
 
-  const handleSaveGlass = async (id: string, newPrice: string) => {
-    await updateGlassTypeMutation.mutateAsync({
-      glass_type_id: id,
+  const handleSaveGlassPrice = async (id: string, newPrice: string) => {
+    await updateInventoryPriceMutation.mutateAsync({
+      item_id: id,
       data: { price_per_sqm: newPrice },
+    });
+  };
+
+  const handleSaveHardwarePrice = async (id: string, newPrice: string) => {
+    await updateInventoryPriceMutation.mutateAsync({
+      item_id: id,
+      data: { unit_price: newPrice },
     });
   };
 
@@ -103,25 +120,22 @@ export default function PricingPage() {
     });
   };
 
-  const handleAddProduct = async (product: Omit<CustomProduct, "id">) => {
-    if (product.category === "Base Glass") {
-      await createGlassTypeMutation.mutateAsync({
-        data: { name: product.name, price_per_sqm: product.price },
-      });
-    } else {
-      await createAddonMutation.mutateAsync({
-        data: {
-          name: product.name,
-          price: product.price,
-          price_type: product.price_type ?? "flat",
-        },
-      });
-    }
+  const handleAddAddon = async (addon: NewAddon) => {
+    await createAddonMutation.mutateAsync({
+      data: {
+        name: addon.name,
+        description: addon.description,
+        category: addon.category,
+        price: addon.price,
+        price_type: addon.price_type,
+      },
+    });
   };
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "base-glass", label: "Base Glass" },
-    { key: "addons", label: "Add - ons" },
+    { key: "addons", label: "Add-ons and Services" },
+    { key: "glass-sheets", label: "Glass sheets" },
+    { key: "hardware", label: "Hardware" },
     { key: "insurance", label: "Insurance and Tax" },
   ];
 
@@ -132,7 +146,9 @@ export default function PricingPage() {
         description="Manage pricing for glass and services"
         className="mb-0"
       >
-        <Button onClick={() => setModalOpen(true)}>Add new Product</Button>
+        <Button onClick={() => setModalOpen(true)}>
+          Add new Add-ons and Services
+        </Button>
       </Header>
 
       <div className="flex px-6 bg-background items-center border-b border-neutral-200 mb-6">
@@ -152,27 +168,41 @@ export default function PricingPage() {
       </div>
 
       <div className="container pb-10">
-        {activeTab === "base-glass" && (
-          <PricingTable
-            rows={glassRows}
-            variableName="Price (₦)"
-            isLoading={isGlassLoading}
-            isError={isGlassError}
-            error={glassError as Error | null}
-            onSave={handleSaveGlass}
-            deleteType="glass-type"
-          />
-        )}
-
         {activeTab === "addons" && (
-          <PricingTable
-            rows={addonRows}
-            variableName="Price (₦)"
+          <AddonsTable
+            rows={addons}
             isLoading={isAddonsLoading}
             isError={isAddonsError}
             error={addonsError as Error | null}
-            onSave={handleSaveAddon}
-            deleteType="addon"
+            onSavePrice={handleSaveAddon}
+          />
+        )}
+
+        {activeTab === "glass-sheets" && (
+          <PricingTable
+            rows={glassRows}
+            title="Glass sheets"
+            variableName="Price Per Sqm (₦)"
+            nameHeader="Sheets"
+            showUnit={false}
+            isLoading={isGlassLoading}
+            isError={isGlassError}
+            error={glassError as Error | null}
+            onSave={handleSaveGlassPrice}
+          />
+        )}
+
+        {activeTab === "hardware" && (
+          <PricingTable
+            rows={hardwareRows}
+            title="Hardware"
+            variableName="Price Per Unit (₦)"
+            nameHeader="Hardware"
+            showUnit={false}
+            isLoading={isHardwareLoading}
+            isError={isHardwareError}
+            error={hardwareError as Error | null}
+            onSave={handleSaveHardwarePrice}
           />
         )}
 
@@ -180,6 +210,7 @@ export default function PricingPage() {
           <PricingTable
             rows={rateRows}
             variableName="Rate (%)"
+            title="Insurance and Tax"
             isLoading={isRatesLoading}
             isError={isRatesError}
             error={ratesError as Error | null}
@@ -188,10 +219,10 @@ export default function PricingPage() {
         )}
       </div>
 
-      <AddProductModal
+      <AddAddonModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSave={handleAddProduct}
+        onSave={handleAddAddon}
       />
     </div>
   );

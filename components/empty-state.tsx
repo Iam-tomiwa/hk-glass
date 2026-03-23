@@ -36,7 +36,7 @@ export default function EmptyState({
 
   return (
     <div className="flex flex-col gap-6 my-10 items-center text-center justify-center mx-auto">
-      <div className="bg-sidebar !text-primary size-[80px] flex justify-center items-center rounded-full">
+      <div className="bg-background border text-primary! size-[80px] flex justify-center items-center rounded-full">
         {IconElement}
       </div>
       <div>

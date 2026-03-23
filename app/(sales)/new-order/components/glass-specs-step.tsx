@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { OrderFormValues } from "../schema";
-import { useListGlassTypes } from "@/services/queries/orders";
 import { ComboBox } from "@/components/ui/combo-box-2";
+import { useListInventory } from "@/services/queries/inventory";
 
 export function GlassSpecsStep({
   form,
@@ -22,8 +22,8 @@ export function GlassSpecsStep({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const { data: glassTypes, isLoading: isLoadingGlassTypes } =
-    useListGlassTypes();
+  const { data: glassTypes = [], isLoading: isLoadingGlassTypes } =
+    useListInventory("glass", false);
 
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });
@@ -103,7 +103,7 @@ export function GlassSpecsStep({
                   isLoading={isLoadingGlassTypes}
                   options={(glassTypes || [])?.map((type) => ({
                     value: type.id,
-                    label: type.name,
+                    label: type.material_name,
                   }))}
                   onValueChange={field.onChange}
                 />
