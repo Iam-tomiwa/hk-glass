@@ -44,7 +44,7 @@ export function useCreateOrder() {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -65,23 +65,23 @@ export function useListAddons() {
 }
 
 export function useSearchOrders(params?: {
-  customer_name?: string | any | null;
-  customer_email?: string | any | null;
-  customer_phone?: string | any | null;
-  reference?: string | any | null;
-  glass_type_id?: string | any | null;
-  payment_status?: PaymentStatus | any | null;
-  order_status?: OrderStatus | any | null;
-  min_width?: number | string | any | null;
-  max_width?: number | string | any | null;
-  min_height?: number | string | any | null;
-  max_height?: number | string | any | null;
-  min_area?: number | string | any | null;
-  max_area?: number | string | any | null;
-  min_total?: number | string | any | null;
-  max_total?: number | string | any | null;
-  created_from?: string | any | null;
-  created_to?: string | any | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  reference?: string | null;
+  glass_type_id?: string | null;
+  payment_status?: PaymentStatus | null;
+  order_status?: OrderStatus | null;
+  min_width?: number | string | null;
+  max_width?: number | string | null;
+  min_height?: number | string | null;
+  max_height?: number | string | null;
+  min_area?: number | string | null;
+  max_area?: number | string | null;
+  min_total?: number | string | null;
+  max_total?: number | string | null;
+  created_from?: string | null;
+  created_to?: string | null;
 }) {
   return useQuery<PaginatedResponse<OrderResponse>>({
     queryKey: queryKeys.orders.list(params),
@@ -122,7 +122,7 @@ export function useUpdateOrder() {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       toast.success("Order status updated successfully.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -136,7 +136,7 @@ export function useDeleteOrder() {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       toast.success("Action successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -145,7 +145,7 @@ export function useDeleteOrder() {
 export function useReviewOrder() {
   return useMutation<OrderReviewResponse, Error, { data: OrderReviewRequest }>({
     mutationFn: ({ data }) => reviewOrder(data),
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(
         getErrorMessage(error, "Failed to calculate price. Please try again."),
       );
@@ -160,9 +160,12 @@ export function useSendReviewEmail() {
     { order_id: string; data?: OrderReviewEmailRequest }
   >({
     mutationFn: ({ order_id, data }) => sendReviewEmail(order_id, data),
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(
-        getErrorMessage(error, "Failed to send review email. Please try again."),
+        getErrorMessage(
+          error,
+          "Failed to send review email. Please try again.",
+        ),
       );
     },
   });

@@ -55,9 +55,9 @@ const TINT_OPTIONS = [
   { value: "frosted", label: "Frosted" },
 ];
 const ENGRAVING_OPTIONS = [
-  { value: "laser", label: "Laser Engraving" },
-  { value: "sand_blast", label: "Sand Blast" },
-  { value: "hand_carved", label: "Hand Carved" },
+  { value: "text", label: "Text" },
+  { value: "image", label: "Image" },
+  { value: "both", label: "Both" },
 ];
 const HOLE_DIAMETER_OPTIONS = [
   { value: "1/4", label: '1/4"' },
@@ -155,6 +155,13 @@ export function AddOnsStep({
     }
     if (addon.category === "thermal_film") {
       form.setValue("addTintFilm", checked);
+    }
+    if (addon.code === "edging") {
+      form.setValue("edgingAddonId", checked ? addon.id : "");
+      if (!checked) {
+        form.setValue("edgingType", "");
+        form.setValue("edgingSides", "");
+      }
     }
   };
 
@@ -326,18 +333,67 @@ export function AddOnsStep({
 
     if (addon.code === "edging") {
       return (
-        <div className="pt-3 pl-1 space-y-1.5">
-          <label className="text-[#1E202E] font-medium text-sm">
-            Edging Type
-          </label>
-          <ComboBox
-            value={addonExtras[`${addon.id}:type`] || ""}
-            onValueChange={(v) =>
-              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
-            }
-            options={EDGING_OPTIONS.map((o) => ({ value: o, label: o }))}
-            placeholder="Select edging type"
-            className="w-full"
+        <div className="pt-3 pl-1 space-y-3">
+          <FormField
+            control={form.control}
+            name="edgingType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Edging Type
+                </FormLabel>
+                <ComboBox
+                  value={field.value || ""}
+                  onValueChange={field.onChange}
+                  options={EDGING_OPTIONS.map((o) => ({ value: o, label: o }))}
+                  placeholder="Select edging type"
+                  className="w-full"
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="edgingSides"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Number of Sides
+                </FormLabel>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      field.onChange(
+                        String(Math.max(1, Number(field.value || 1) - 1)),
+                      )
+                    }
+                    className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center font-medium text-[#1E202E]">
+                    {field.value || "1"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      field.onChange(
+                        String(Math.min(4, Number(field.value || 1) + 1)),
+                      )
+                    }
+                    className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm text-neutral-500">
+                    side{Number(field.value || 1) !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
       );

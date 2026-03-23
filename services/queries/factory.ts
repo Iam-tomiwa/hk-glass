@@ -25,7 +25,7 @@ import {
 } from "../types/openapi";
 
 export function useListFactoryQueue(params?: {
-  order_status?: OrderStatus | any | null;
+  order_status?: OrderStatus | null;
 }) {
   return useQuery<PaginatedResponse<OrderResponse>>({
     queryKey: queryKeys.factory.list(params),
@@ -63,7 +63,7 @@ export function useUpdateFactoryOrderStatus() {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       toast.success("Order status updated successful.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
     },
   });
@@ -96,7 +96,7 @@ export function useReportFactoryOrderDamage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.factory.all });
       toast.success("Damage report submitted.");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error(getErrorMessage(error, "Failed to submit damage report."));
     },
   });

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/unauthorized", "/payment-confirmation", "/materials"];
+const PUBLIC_ROUTES = [
+  "/unauthorized",
+  "/payment-confirmation",
+  "/materials",
+  "/orders/review",
+];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,12 +25,15 @@ export function proxy(request: NextRequest) {
   const segments = pathname.split("/").filter(Boolean);
   const isPublicOrderPage =
     segments.length === 1 &&
-    !["new-order", "factory", ...PUBLIC_ROUTES.map((r) => r.substring(1))].includes(
-      segments[0],
-    );
+    ![
+      "new-order",
+      "factory",
+      ...PUBLIC_ROUTES.map((r) => r.substring(1)),
+    ].includes(segments[0]);
 
   const isPublicPage =
-    PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) || isPublicOrderPage;
+    PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) ||
+    isPublicOrderPage;
 
   // Check for authentication tokens in cookies
   const accessToken = request.cookies.get("access_token")?.value;

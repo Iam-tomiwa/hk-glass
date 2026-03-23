@@ -41,6 +41,11 @@ export const orderFormSchema = z
     deliveryFee: z.string().optional(),
 
     unit: z.enum(["mm", "cm", "m"]),
+
+    // Edging addon (sent via addon_items)
+    edgingAddonId: z.string().optional(),
+    edgingType: z.string().optional(),
+    edgingSides: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const toMm = (val: string | undefined) => {

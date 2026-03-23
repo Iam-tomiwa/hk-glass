@@ -9,6 +9,7 @@ import {
   FactoryNotificationBell,
   AdminNotificationBell,
 } from "@/components/notification-bell";
+import Link from "next/link";
 
 export const Navbar = ({
   fullWidth = true,
@@ -41,13 +42,22 @@ export const Navbar = ({
           fullWidth ? "md:px-6 px-4" : "container",
         )}
       >
-        <div className="flex items-center gap-2">
+        <Link
+          href={
+            persona === "admin"
+              ? "/admin"
+              : persona === "factory"
+                ? "/factory"
+                : "/"
+          }
+          className="flex items-center gap-2"
+        >
           <img
             src="/images/logo.svg"
             alt="Glasstronics"
             className="h-8 w-auto"
           />
-        </div>
+        </Link>
         <div className="flex items-center gap-2 md:gap-4">
           {persona === "factory" && <FactoryNotificationBell />}
           {persona === "staff" && <StaffNotificationBell />}

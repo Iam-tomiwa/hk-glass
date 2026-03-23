@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
@@ -112,6 +112,9 @@ function NewOrderForm() {
       deliveryAddress: "",
       deliveryFee: "",
       unit: "mm",
+      edgingAddonId: "",
+      edgingType: "",
+      edgingSides: "1",
     },
   });
 
@@ -154,6 +157,19 @@ function NewOrderForm() {
     const values = form.getValues();
     try {
       // Calculate pricing preview
+      // Build addon_items for pricing preview (edging)
+      const previewAddonItems = [];
+      if (values.edgingAddonId && values.edgingType) {
+        previewAddonItems.push({
+          addon_id: values.edgingAddonId,
+          quantity: Number(values.edgingSides || 1),
+          custom_input: values.edgingType,
+        });
+      }
+      const previewAddonIds = (values.selectedAddons ?? []).filter(
+        (id) => id !== values.edgingAddonId,
+      );
+
       const result = await reviewOrder({
         data: {
           width: `${values.width}${values.unit}`,
@@ -163,11 +179,28 @@ function NewOrderForm() {
           drill_holes_count: values.drillHoles
             ? Number(values.numberOfHoles) || 0
             : 0,
-          addon_ids: values.selectedAddons ?? [],
+          addon_ids: previewAddonIds,
+          addon_items:
+            previewAddonItems.length > 0 ? previewAddonItems : undefined,
           insurance_selected: values.insuranceCoverage ?? false,
         },
       });
       setOrderReview(result);
+
+      // Build addon_items for addons that require quantity/custom_input
+      const addonItems = [];
+      if (values.edgingAddonId && values.edgingType) {
+        addonItems.push({
+          addon_id: values.edgingAddonId,
+          quantity: Number(values.edgingSides || 1),
+          custom_input: values.edgingType,
+        });
+      }
+
+      // Exclude edging from addon_ids since it's sent via addon_items
+      const addonIds = (values.selectedAddons || []).filter(
+        (id) => id !== values.edgingAddonId,
+      );
 
       // Create the order
       const orderRes = await createOrder({
@@ -186,7 +219,8 @@ function NewOrderForm() {
           tint_type: values.addTintFilm ? values.tintType : "",
           engraving_text: values.engraving ? values.engravingText : "",
           glass_type_id: values.glassTypeId,
-          addon_ids: values.selectedAddons,
+          addon_ids: addonIds,
+          addon_items: addonItems.length > 0 ? addonItems : undefined,
           insurance_selected: values.insuranceCoverage,
           shape_type: values.shape,
           curve_diameter: values.curveDiameter

@@ -35,23 +35,23 @@ export async function listAddons(): Promise<AddonResponse[]> {
 
 // Search Orders
 export async function searchOrders(params?: {
-  customer_name?: string | any | null;
-  customer_email?: string | any | null;
-  customer_phone?: string | any | null;
-  reference?: string | any | null;
-  glass_type_id?: string | any | null;
-  payment_status?: PaymentStatus | any | null;
-  order_status?: OrderStatus | any | null;
-  min_width?: number | string | any | null;
-  max_width?: number | string | any | null;
-  min_height?: number | string | any | null;
-  max_height?: number | string | any | null;
-  min_area?: number | string | any | null;
-  max_area?: number | string | any | null;
-  min_total?: number | string | any | null;
-  max_total?: number | string | any | null;
-  created_from?: string | any | null;
-  created_to?: string | any | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  reference?: string | null;
+  glass_type_id?: string | null;
+  payment_status?: PaymentStatus | null;
+  order_status?: OrderStatus | null;
+  min_width?: number | string | null;
+  max_width?: number | string | null;
+  min_height?: number | string | null;
+  max_height?: number | string | null;
+  min_area?: number | string | null;
+  max_area?: number | string | null;
+  min_total?: number | string | null;
+  max_total?: number | string | null;
+  created_from?: string | null;
+  created_to?: string | null;
 }): Promise<PaginatedResponse<OrderResponse>> {
   return await get<PaginatedResponse<OrderResponse>>(`/api/orders/search`, {
     params,
@@ -66,9 +66,7 @@ export async function getOrderByReference(
 }
 
 // Get Order by ID
-export async function getOrderById(
-  order_id: string,
-): Promise<OrderResponse> {
+export async function getOrderById(order_id: string): Promise<OrderResponse> {
   return await get<OrderResponse>(`/api/orders/${order_id}`);
 }
 
@@ -158,7 +156,7 @@ export async function listStaffNotifications(
 ): Promise<NotificationListResponse> {
   return await get<NotificationListResponse>(
     `/api/orders/notifications?limit=${limit}`,
-    { _skipAuthRedirect: true } as any,
+    { _skipAuthRedirect: true },
   );
 }
 
