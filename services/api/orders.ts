@@ -14,6 +14,8 @@ import {
   OrderFileLinksResponse,
   NotificationListResponse,
   NotificationMarkReadResponse,
+  OrderReviewEmailRequest,
+  OrderReviewEmailResponse,
 } from "../types/openapi";
 
 // Create Order
@@ -136,6 +138,17 @@ export async function uploadSignature(
     `/api/orders/${order_id}/upload-signature`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } },
+  );
+}
+
+// Send Pre-Payment Review Email
+export async function sendReviewEmail(
+  order_id: string,
+  data?: OrderReviewEmailRequest,
+): Promise<OrderReviewEmailResponse> {
+  return await post<OrderReviewEmailResponse>(
+    `/api/orders/${order_id}/send-review-email`,
+    data ?? {},
   );
 }
 

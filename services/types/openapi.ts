@@ -400,6 +400,17 @@ export interface NotificationMarkReadResponse {
   notification: NotificationResponse;
 }
 
+export interface OrderReviewEmailRequest {
+  review_url?: string | null;
+}
+
+export interface OrderReviewEmailResponse {
+  order_id: string;
+  customer_email: string;
+  review_url: string | null;
+  email_provider_configured: boolean;
+}
+
 export interface NotificationUnreadCountResponse {
   unread_count: number;
 }

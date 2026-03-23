@@ -17,6 +17,7 @@ import {
   getOrderFiles,
   listStaffNotifications,
   markStaffNotificationRead,
+  sendReviewEmail,
 } from "../api/orders";
 import {
   OrderCreate,
@@ -31,6 +32,8 @@ import {
   PaginatedResponse,
   OrderFileLinksResponse,
   NotificationListResponse,
+  OrderReviewEmailRequest,
+  OrderReviewEmailResponse,
 } from "../types/openapi";
 
 export function useCreateOrder() {
@@ -145,6 +148,21 @@ export function useReviewOrder() {
     onError: (error: any) => {
       toast.error(
         getErrorMessage(error, "Failed to calculate price. Please try again."),
+      );
+    },
+  });
+}
+
+export function useSendReviewEmail() {
+  return useMutation<
+    OrderReviewEmailResponse,
+    Error,
+    { order_id: string; data?: OrderReviewEmailRequest }
+  >({
+    mutationFn: ({ order_id, data }) => sendReviewEmail(order_id, data),
+    onError: (error: any) => {
+      toast.error(
+        getErrorMessage(error, "Failed to send review email. Please try again."),
       );
     },
   });

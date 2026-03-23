@@ -17,7 +17,7 @@ import { GlassSpecsStep } from "./components/glass-specs-step";
 import { AddOnsStep } from "./components/add-ons-step";
 import { ReviewStep } from "./components/review-step";
 import { Header } from "@/components/header";
-import { useCreateOrder, useReviewOrder } from "@/services/queries/orders";
+import { useCreateOrder, useReviewOrder, useSendReviewEmail } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
 import { OrderReviewResponse } from "@/services/types/openapi";
 import {
@@ -131,6 +131,7 @@ function NewOrderForm() {
     useInitializePayment();
   const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
     useReviewOrder();
+  const { mutateAsync: sendReviewEmail } = useSendReviewEmail();
 
   const handleAddOnsNext = async () => {
     const fields: (keyof OrderFormValues)[] = [
@@ -239,6 +240,8 @@ function NewOrderForm() {
             setIsUploading(false);
           }
         }
+
+        await sendReviewEmail({ order_id: orderId });
 
         const paymentRes = await initializePayment({
           data: { order_id: orderId },
