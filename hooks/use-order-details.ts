@@ -43,10 +43,16 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.engraving_text
       ? [{ label: "Engraving", value: String(order.engraving_text) }]
       : []),
-    ...(order?.addons?.map((a: OrderAddonResponse) => ({
-      label: a.addon?.name ?? "Add-on",
-      value: "Yes",
-    })) ?? []),
+    ...(order?.addons?.map((a: OrderAddonResponse) => {
+      const parts: string[] = [];
+      if (a.custom_input) parts.push(a.custom_input);
+      if (a.quantity != null) parts.push(`${a.quantity} side${a.quantity !== 1 ? "s" : ""}`);
+      if (a.notes) parts.push(a.notes);
+      return {
+        label: a.addon?.name ?? "Add-on",
+        value: parts.length > 0 ? parts.join(", ") : "Yes",
+      };
+    }) ?? []),
   ];
 
   return { glassSpecs, addOns };

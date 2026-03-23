@@ -276,6 +276,9 @@ export interface InventoryItemUpdate {
 export interface OrderAddonResponse {
   addon: AddonResponse;
   calculated_price: string;
+  quantity?: number | null;
+  custom_input?: string | null;
+  notes?: string | null;
 }
 
 export interface OrderFileUploadResponse {

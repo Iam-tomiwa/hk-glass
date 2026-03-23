@@ -109,7 +109,7 @@ export function OrderLeftCard({
       name: f.file_path.split("/").pop(),
     })) ?? [];
 
-  const isNotEmpty = (val: any) => {
+  const isNotEmpty = (val: unknown) => {
     if (val === null || val === undefined || val === "") return false;
     if (typeof val === "string" && (val.trim() === "—" || val.trim() === "__"))
       return false;
@@ -142,14 +142,15 @@ export function OrderLeftCard({
     <>
       <Card className="border border-gray-200 divide divide-y px-6 h-max rounded-2xl gap-0 bg-white">
         {/* Customer Information */}
-        {hasCustomerSection && customerTableRows.some((r) => isNotEmpty(r.value)) && (
-          <CardContent className="pb-4 px-0 pt-6">
-            <h3 className="text-base font-bold text-gray-900 mb-2">
-              Customer Information
-            </h3>
-            <SpecTable rows={customerTableRows} />
-          </CardContent>
-        )}
+        {hasCustomerSection &&
+          customerTableRows.some((r) => isNotEmpty(r.value)) && (
+            <CardContent className="pb-4 px-0 pt-6">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
+                Customer Information
+              </h3>
+              <SpecTable rows={customerTableRows} />
+            </CardContent>
+          )}
 
         {/* Glass Specifications */}
         {glassSpecs.some((r) => isNotEmpty(r.value)) && (
@@ -164,7 +165,8 @@ export function OrderLeftCard({
         )}
 
         {/* Add-ons & Services */}
-        {(addOns.some((r) => isNotEmpty(r.value)) || engravingImages.length > 0) && (
+        {(addOns.some((r) => isNotEmpty(r.value)) ||
+          engravingImages.length > 0) && (
           <CardContent className="py-4 px-0">
             <h3 className="text-base font-bold text-gray-900 mb-2">
               Add-ons &amp; Services

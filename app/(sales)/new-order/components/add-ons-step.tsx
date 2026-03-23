@@ -59,12 +59,6 @@ const ENGRAVING_OPTIONS = [
   { value: "image", label: "Image" },
   { value: "both", label: "Both" },
 ];
-const HOLE_DIAMETER_OPTIONS = [
-  { value: "1/4", label: '1/4"' },
-  { value: "1/2", label: '1/2"' },
-  { value: "3/4", label: '3/4"' },
-  { value: "1", label: '1"' },
-];
 
 export function AddOnsStep({
   form,
@@ -197,6 +191,7 @@ export function AddOnsStep({
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="holeDiameter"
@@ -205,12 +200,11 @@ export function AddOnsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Hole Diameter
                 </FormLabel>
-                <ComboBox
+                <Input
+                  {...field}
                   value={field.value || ""}
-                  onValueChange={(v) => field.onChange(v)}
-                  options={HOLE_DIAMETER_OPTIONS}
-                  placeholder="Select diameter"
-                  className="w-full"
+                  type="number"
+                  endIcon="mm"
                 />
                 <FormMessage />
               </FormItem>
@@ -248,7 +242,7 @@ export function AddOnsStep({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Engraving Text <span className="text-red-500">*</span>
+                  Engraving Text
                 </FormLabel>
                 <FormControl>
                   <Textarea
@@ -403,7 +397,7 @@ export function AddOnsStep({
       return (
         <div className="pt-3 pl-1 space-y-1.5">
           <label className="text-[#1E202E] font-medium text-sm">
-            Bevel Angle
+            Select Bevelling Type
           </label>
           <ComboBox
             value={addonExtras[`${addon.id}:type`] || ""}
@@ -411,7 +405,7 @@ export function AddOnsStep({
               setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
             }
             options={BEVELING_OPTIONS.map((o) => ({ value: o, label: o }))}
-            placeholder="Select bevel angle"
+            placeholder="Select bevelling type"
             className="w-full"
           />
         </div>
@@ -446,7 +440,7 @@ export function AddOnsStep({
 
     return (
       <div key={category}>
-        <h3 className="text-base font-bold text-[#1E202E] mb-3">
+        <h3 className="text-base capitalize font-bold text-[#1E202E] mb-3">
           {CATEGORY_LABELS[category] || category.replace(/_/g, " ")}
         </h3>
         <div className="space-y-3">
