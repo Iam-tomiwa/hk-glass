@@ -25,11 +25,11 @@ export interface NewAddon {
 }
 
 const CATEGORY_OPTIONS = [
-  { value: "edge_surface", label: "Edge Surface" },
-  { value: "structural", label: "Structural" },
-  { value: "thermal_film", label: "Thermal Film" },
-  { value: "decorative", label: "Decorative" },
-  { value: "other", label: "Other" },
+  { value: "cutting_shaping", label: "Cutting & Shaping" },
+  { value: "edge_surface_finishing", label: "Edge Surface Finishing" },
+  { value: "fabrication_processing", label: "Fabrication Processing" },
+  { value: "strength_insulation", label: "Strength & Insulation" },
+  { value: "assembly", label: "Assembly" },
 ];
 
 const PRICE_TYPE_OPTIONS = [
