@@ -22,7 +22,13 @@ export interface AddonCreate {
   is_active?: boolean;
 }
 
-export type AddonPriceType = object;
+export type AddonPriceType = "flat" | "per_sqm" | "per_side";
+
+export interface AddonPriceUpdate {
+  price_per_unit?: number | string | null;
+  price_per_sqm?: number | string | null;
+  price_per_side?: number | string | null;
+}
 
 export interface AddonResponse {
   id: string;

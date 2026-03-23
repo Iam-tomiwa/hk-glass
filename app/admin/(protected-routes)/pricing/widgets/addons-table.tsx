@@ -2,38 +2,151 @@
 
 import { useMemo, useState } from "react";
 import { PackagePlus } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { ComboBox } from "@/components/ui/combo-box-2";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { cn, formatNaira } from "@/lib/utils";
 import DeleteEntityButton from "@/components/delete-entity-button";
 import DataGrid from "@/components/data-table";
 import type { ColumnDef } from "@/components/data-table/types";
-import { AddonResponse } from "@/services/types/openapi";
-import { useUpdateAddon } from "@/services/queries/admin";
+import { AddonResponse, AddonPriceType } from "@/services/types/openapi";
+import { useUpdateAddon, useUpdateAddonPrice } from "@/services/queries/admin";
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 import SearchInput from "@/components/search-input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+
+const PRICE_TYPE_OPTIONS: { value: AddonPriceType; label: string }[] = [
+  { value: "flat", label: "Flat (per unit)" },
+  { value: "per_sqm", label: "Per sqm" },
+  { value: "per_side", label: "Per side" },
+];
+
+function EditPriceModal({
+  addon,
+  open,
+  onClose,
+}: {
+  addon: AddonResponse | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { openConfirmModal } = useConfirmations();
+  const { mutate: updatePrice, isPending } = useUpdateAddonPrice();
+
+  const [priceType, setPriceType] = useState<AddonPriceType>(
+    (addon?.price_type as AddonPriceType) ?? "flat",
+  );
+  const [price, setPrice] = useState(addon?.price ?? "");
+
+  // Reset fields when a different addon is opened
+  const handleOpenChange = (o: boolean) => {
+    if (!o) onClose();
+  };
+
+  const handleOpen = () => {
+    setPriceType((addon?.price_type as AddonPriceType) ?? "flat");
+    setPrice(addon?.price ?? "");
+  };
+
+  const handleSave = () => {
+    if (!addon) return;
+    openConfirmModal(
+      "Are you sure you want to update this price? This will affect new orders.",
+      () => {
+        const data =
+          priceType === "flat"
+            ? { price_per_unit: price }
+            : priceType === "per_sqm"
+              ? { price_per_sqm: price }
+              : { price_per_side: price };
+
+        updatePrice({ addon_id: addon.id, data }, { onSuccess: onClose });
+      },
+      { title: "Save Price Change", confirmText: "Save" },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[400px] gap-5"
+        onAnimationStart={open ? handleOpen : undefined}
+      >
+        <DialogHeader className="gap-1">
+          <DialogTitle className="text-base font-bold text-[#1E202E]">
+            Edit Price
+          </DialogTitle>
+          <DialogDescription>
+            Update price for <span className="font-medium">{addon?.name}</span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#1E202E]">
+              Pricing Unit
+            </label>
+            <ComboBox
+              value={priceType}
+              onValueChange={(v) => setPriceType(v as AddonPriceType)}
+              options={PRICE_TYPE_OPTIONS}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[#1E202E]">
+              Price (₦)
+            </label>
+            <Input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Enter price"
+              className="h-9"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            className="flex-1"
+            onClick={handleSave}
+            disabled={isPending || !price}
+          >
+            {isPending ? "Saving..." : "Save Price"}
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function AddonsTable({
   rows,
   isLoading = false,
   isError = false,
   error = null,
-  onSavePrice,
 }: {
   rows: AddonResponse[];
   isLoading?: boolean;
   isError?: boolean;
   error?: Error | null;
-  onSavePrice: (id: string, newPrice: string) => Promise<void>;
 }) {
   const [search, setSearch] = useState("");
   const [builtinFilter, setBuiltinFilter] = useState("all");
   const [activeFilter, setActiveFilter] = useState("all");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState<string>("");
-  const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
+  const [editingAddon, setEditingAddon] = useState<AddonResponse | null>(null);
 
   const updateAddonMutation = useUpdateAddon();
   const { openConfirmModal } = useConfirmations();
@@ -48,22 +161,6 @@ export default function AddonsTable({
       (activeFilter === "active" ? r.is_active : !r.is_active);
     return matchesSearch && matchesBuiltin && matchesActive;
   });
-
-  const handleSavePrice = (id: string, value: string) => {
-    openConfirmModal(
-      "Are you sure you want to update this price? This will affect new orders.",
-      async () => {
-        setPendingSaveId(id);
-        try {
-          await onSavePrice(id, value);
-          setEditingId(null);
-        } finally {
-          setPendingSaveId(null);
-        }
-      },
-      { title: "Save Price Change", confirmText: "Save" },
-    );
-  };
 
   const handleToggleActive = (row: AddonResponse) => {
     const action = row.is_active ? "deactivate" : "activate";
@@ -138,79 +235,52 @@ export default function AddonsTable({
       {
         field: "price",
         headerName: "Price (₦)",
-        width: 160,
-        renderCell: (row: AddonResponse) => {
-          const isEditing = editingId === row.id;
-          return isEditing ? (
-            <Input
-              type="number"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              className="h-9 w-[140px] text-sm border-neutral-200 bg-white focus-visible:ring-[#00AE4D]"
-              autoFocus
-            />
-          ) : (
-            <div className="h-9 w-[140px] flex items-center px-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm text-neutral-500 select-none">
-              {row.price ? Number(row.price).toLocaleString() : "—"}
-            </div>
-          );
-        },
+        width: 140,
+        renderCell: (row: AddonResponse) => (
+          <span className="text-sm text-neutral-700">
+            {row.price ? formatNaira(Number(row.price)) : "Not Set"}
+          </span>
+        ),
       },
       {
         field: "",
         headerName: "",
         width: 180,
         align: "right",
-        renderCell: (row: AddonResponse) => {
-          const isEditing = editingId === row.id;
-          const isSaving = pendingSaveId === row.id;
-          return (
-            <div className="flex items-center gap-2 justify-end">
+        renderCell: (row: AddonResponse) => (
+          <div className="flex items-center gap-2 justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingAddon(row)}
+            >
+              Edit Price
+            </Button>
+            {row.is_builtin ? (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (isEditing) {
-                    handleSavePrice(row.id, editValue);
-                  } else {
-                    setEditingId(row.id);
-                    setEditValue(String(row.price));
-                  }
-                }}
-                disabled={isSaving}
+                onClick={() => handleToggleActive(row)}
+                disabled={updateAddonMutation.isPending}
               >
-                {isSaving
-                  ? "Saving..."
-                  : isEditing
-                    ? "Save Price"
-                    : "Edit Price"}
+                {row.is_active ? "Deactivate" : "Activate"}
               </Button>
-              {row.is_builtin ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleToggleActive(row)}
-                  disabled={updateAddonMutation.isPending}
-                >
-                  {row.is_active ? "Deactivate" : "Activate"}
-                </Button>
-              ) : (
-                <DeleteEntityButton
-                  type="addon"
-                  id={row.id}
-                  name={row.name}
-                  btnProps={{ size: "sm" }}
-                >
-                  Delete
-                </DeleteEntityButton>
-              )}
-            </div>
-          );
-        },
+            ) : (
+              <DeleteEntityButton
+                type="addon"
+                id={row.id}
+                name={row.name}
+                btnProps={{ size: "sm" }}
+              >
+                Delete
+              </DeleteEntityButton>
+            )}
+          </div>
+        ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [editingId, editValue, pendingSaveId, updateAddonMutation],
+    [updateAddonMutation],
   );
 
   return (
@@ -263,6 +333,12 @@ export default function AddonsTable({
           title: "No add-ons found",
           subTitle: "Click 'Add new Add-ons and Services' to add one",
         }}
+      />
+
+      <EditPriceModal
+        addon={editingAddon}
+        open={!!editingAddon}
+        onClose={() => setEditingAddon(null)}
       />
     </div>
   );

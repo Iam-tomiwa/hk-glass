@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 import {
   StaffNotificationBell,
   FactoryNotificationBell,
+  AdminNotificationBell,
 } from "@/components/notification-bell";
 
 export const Navbar = ({
@@ -14,8 +15,8 @@ export const Navbar = ({
   persona,
   onMenuClick,
 }: {
-  fullWidth?: Boolean;
-  persona?: "factory" | "staff";
+  fullWidth?: boolean;
+  persona?: "factory" | "staff" | "admin";
   onMenuClick?: () => void;
 }) => {
   const { openConfirmModal } = useConfirmations();
@@ -50,6 +51,7 @@ export const Navbar = ({
         <div className="flex items-center gap-2 md:gap-4">
           {persona === "factory" && <FactoryNotificationBell />}
           {persona === "staff" && <StaffNotificationBell />}
+          {persona === "admin" && <AdminNotificationBell />}
           <button
             onClick={() => {
               openConfirmModal(

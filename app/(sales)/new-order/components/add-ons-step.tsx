@@ -87,7 +87,7 @@ export function AddOnsStep({
 }) {
   const { data: addons = [], isLoading: isLoadingAddons } = useListAddons();
   const { data: hardwareItems = [], isLoading: isLoadingHardware } =
-    useListInventory("hardware", false);
+    useListInventory("hardware", true);
 
   const [addonExtras, setAddonExtras] = useState<Record<string, string>>({});
   const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});

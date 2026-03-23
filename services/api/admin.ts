@@ -20,6 +20,9 @@ import {
   DashboardSummaryResponse,
   DashboardOrderResponse,
   PaginatedResponse,
+  NotificationListResponse,
+  NotificationMarkReadResponse,
+  AddonPriceUpdate,
 } from "../types/openapi";
 
 // Create Glass Type
@@ -66,6 +69,17 @@ export async function updateAddon(
   data: AddonUpdate,
 ): Promise<AddonResponse> {
   return await patch<AddonResponse>(`/api/admin/addons/${addon_id}`, data);
+}
+
+// Update Addon Price
+export async function updateAddonPrice(
+  addon_id: string,
+  data: AddonPriceUpdate,
+): Promise<AddonResponse> {
+  return await patch<AddonResponse>(
+    `/api/admin/addons/${addon_id}/price`,
+    data,
+  );
 }
 
 // Delete Addon
@@ -226,6 +240,23 @@ export async function listRecentOrders(params?: {
   return await get<DashboardOrderResponse[]>(`/api/admin/recent-orders`, {
     params,
   });
+}
+
+// Admin Notifications
+export async function listAdminNotifications(
+  limit = 20,
+): Promise<NotificationListResponse> {
+  return await get<NotificationListResponse>(`/api/admin/notifications`, {
+    params: { limit },
+  });
+}
+
+export async function markAdminNotificationRead(
+  notification_id: string,
+): Promise<NotificationMarkReadResponse> {
+  return await patch<NotificationMarkReadResponse>(
+    `/api/admin/notifications/${notification_id}/read`,
+  );
 }
 
 // Setup Admin Device

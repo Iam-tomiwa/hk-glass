@@ -16,12 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddMaterialModal } from "./widgets/add-material-modal";
 import { AdjustStockModal } from "./widgets/adjust-stock-modal";
-import {
-  useListInventory,
-  useDeleteInventoryItem,
-} from "@/services/queries/inventory";
+import { useListInventory } from "@/services/queries/inventory";
 import { InventoryItemResponse } from "@/services/types/openapi";
 import { useRouter } from "next/navigation";
+import DeleteEntityButton from "@/components/delete-entity-button";
 
 const ITEM_TYPE_LABELS: Record<string, string> = {
   glass: "Glass Sheet",
@@ -55,7 +53,6 @@ function RowActions({
   onAdjust: (row: InventoryItemResponse) => void;
 }) {
   const router = useRouter();
-  const { mutate: deleteItem } = useDeleteInventoryItem();
   return (
     <>
       <DropdownMenuItem onClick={() => onAdjust(row)}>
@@ -67,12 +64,17 @@ function RowActions({
         View Details
       </DropdownMenuItem>
       <DropdownMenuSeparator />
-      <DropdownMenuItem
-        className="text-red-600 focus:text-red-600"
-        onClick={() => deleteItem({ item_id: row.id })}
+      <DeleteEntityButton
+        name={row.material_name}
+        id={row.id}
+        btnProps={{
+          variant: "ghost",
+          className: "w-full text-destructive! justify-start",
+        }}
+        type="inventory-item"
       >
-        Delete Item
-      </DropdownMenuItem>
+        Delete Stock
+      </DeleteEntityButton>
     </>
   );
 }

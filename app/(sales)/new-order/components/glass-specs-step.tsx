@@ -23,7 +23,7 @@ export function GlassSpecsStep({
   onNext: () => void;
 }) {
   const { data: glassTypes = [], isLoading: isLoadingGlassTypes } =
-    useListInventory("glass", false);
+    useListInventory("glass", true);
 
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });

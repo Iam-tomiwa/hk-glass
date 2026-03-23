@@ -13,6 +13,7 @@ import {
   getInventoryItem,
   updateInventoryItemPrice,
   listGlassSheets,
+  scanBySerialCode,
   InventoryItemPriceUpdate,
 } from "../api/inventory";
 import {
@@ -22,12 +23,13 @@ import {
   InventoryAdjustRequest,
   InventoryItemType,
   GlassSheetResponse,
+  InventorySerialScanResponse,
 } from "../types/openapi";
 
-export function useListInventory(type?: InventoryItemType, isAdmin?: boolean) {
+export function useListInventory(type?: InventoryItemType, isSales?: boolean) {
   return useQuery<InventoryItemResponse[]>({
     queryKey: queryKeys.inventory.list(type),
-    queryFn: () => listInventory(type, isAdmin),
+    queryFn: () => listInventory(type, isSales),
   });
 }
 
@@ -110,6 +112,14 @@ export function useUpdateInventoryItemPrice() {
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, "Failed to update price."));
     },
+  });
+}
+
+export function useScanBySerialCode(serial_code: string) {
+  return useQuery<InventorySerialScanResponse>({
+    queryKey: [...queryKeys.inventory.all, "scan", serial_code],
+    queryFn: () => scanBySerialCode(serial_code),
+    enabled: !!serial_code,
   });
 }
 

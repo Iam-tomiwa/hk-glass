@@ -12,6 +12,7 @@ import {
   createAddon,
   listAddons,
   updateAddon,
+  updateAddonPrice,
   deleteAddon,
   getPricingSettings,
   updatePricingSettings,
@@ -35,6 +36,8 @@ import {
   getCurrentDevice,
   getOrder,
   getAdminOrderFiles,
+  listAdminNotifications,
+  markAdminNotificationRead,
 } from "../api/admin";
 import {
   GlassTypeCreate,
@@ -43,6 +46,7 @@ import {
   AddonCreate,
   AddonResponse,
   AddonUpdate,
+  AddonPriceUpdate,
   PricingSettingsResponse,
   PricingSettingsUpdate,
   AdminDeviceCreate,
@@ -56,6 +60,7 @@ import {
   DashboardSummaryResponse,
   DashboardOrderResponse,
   PaginatedResponse,
+  NotificationListResponse,
 } from "../types/openapi";
 
 export function useCreateGlassType() {
@@ -160,6 +165,26 @@ export function useDeleteAddon() {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));
+    },
+  });
+}
+
+export function useUpdateAddonPrice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      addon_id,
+      data,
+    }: {
+      addon_id: string;
+      data: AddonPriceUpdate;
+    }) => updateAddonPrice(addon_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.all });
+      toast.success("Price updated successfully.");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Failed to update price."));
     },
   });
 }
@@ -401,5 +426,26 @@ export function useGetDevices(params?: {
   return useQuery({
     queryKey: queryKeys.admin.list(params),
     queryFn: () => setupDevice(params),
+  });
+}
+
+export function useListAdminNotifications() {
+  return useQuery<NotificationListResponse>({
+    queryKey: queryKeys.notifications.admin,
+    queryFn: () => listAdminNotifications(),
+    refetchInterval: 30_000,
+  });
+}
+
+export function useMarkAdminNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (notification_id: string) =>
+      markAdminNotificationRead(notification_id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.admin,
+      });
+    },
   });
 }

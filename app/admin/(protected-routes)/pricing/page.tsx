@@ -10,7 +10,6 @@ import {
   useGetPricingSettings,
   useUpdatePricingSettings,
   useListAddons,
-  useUpdateAddon,
   useCreateAddon,
 } from "@/services/queries/admin";
 import {
@@ -52,7 +51,6 @@ export default function PricingPage() {
     error: hardwareError,
   } = useListInventory("hardware");
 
-  const updateAddonMutation = useUpdateAddon();
   const updatePricingSettingsMutation = useUpdatePricingSettings();
   const createAddonMutation = useCreateAddon();
   const updateInventoryPriceMutation = useUpdateInventoryItemPrice();
@@ -97,13 +95,6 @@ export default function PricingPage() {
     await updateInventoryPriceMutation.mutateAsync({
       item_id: id,
       data: { unit_price: newPrice },
-    });
-  };
-
-  const handleSaveAddon = async (id: string, newPrice: string) => {
-    await updateAddonMutation.mutateAsync({
-      addon_id: id,
-      data: { price: newPrice },
     });
   };
 
@@ -174,7 +165,6 @@ export default function PricingPage() {
             isLoading={isAddonsLoading}
             isError={isAddonsError}
             error={addonsError as Error | null}
-            onSavePrice={handleSaveAddon}
           />
         )}
 

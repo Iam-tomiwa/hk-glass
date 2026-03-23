@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -8,16 +8,7 @@ import { getErrorMessage } from "@/lib/error-handler";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { del } from "@/lib/axios-setup";
 import { queryKeys } from "@/services/queries/openapi-keys";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
 
 export type DeleteEntityType = "glass-type" | "addon" | "inventory-item";
 
@@ -79,8 +70,8 @@ export default function DeleteEntityButton({
   children,
   btnProps,
 }: DeleteEntityButtonProps) {
-  const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { openConfirmModal } = useConfirmations();
 
   const resolvedUrl =
     url ?? (type && id ? `${entityConfig[type].endpoint}/${id}` : null);
@@ -109,44 +100,38 @@ export default function DeleteEntityButton({
     },
   });
 
-  return (
-    <>
-      <Button
-        variant="outline"
-        disabled={deleteMutation.isPending || disabled}
-        {...btnProps}
-        onClick={() => setOpen(true)}
-      >
-        {deleteMutation.isPending ? (
-          <Loader2 className="animate-spin w-4 h-4" />
-        ) : children ? (
-          children
-        ) : (
-          <Trash2 className="w-4 h-4" />
-        )}
-      </Button>
+  const handleDelete = () => {
+    openConfirmModal(
+      <span>
+        Are you sure you want to delete{" "}
+        <span className="font-medium">{name}</span>? This action cannot be
+        undone.
+      </span>,
+      () => {
+        deleteMutation.mutate();
+      },
+      {
+        title: `Delete ${resolvedLabel}`,
+        isDelete: true,
+      },
+    );
+  };
 
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {resolvedLabel}</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <span className="font-medium">{name}</span>? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => deleteMutation.mutate()}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+  return (
+    <Button
+      variant="outline"
+      disabled={deleteMutation.isPending || disabled}
+      {...btnProps}
+      onClick={handleDelete}
+    >
+      {deleteMutation.isPending ? (
+        <Loader2 className="animate-spin w-4 h-4" />
+      ) : children ? (
+        children
+      ) : (
+        <Trash2 className="w-4 h-4" />
+      )}
+    </Button>
   );
 }
+

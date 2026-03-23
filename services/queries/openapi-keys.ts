@@ -64,5 +64,6 @@ export const queryKeys = {
   notifications: {
     staff: ["notifications", "staff"] as const,
     factory: ["notifications", "factory"] as const,
+    admin: ["notifications", "admin"] as const,
   },
 };

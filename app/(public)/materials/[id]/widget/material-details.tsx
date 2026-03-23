@@ -6,8 +6,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Loader2, MirrorRectangular, X, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Loader2, MirrorRectangular, X, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +28,8 @@ import EmptyState from "@/components/empty-state";
 import { Header } from "@/components/header";
 import { AdjustStockModal } from "@/app/admin/(protected-routes)/inventory/widgets/adjust-stock-modal";
 import { ComboBox } from "@/components/ui/combo-box-2";
+import { downloadQRCodesPDF } from "@/lib/qr-pdf";
+import SearchInput from "@/components/search-input";
 
 const ITEM_TYPE_LABELS: Record<string, string> = {
   glass: "Glass Sheet",
@@ -110,11 +111,15 @@ function QRModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-center p-4">
+        <div className="flex justify-center py-4">
           <QRCodeCanvas
             ref={canvasRef}
-            value={sheet?.serial_code ?? ""}
-            size={200}
+            value={
+              sheet?.serial_code
+                ? `${typeof window !== "undefined" ? window.location.origin : ""}/materials/${sheet.serial_code}`
+                : ""
+            }
+            size={270}
             level="M"
           />
         </div>
@@ -190,6 +195,24 @@ export default function MaterialDetailsPage({
   const [qrSheet, setQrSheet] = useState<GlassSheetResponse | null>(null);
   const [sheetSearch, setSheetSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadAllQR = async () => {
+    if (!item || sheets.length === 0) return;
+    setPdfLoading(true);
+    try {
+      await downloadQRCodesPDF(
+        sheets.map((s) => ({
+          serialCode: s.serial_code,
+          materialName: item.material_name,
+          url: `${window.location.origin}/materials/${s.serial_code}`,
+        })),
+        `${item.material_name}-qr-codes.pdf`,
+      );
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -321,17 +344,34 @@ export default function MaterialDetailsPage({
         {/* Glass Sheets Grid — glass items only */}
         {item.item_type === "glass" && (
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 space-y-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[#1E202E]">Glass Sheets</h3>
+              {sheets.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadAllQR}
+                  disabled={pdfLoading}
+                >
+                  {pdfLoading ? (
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="size-4 mr-2" />
+                  )}
+                  Download All QR Codes
+                </Button>
+              )}
+            </div>
+
             {/* Filters */}
             <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 size-4" />
-                <Input
-                  placeholder="Search by name or reference"
-                  value={sheetSearch}
-                  onChange={(e) => setSheetSearch(e.target.value)}
-                  className="pl-9 h-9"
-                />
-              </div>
+              <SearchInput
+                value={sheetSearch}
+                onChange={(e) => setSheetSearch(e.target.value)}
+                placeholder="Search by name or reference"
+                containerClass="grow"
+                className="h-10"
+              />
               <ComboBox
                 value={statusFilter}
                 onValueChange={setStatusFilter}
@@ -342,7 +382,7 @@ export default function MaterialDetailsPage({
                   { value: "damaged", label: "Damaged" },
                   { value: "retired", label: "Retired" },
                 ]}
-                className="w-[150px]"
+                className="w-[150px] h-10"
               />
             </div>
 

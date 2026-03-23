@@ -16,6 +16,10 @@ import {
   useListFactoryNotifications,
   useMarkFactoryNotificationRead,
 } from "@/services/queries/factory";
+import {
+  useListAdminNotifications,
+  useMarkAdminNotificationRead,
+} from "@/services/queries/admin";
 import type { NotificationResponse } from "@/services/types/openapi";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 
@@ -180,6 +184,18 @@ export function FactoryNotificationBell() {
   function getHref(n: NotificationResponse): string | null {
     const ref = getOrderReference(n);
     return ref ? `/factory/${ref}` : null;
+  }
+
+  return <NotificationBell data={data} markRead={markRead} getHref={getHref} />;
+}
+
+export function AdminNotificationBell() {
+  const { data } = useListAdminNotifications();
+  const { mutate: markRead } = useMarkAdminNotificationRead();
+
+  function getHref(n: NotificationResponse): string | null {
+    const ref = getOrderReference(n);
+    return ref ? `/admin/${ref}` : null;
   }
 
   return <NotificationBell data={data} markRead={markRead} getHref={getHref} />;

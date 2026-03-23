@@ -6,6 +6,7 @@ import {
   InventoryAdjustRequest,
   InventoryItemType,
   GlassSheetResponse,
+  InventorySerialScanResponse,
 } from "../types/openapi";
 
 export interface InventoryItemPriceUpdate {
@@ -18,11 +19,11 @@ export interface InventoryItemPriceUpdate {
 // List Inventory
 export async function listInventory(
   type?: InventoryItemType,
-  isAdmin?: boolean,
+  isSales?: boolean,
 ): Promise<InventoryItemResponse[]> {
   const params = type ? `?type=${type}` : "";
   return await get<InventoryItemResponse[]>(
-    isAdmin ? `/api/admin/inventory${params}` : `/api/inventory${params}`,
+    isSales ? `/api/inventory${params}` : `/api/admin/inventory${params}`,
   );
 }
 
@@ -77,6 +78,15 @@ export async function getInventoryItem(
 ): Promise<InventoryItemResponse> {
   return await get<InventoryItemResponse>(
     `/api/admin/inventory/scan/item/${item_id}`,
+  );
+}
+
+// Public scan by serial code
+export async function scanBySerialCode(
+  serial_code: string,
+): Promise<InventorySerialScanResponse> {
+  return await get<InventorySerialScanResponse>(
+    `/api/inventory/scan/${serial_code}`,
   );
 }
 
