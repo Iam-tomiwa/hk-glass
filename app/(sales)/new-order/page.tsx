@@ -52,13 +52,10 @@ function NewOrderForm() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("customer");
   const [highestUnlockedIndex, setHighestUnlockedIndex] = useState(0);
-  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(
-    null,
-  );
+  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [specFiles, setSpecFiles] = useState<File[]>([]);
-  const [engravingImageFile, setEngravingImageFile] = useState<File | null>(
-    null,
-  );
+  const [engravingImageFile, setEngravingImageFile] = useState<File | null>(null);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -72,7 +69,6 @@ function NewOrderForm() {
         const params = new URLSearchParams(searchParams.toString());
         router.replace(`/payment-confirmation/${orderId}?${params.toString()}`);
       } else {
-        // Fallback if no order_id: show inline confirmation tab
         setHighestUnlockedIndex(steps.length - 1);
         setActiveTab("confirmation");
       }
@@ -125,12 +121,9 @@ function NewOrderForm() {
     }
   };
 
-  const { mutateAsync: createOrder, isPending: isCreatingOrder } =
-    useCreateOrder();
-  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
-    useInitializePayment();
-  const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
-    useReviewOrder();
+  const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutateAsync: initializePayment, isPending: isInitializingPayment } = useInitializePayment();
+  const { mutateAsync: reviewOrder, isPending: isReviewingOrder } = useReviewOrder();
   const { mutateAsync: sendReviewEmail } = useSendReviewEmail();
 
   const handleAddOnsNext = async () => {
@@ -149,6 +142,7 @@ function NewOrderForm() {
 
     const values = form.getValues();
     try {
+      // Calculate pricing preview
       const result = await reviewOrder({
         data: {
           width: Number(values.width),
@@ -163,75 +157,53 @@ function NewOrderForm() {
         },
       });
       setOrderReview(result);
-      const currentIndex = steps.findIndex((s) => s.id === "add-ons");
-      setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
-      setActiveTab("review");
-    } catch {
-      // error already toasted by the hook
-    }
-  };
 
-  const handleProceedToPayment = async () => {
-    const data = form.getValues();
-    try {
+      // Create the order
       const orderRes = await createOrder({
         data: {
-          customer_name: data.customerName,
-          customer_email: data.email,
-          customer_phone: data.phone || "",
-          width: Number(data.width),
-          length: Number(data.length),
-          sheet_size: data.sheetSize,
-          thickness: data.thickness,
-          drill_holes_count: data.drillHoles ? Number(data.numberOfHoles) : 0,
-          hole_diameter: data.drillHoles ? data.holeDiameter : "",
-          tint_type: data.addTintFilm ? data.tintType : "",
-          engraving_text: data.engraving ? data.engravingText : "",
-          glass_type_id: data.glassTypeId,
-          addon_ids: data.selectedAddons,
-          insurance_selected: data.insuranceCoverage,
-          shape_type: data.shape,
-          curve_diameter: data.curveDiameter
-            ? Number(data.curveDiameter)
+          customer_name: values.customerName,
+          customer_email: values.email,
+          customer_phone: values.phone || "",
+          width: Number(values.width),
+          length: Number(values.length),
+          sheet_size: values.sheetSize,
+          thickness: values.thickness,
+          drill_holes_count: values.drillHoles ? Number(values.numberOfHoles) : 0,
+          hole_diameter: values.drillHoles ? values.holeDiameter : "",
+          tint_type: values.addTintFilm ? values.tintType : "",
+          engraving_text: values.engraving ? values.engravingText : "",
+          glass_type_id: values.glassTypeId,
+          addon_ids: values.selectedAddons,
+          insurance_selected: values.insuranceCoverage,
+          shape_type: values.shape,
+          curve_diameter: values.curveDiameter
+            ? Number(values.curveDiameter)
             : undefined,
-          customer_notes: data.customerNotes,
-          delivery_method: data.deliveryMethod,
+          customer_notes: values.customerNotes,
+          delivery_method: values.deliveryMethod,
           delivery_address:
-            data.deliveryMethod === "delivery"
-              ? data.deliveryAddress
+            values.deliveryMethod === "delivery"
+              ? values.deliveryAddress
               : undefined,
           delivery_fee:
-            data.deliveryMethod === "delivery" && data.deliveryFee
-              ? Number(data.deliveryFee)
+            values.deliveryMethod === "delivery" && values.deliveryFee
+              ? Number(values.deliveryFee)
               : 0,
         },
       });
 
       if (orderRes?.id) {
         const orderId = orderRes.id;
+        setCreatedOrderId(orderId);
 
-        // Upload files in parallel
+        // Upload spec + engraving files in parallel
         const uploadPromises: Promise<unknown>[] = [];
-
         for (const file of specFiles) {
           uploadPromises.push(uploadSpecification(orderId, file));
         }
-
         if (engravingImageFile) {
-          uploadPromises.push(
-            uploadEngravingImage(orderId, engravingImageFile),
-          );
+          uploadPromises.push(uploadEngravingImage(orderId, engravingImageFile));
         }
-
-        if (signatureDataUrl?.startsWith("data:")) {
-          const res = await fetch(signatureDataUrl);
-          const blob = await res.blob();
-          const sigFile = new File([blob], "signature.png", {
-            type: "image/png",
-          });
-          uploadPromises.push(uploadSignature(orderId, sigFile));
-        }
-
         if (uploadPromises.length > 0) {
           setIsUploading(true);
           try {
@@ -241,21 +213,48 @@ function NewOrderForm() {
           }
         }
 
-        await sendReviewEmail({ order_id: orderId });
+        // Send pre-payment review email
+        const reviewUrl = orderRes.order_reference
+          ? `${window.location.origin}/orders/review/${orderRes.order_reference}`
+          : `${window.location.origin}/orders/review?order_id=${orderId}`;
+        await sendReviewEmail({ order_id: orderId, data: { review_url: reviewUrl } });
+      }
 
-        const paymentRes = await initializePayment({
-          data: { order_id: orderId },
-        });
+      const currentIndex = steps.findIndex((s) => s.id === "add-ons");
+      setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
+      setActiveTab("review");
+    } catch {
+      // errors already toasted by the hooks
+    }
+  };
 
-        if (paymentRes?.authorization_url) {
-          window.location.href = paymentRes.authorization_url;
-        } else {
-          setHighestUnlockedIndex(steps.length - 1);
-          setActiveTab("confirmation");
+  const handleProceedToPayment = async () => {
+    const orderId = createdOrderId;
+    if (!orderId) return;
+    try {
+      // Upload signature if provided
+      if (signatureDataUrl?.startsWith("data:")) {
+        setIsUploading(true);
+        try {
+          const res = await fetch(signatureDataUrl);
+          const blob = await res.blob();
+          const sigFile = new File([blob], "signature.png", { type: "image/png" });
+          await uploadSignature(orderId, sigFile);
+        } finally {
+          setIsUploading(false);
         }
       }
+
+      const paymentRes = await initializePayment({ data: { order_id: orderId } });
+
+      if (paymentRes?.authorization_url) {
+        window.location.href = paymentRes.authorization_url;
+      } else {
+        setHighestUnlockedIndex(steps.length - 1);
+        setActiveTab("confirmation");
+      }
     } catch (e) {
-      console.error("Order processing failed", e);
+      console.error("Payment failed", e);
     }
   };
 
@@ -333,7 +332,7 @@ function NewOrderForm() {
                   form={form}
                   onBack={handleCancel}
                   onNext={handleAddOnsNext}
-                  isLoading={isReviewingOrder}
+                  isLoading={isReviewingOrder || isCreatingOrder || isUploading}
                   specFiles={specFiles}
                   onSpecFilesChange={setSpecFiles}
                   engravingImageFile={engravingImageFile}
@@ -344,9 +343,7 @@ function NewOrderForm() {
                   pricing={orderReview}
                   onBack={() => setActiveTab("add-ons")}
                   onProceedToPayment={handleProceedToPayment}
-                  isLoading={
-                    isCreatingOrder || isUploading || isInitializingPayment
-                  }
+                  isLoading={isUploading || isInitializingPayment}
                   signatureDataUrl={signatureDataUrl}
                   onSignatureChange={setSignatureDataUrl}
                 />
