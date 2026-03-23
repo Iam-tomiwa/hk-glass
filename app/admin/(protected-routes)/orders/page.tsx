@@ -8,7 +8,7 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/search-input";
 import Link from "next/link";
-import { useListOrders } from "@/services/queries/admin";
+import { useListOrders, useListStaff } from "@/services/queries/admin";
 import { Inbox } from "lucide-react";
 import OrderStatusBadge from "@/components/order-status-badge";
 import DateTag from "@/components/date-tag";
@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [staffFilter, setStaffFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -25,6 +26,13 @@ export default function OrdersPage() {
     const timer = setTimeout(() => setDebouncedSearch(searchText), 400);
     return () => clearTimeout(timer);
   }, [searchText]);
+
+  const { data: staffData } = useListStaff();
+
+  const staffOptions = [
+    { value: "all", label: "Created By" },
+    ...(staffData?.map((s) => ({ value: s.id, label: s.name })) ?? []),
+  ];
 
   const columns: ColumnDef[] = [
     {
@@ -34,6 +42,20 @@ export default function OrdersPage() {
         <span className="font-semibold text-[#111827]">
           {row?.order_reference}
         </span>
+      ),
+    },
+    {
+      field: "created_by",
+      headerName: "Created By",
+      renderCell: (row) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-[#111827]">
+            {row.created_by_user?.name ?? "—"}
+          </span>
+          <span className="text-[13px] text-[#6B7280]">
+            {row.created_by_user?.email}
+          </span>
+        </div>
       ),
     },
     {
@@ -100,6 +122,7 @@ export default function OrdersPage() {
   const { data, isLoading, error, isError } = useListOrders({
     search: debouncedSearch || undefined,
     order_status: statusFilter !== "all" ? statusFilter : undefined,
+    staff: staffFilter !== "all" ? staffFilter : undefined,
   });
   return (
     <div className="space-y-8">
@@ -134,6 +157,13 @@ export default function OrdersPage() {
                       { value: "completed", label: "Completed" },
                     ]}
                     placeholder="All Statuses"
+                    className="w-[150px]"
+                  />
+                  <ComboBox
+                    value={staffFilter}
+                    onValueChange={(v) => setStaffFilter(v)}
+                    options={staffOptions}
+                    placeholder="Created By"
                     className="w-[150px]"
                   />
                 </div>

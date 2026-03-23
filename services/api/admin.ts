@@ -198,6 +198,7 @@ export async function listOrders(params?: {
   limit?: number;
   order_status?: string;
   search?: string;
+  staff?: string;
 }): Promise<PaginatedResponse<OrderResponse>> {
   return await get<PaginatedResponse<OrderResponse>>(`/api/admin/orders`, {
     params,
