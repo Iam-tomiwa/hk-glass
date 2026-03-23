@@ -41,7 +41,7 @@ export const inventoryAdjustRequestSchema = z.object({
 });
 
 export const inventoryItemCreateSchema = z.object({
-    item_type: z.enum(["glass", "hardware", "others"], { required_error: "Material type is required" }),
+    item_type: z.enum(["glass", "hardware", "others"], { message: "Material type is required" }),
     material_name: z.string().min(1, "Item name is required"),
     description: z.string().optional().nullable(),
     size: z.string().optional().nullable(),

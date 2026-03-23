@@ -43,12 +43,10 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.engraving_text
       ? [{ label: "Engraving", value: String(order.engraving_text) }]
       : []),
-    ...(order?.addons?.length > 0
-      ? order.addons.map((a: OrderAddonResponse) => ({
-          label: a.addon?.name ?? "Add-on",
-          value: "Yes",
-        }))
-      : []),
+    ...(order?.addons?.map((a: OrderAddonResponse) => ({
+      label: a.addon?.name ?? "Add-on",
+      value: "Yes",
+    })) ?? []),
   ];
 
   return { glassSpecs, addOns };
