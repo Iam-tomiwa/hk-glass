@@ -223,6 +223,7 @@ export interface InventoryItemResponse {
   low_stock_threshold: number;
   status: string;
   created_at: string;
+  glass_type_id: string;
   updated_at: string;
 }
 

@@ -102,7 +102,7 @@ export function GlassSpecsStep({
                   value={field.value}
                   isLoading={isLoadingGlassTypes}
                   options={(glassTypes || [])?.map((type) => ({
-                    value: type.id,
+                    value: type.glass_type_id,
                     label: type.material_name,
                   }))}
                   onValueChange={field.onChange}

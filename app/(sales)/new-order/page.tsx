@@ -17,7 +17,11 @@ import { GlassSpecsStep } from "./components/glass-specs-step";
 import { AddOnsStep } from "./components/add-ons-step";
 import { ReviewStep } from "./components/review-step";
 import { Header } from "@/components/header";
-import { useCreateOrder, useReviewOrder, useSendReviewEmail } from "@/services/queries/orders";
+import {
+  useCreateOrder,
+  useReviewOrder,
+  useSendReviewEmail,
+} from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
 import { OrderReviewResponse } from "@/services/types/openapi";
 import {
@@ -52,10 +56,14 @@ function NewOrderForm() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("customer");
   const [highestUnlockedIndex, setHighestUnlockedIndex] = useState(0);
-  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(null);
+  const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(
+    null,
+  );
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [specFiles, setSpecFiles] = useState<File[]>([]);
-  const [engravingImageFile, setEngravingImageFile] = useState<File | null>(null);
+  const [engravingImageFile, setEngravingImageFile] = useState<File | null>(
+    null,
+  );
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -121,9 +129,12 @@ function NewOrderForm() {
     }
   };
 
-  const { mutateAsync: createOrder, isPending: isCreatingOrder } = useCreateOrder();
-  const { mutateAsync: initializePayment, isPending: isInitializingPayment } = useInitializePayment();
-  const { mutateAsync: reviewOrder, isPending: isReviewingOrder } = useReviewOrder();
+  const { mutateAsync: createOrder, isPending: isCreatingOrder } =
+    useCreateOrder();
+  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
+    useInitializePayment();
+  const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
+    useReviewOrder();
   const { mutateAsync: sendReviewEmail } = useSendReviewEmail();
 
   const handleAddOnsNext = async () => {
@@ -168,7 +179,9 @@ function NewOrderForm() {
           length: `${values.length}${values.unit}`,
           sheet_size: values.sheetSize,
           thickness: values.thickness,
-          drill_holes_count: values.drillHoles ? Number(values.numberOfHoles) : 0,
+          drill_holes_count: values.drillHoles
+            ? Number(values.numberOfHoles)
+            : 0,
           hole_diameter: values.drillHoles ? values.holeDiameter : "",
           tint_type: values.addTintFilm ? values.tintType : "",
           engraving_text: values.engraving ? values.engravingText : "",
@@ -202,7 +215,9 @@ function NewOrderForm() {
           uploadPromises.push(uploadSpecification(orderId, file));
         }
         if (engravingImageFile) {
-          uploadPromises.push(uploadEngravingImage(orderId, engravingImageFile));
+          uploadPromises.push(
+            uploadEngravingImage(orderId, engravingImageFile),
+          );
         }
         if (uploadPromises.length > 0) {
           setIsUploading(true);
@@ -217,7 +232,10 @@ function NewOrderForm() {
         const reviewUrl = orderRes.order_reference
           ? `${window.location.origin}/orders/review/${orderRes.order_reference}`
           : `${window.location.origin}/orders/review?order_id=${orderId}`;
-        await sendReviewEmail({ order_id: orderId, data: { review_url: reviewUrl } });
+        await sendReviewEmail({
+          order_id: orderId,
+          data: { review_url: reviewUrl },
+        });
       }
 
       const currentIndex = steps.findIndex((s) => s.id === "add-ons");
@@ -238,14 +256,18 @@ function NewOrderForm() {
         try {
           const res = await fetch(signatureDataUrl);
           const blob = await res.blob();
-          const sigFile = new File([blob], "signature.png", { type: "image/png" });
+          const sigFile = new File([blob], "signature.png", {
+            type: "image/png",
+          });
           await uploadSignature(orderId, sigFile);
         } finally {
           setIsUploading(false);
         }
       }
 
-      const paymentRes = await initializePayment({ data: { order_id: orderId } });
+      const paymentRes = await initializePayment({
+        data: { order_id: orderId },
+      });
 
       if (paymentRes?.authorization_url) {
         window.location.href = paymentRes.authorization_url;
