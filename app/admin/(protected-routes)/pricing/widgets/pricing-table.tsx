@@ -49,9 +49,9 @@ export default function PricingTable({
   const [pendingSaveId, setPendingSaveId] = useState<string | null>(null);
   const { openConfirmModal } = useConfirmations();
 
-  const filtered = rows.filter((r) =>
-    r.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = rows
+    .filter((r) => r.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const handleEditClick = (row: PricingRow) => {
     setEditingId(row.id);
@@ -134,7 +134,7 @@ export default function PricingTable({
                     i < filtered.length - 1 ? "border-b border-neutral-100" : ""
                   }
                 >
-                  <td className="px-6 py-4 text-sm font-medium text-[#1E202E]">
+                  <td className="px-6 capitalize py-4 text-sm font-medium text-[#1E202E]">
                     {row.name}
                   </td>
                   {showUnit && (

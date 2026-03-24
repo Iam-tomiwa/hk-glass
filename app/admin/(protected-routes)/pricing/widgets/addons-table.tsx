@@ -151,16 +151,22 @@ export default function AddonsTable({
   const updateAddonMutation = useUpdateAddon();
   const { openConfirmModal } = useConfirmations();
 
-  const filtered = rows.filter((r) => {
-    const matchesSearch = r.name.toLowerCase().includes(search.toLowerCase());
-    const matchesBuiltin =
-      builtinFilter === "all" ||
-      (builtinFilter === "yes" ? r.is_builtin : !r.is_builtin);
-    const matchesActive =
-      activeFilter === "all" ||
-      (activeFilter === "active" ? r.is_active : !r.is_active);
-    return matchesSearch && matchesBuiltin && matchesActive;
-  });
+  const filtered = useMemo(() => {
+    return rows
+      .filter((r) => {
+        const matchesSearch = r.name
+          .toLowerCase()
+          .includes(search.toLowerCase());
+        const matchesBuiltin =
+          builtinFilter === "all" ||
+          (builtinFilter === "yes" ? r.is_builtin : !r.is_builtin);
+        const matchesActive =
+          activeFilter === "all" ||
+          (activeFilter === "active" ? r.is_active : !r.is_active);
+        return matchesSearch && matchesBuiltin && matchesActive;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rows, search, builtinFilter, activeFilter]);
 
   const handleToggleActive = (row: AddonResponse) => {
     const action = row.is_active ? "deactivate" : "activate";

@@ -34,7 +34,7 @@ const CATEGORY_OPTIONS = [
 
 const PRICE_TYPE_OPTIONS = [
   { value: "flat", label: "Per order (flat)" },
-  { value: "per_sqm", label: "Per sq ft" },
+  { value: "per_sqm", label: "Per sq meter" },
   { value: "per_side", label: "Per side" },
 ];
 
