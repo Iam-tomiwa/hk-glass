@@ -25,7 +25,7 @@ export interface NewAddon {
 }
 
 const CATEGORY_OPTIONS = [
-  { value: "cutting_shaping", label: "Cutting & Shaping" },
+  { value: "cutting_and_shaping", label: "Cutting & Shaping" },
   { value: "edge_surface_finishing", label: "Edge Surface Finishing" },
   { value: "fabrication_processing", label: "Fabrication Processing" },
   { value: "strength_insulation", label: "Strength & Insulation" },
