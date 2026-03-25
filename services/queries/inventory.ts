@@ -41,10 +41,10 @@ export function useGetInventoryItem(item_id: string) {
   });
 }
 
-export function useListGlassSheets(item_id: string) {
+export function useListGlassSheets(item_id: string, isAdmin = true) {
   return useQuery<GlassSheetResponse[]>({
-    queryKey: [...queryKeys.inventory.detail(item_id), "glass-sheets"],
-    queryFn: () => listGlassSheets(item_id),
+    queryKey: [...queryKeys.inventory.detail(item_id), "glass-sheets", isAdmin],
+    queryFn: () => listGlassSheets(item_id, isAdmin),
     enabled: !!item_id,
   });
 }

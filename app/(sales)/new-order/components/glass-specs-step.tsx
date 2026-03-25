@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import {
   FormControl,
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { OrderFormValues } from "../schema";
 import { ComboBox } from "@/components/ui/combo-box-2";
-import { useListInventory } from "@/services/queries/inventory";
+import { useListInventory, useListGlassSheets } from "@/services/queries/inventory";
 
 export function GlassSpecsStep({
   form,
@@ -24,6 +25,15 @@ export function GlassSpecsStep({
 }) {
   const { data: glassTypes = [], isLoading: isLoadingGlassTypes } =
     useListInventory("glass", true);
+
+  const glassTypeId = useWatch({ control: form.control, name: "glassTypeId" });
+  const { data: glassSheets } = useListGlassSheets(glassTypeId || "", false);
+
+  // Auto-resolve the first available serial code whenever the selected item changes
+  useEffect(() => {
+    const available = glassSheets?.find((s) => s.status === "available");
+    form.setValue("glassInventorySerialCode", available?.serial_code ?? "");
+  }, [glassSheets, form]);
 
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });
@@ -102,7 +112,7 @@ export function GlassSpecsStep({
                   value={field.value}
                   isLoading={isLoadingGlassTypes}
                   options={(glassTypes || [])?.map((type) => ({
-                    value: type.glass_type_id,
+                    value: type.id,
                     label: type.material_name,
                   }))}
                   onValueChange={field.onChange}

@@ -151,12 +151,13 @@ export interface AddonItem {
 export interface OrderReviewRequest {
   width: number | string;
   length: number | string;
-  glass_type_id?: string | null;
+  glass_inventory_item_id?: string | null;
   shape_type?: string | null;
   drill_holes_count?: number | null;
   addon_ids?: string[];
   addon_items?: AddonItem[];
   insurance_selected: boolean;
+  commission_selected?: boolean;
 }
 
 export interface OrderReviewResponse {
@@ -164,6 +165,7 @@ export interface OrderReviewResponse {
   subtotal_amount: string;
   tax_amount: string;
   insurance_amount: string;
+  commission_amount?: string | null;
   total_amount: string;
 }
 
@@ -305,11 +307,12 @@ export interface OrderCreate {
   hole_diameter?: number | string | any | null;
   tint_type?: string | any | null;
   engraving_text?: string | any | null;
-  glass_type_id?: string | null;
+  glass_inventory_item_id?: string | null;
   addon_ids?: string[];
   addon_items?: AddonItem[];
   glass_inventory_serial_code?: string | null;
   insurance_selected?: boolean;
+  commission_selected?: boolean;
   shape_type?: string | null;
   curve_diameter?: number | null;
   custom_shape_spec?: string | null;
@@ -441,10 +444,11 @@ export interface OrderUpdate {
   hole_diameter?: number | string | any | null;
   tint_type?: string | any | null;
   engraving_text?: string | any | null;
-  glass_type_id?: string | any | null;
+  glass_inventory_item_id?: string | any | null;
   addon_ids?: string[] | any | null;
   order_status?: string | any | null;
   insurance_selected?: boolean | any | null;
+  commission_selected?: boolean | any | null;
 }
 
 export interface PaymentInitResponse {

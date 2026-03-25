@@ -115,6 +115,8 @@ function NewOrderForm() {
       edgingAddonId: "",
       edgingType: "",
       edgingSides: "1",
+      commissionSelected: false,
+      glassInventorySerialCode: "",
     },
   });
 
@@ -174,7 +176,7 @@ function NewOrderForm() {
         data: {
           width: `${values.width}${values.unit}`,
           length: `${values.length}${values.unit}`,
-          glass_type_id: values.glassTypeId,
+          glass_inventory_item_id: values.glassTypeId || null,
           shape_type: values.shape,
           drill_holes_count: values.drillHoles
             ? Number(values.numberOfHoles) || 0
@@ -183,6 +185,7 @@ function NewOrderForm() {
           addon_items:
             previewAddonItems.length > 0 ? previewAddonItems : undefined,
           insurance_selected: values.insuranceCoverage ?? false,
+          commission_selected: values.commissionSelected ?? false,
         },
       });
       setOrderReview(result);
@@ -218,10 +221,12 @@ function NewOrderForm() {
           hole_diameter: values.drillHoles ? values.holeDiameter : "",
           tint_type: values.addTintFilm ? values.tintType : "",
           engraving_text: values.engraving ? values.engravingText : "",
-          glass_type_id: values.glassTypeId,
+          glass_inventory_item_id: values.glassTypeId || null,
+          glass_inventory_serial_code: values.glassInventorySerialCode || null,
           addon_ids: addonIds,
           addon_items: addonItems.length > 0 ? addonItems : undefined,
           insurance_selected: values.insuranceCoverage,
+          commission_selected: values.commissionSelected ?? false,
           shape_type: values.shape,
           curve_diameter: values.curveDiameter
             ? Number(values.curveDiameter)

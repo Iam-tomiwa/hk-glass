@@ -58,6 +58,10 @@ export function ReviewStep({
     control: form.control,
     name: "insuranceCoverage",
   });
+  const commissionSelected = useWatch({
+    control: form.control,
+    name: "commissionSelected",
+  });
 
   const selectedGlassType = glassTypes?.find(
     (t) => t.id === values.glassTypeId,
@@ -551,6 +555,43 @@ export function ReviewStep({
               </CardContent>
             </Card>
 
+            {/* Commission */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Commission</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="commissionSelected"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="rounded border-neutral-300 mt-0.5"
+                          id="commissionSelected"
+                        />
+                      </FormControl>
+                      <div className="space-y-1.5 leading-none">
+                        <Label
+                          htmlFor="commissionSelected"
+                          className="font-medium cursor-pointer text-[#1E202E] text-sm"
+                        >
+                          Apply Commission
+                        </Label>
+                        <p className="text-sm text-neutral-500 leading-relaxed pt-1">
+                          Include a commission deduction for this order. This
+                          will be reflected in the final amount payable.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
             {/* Price Breakdown */}
             <Card>
               <CardHeader>
@@ -570,6 +611,22 @@ export function ReviewStep({
                       {formatNaira(pricing?.tax_amount)}
                     </span>
                   </div>
+                  {insuranceCoverage && pricing?.insurance_amount && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Insurance (5%):</span>
+                      <span className="font-medium text-neutral-800">
+                        {formatNaira(pricing.insurance_amount)}
+                      </span>
+                    </div>
+                  )}
+                  {commissionSelected && pricing?.commission_amount && (
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Commission:</span>
+                      <span className="font-medium text-red-600">
+                        − {formatNaira(pricing.commission_amount)}
+                      </span>
+                    </div>
+                  )}
                   {deliveryMethod === "delivery" && values.deliveryFee && (
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Delivery Fee:</span>

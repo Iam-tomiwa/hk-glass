@@ -91,11 +91,14 @@ export async function scanBySerialCode(
 }
 
 // List Glass Sheets for an inventory item
-// Backend endpoint: GET /admin/inventory/{item_id}/glass-sheets
+// Admin: GET /api/admin/inventory/{item_id}/glass-sheets
+// Staff: GET /api/inventory/items/{item_id}/sheets
 export async function listGlassSheets(
   item_id: string,
+  isAdmin = true,
 ): Promise<GlassSheetResponse[]> {
-  return await get<GlassSheetResponse[]>(
-    `/api/admin/inventory/${item_id}/glass-sheets`,
-  );
+  const url = isAdmin
+    ? `/api/admin/inventory/${item_id}/glass-sheets`
+    : `/api/inventory/items/${item_id}/glass-sheets`;
+  return await get<GlassSheetResponse[]>(url);
 }

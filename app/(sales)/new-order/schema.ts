@@ -46,6 +46,12 @@ export const orderFormSchema = z
     edgingAddonId: z.string().optional(),
     edgingType: z.string().optional(),
     edgingSides: z.string().optional(),
+
+    // Commission
+    commissionSelected: z.boolean(),
+
+    // Auto-resolved by sheets lookup (hidden)
+    glassInventorySerialCode: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const toMm = (val: string | undefined) => {
