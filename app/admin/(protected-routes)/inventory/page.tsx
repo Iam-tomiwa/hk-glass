@@ -82,6 +82,7 @@ function RowActions({
 export default function InventoryPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const [addOpen, setAddOpen] = useState(false);
   const [adjustTarget, setAdjustTarget] =
@@ -137,7 +138,26 @@ export default function InventoryPage() {
     },
   ];
 
-  const rows = (data || []).map((el) => ({
+  const filteredData = (data || []).filter((item) => {
+    const searchTerm = search.toLowerCase();
+    const materialName = item.material_name?.toLowerCase() || "";
+    const serialCode = item.serial_code?.toLowerCase() || "";
+    const itemType = item.item_type?.toLowerCase() || "";
+    const itemTypeLabel = ITEM_TYPE_LABELS[item.item_type]?.toLowerCase() || "";
+
+    const matchesSearch =
+      materialName.includes(searchTerm) ||
+      serialCode.includes(searchTerm) ||
+      itemType.includes(searchTerm) ||
+      itemTypeLabel.includes(searchTerm);
+
+    const matchesStatus =
+      statusFilter === "all" || item.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const rows = filteredData.map((el) => ({
     ...el,
     actions: <RowActions row={el} onAdjust={(r) => setAdjustTarget(r)} />,
   }));
@@ -162,8 +182,10 @@ export default function InventoryPage() {
                 <h2 className="font-bold text-[#1E202E]">Inventory</h2>
                 <div className="flex gap-2">
                   <SearchInput
-                    placeholder="Search by name or reference"
+                    placeholder="Search by ID, name or type"
                     containerClass="w-[280px]"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                   />
                   <ComboBox
                     value={statusFilter}
