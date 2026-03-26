@@ -478,11 +478,13 @@ export interface PaystackCallback {
 export interface PricingSettingsResponse {
   tax_rate: string;
   insurance_rate: string;
+  commission_rate: string;
 }
 
 export interface PricingSettingsUpdate {
   tax_rate?: number | string | any | null;
   insurance_rate?: number | string | any | null;
+  commission_rate?: number | string | any | null;
 }
 
 export interface RecoveryCodeGenerateResponse {

@@ -91,7 +91,7 @@ export default function InventoryPage() {
 
   const columns: ColumnDef[] = [
     {
-      field: "material_id",
+      field: "serial_code",
       headerName: "Material ID",
     },
     {
@@ -137,9 +137,8 @@ export default function InventoryPage() {
     },
   ];
 
-  const rows = (data || []).map((el, index) => ({
+  const rows = (data || []).map((el) => ({
     ...el,
-    material_id: `MAT-${new Date(el.created_at).getFullYear()}-${String(index + 1).padStart(3, "0")}`,
     actions: <RowActions row={el} onAdjust={(r) => setAdjustTarget(r)} />,
   }));
 

@@ -77,6 +77,12 @@ export default function PricingPage() {
       price: pricingSettings?.insurance_rate ?? "",
     },
     {
+      id: "commission_rate",
+      name: "Commission Rate",
+      unit: "% of subtotal",
+      price: pricingSettings?.commission_rate ?? "",
+    },
+    {
       id: "tax_rate",
       name: "Tax Rate",
       unit: "% of total",
@@ -107,6 +113,10 @@ export default function PricingPage() {
             : (pricingSettings?.insurance_rate ?? ""),
         tax_rate:
           id === "tax_rate" ? newValue : (pricingSettings?.tax_rate ?? ""),
+        commission_rate:
+          id === "commission_rate"
+            ? newValue
+            : (pricingSettings?.commission_rate ?? ""),
       },
     });
   };
