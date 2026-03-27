@@ -27,7 +27,10 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     ...(order?.custom_shape_spec
       ? [{ label: "Custom Shape", value: order.custom_shape_spec }]
       : []),
-    { label: "Thickness", value: order?.thickness ?? "—" },
+    {
+      label: "Thickness",
+      value: `${order?.thickness}${order?.dimension_unit}`,
+    },
   ];
 
   // Build sets for quick lookup to avoid duplicating top-level fields

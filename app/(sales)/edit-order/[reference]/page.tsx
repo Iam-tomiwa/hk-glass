@@ -27,6 +27,7 @@ import { OrderReviewResponse } from "@/services/types/openapi";
 import {
   uploadSpecification,
   uploadEngravingImage,
+  uploadSignature,
 } from "@/services/api/orders";
 
 const steps = [
@@ -83,6 +84,7 @@ function EditOrderForm() {
   const [engravingImageFile, setEngravingImageFile] = useState<File | null>(
     null,
   );
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const filesUploadedRef = useRef(false);
   const isFormInitialized = useRef(false);
@@ -429,6 +431,19 @@ function EditOrderForm() {
         filesUploadedRef.current = true;
       }
 
+      // Upload signature if provided
+      if (signatureDataUrl?.startsWith("data:")) {
+        setIsUploading(true);
+        try {
+          const res = await fetch(signatureDataUrl);
+          const blob = await res.blob();
+          const sigFile = new File([blob], "signature.png", { type: "image/png" });
+          await uploadSignature(order.id, sigFile);
+        } finally {
+          setIsUploading(false);
+        }
+      }
+
       router.push(`/${reference}`);
     } catch {
       // errors already toasted
@@ -545,8 +560,8 @@ function EditOrderForm() {
                   onRefreshPricing={handleRefreshPricing}
                   isPricingLoading={isReviewingOrder}
                   isLoading={isUpdatingOrder || isUploading || isReviewingOrder}
-                  signatureDataUrl={null}
-                  onSignatureChange={() => {}}
+                  signatureDataUrl={signatureDataUrl}
+                  onSignatureChange={setSignatureDataUrl}
                   submitLabel="Save Changes"
                 />
               </form>

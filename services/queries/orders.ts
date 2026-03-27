@@ -127,9 +127,15 @@ export function useUpdateOrder() {
   return useMutation({
     mutationFn: ({ order_id, data }: { order_id: string; data: OrderUpdate }) =>
       updateOrder(order_id, data),
-    onSuccess: () => {
+    onSuccess: (res, { order_id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
-      toast.success("Order status updated successfully.");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.files(order_id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.detail(res.order_reference),
+      });
+      toast.success("Order details updated successfully.");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, "Failed. Please try again."));

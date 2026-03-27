@@ -187,7 +187,10 @@ export default function OrderDetailsPage() {
                     {isInitializingPayment ? "Redirecting..." : "Make Payment"}
                   </Button>
                   <Button variant="outline" className={"grow"}>
-                    <Link href={`/edit-order/${order.order_reference}`}>
+                    <Link
+                      className="w-full"
+                      href={`/edit-order/${order.order_reference}`}
+                    >
                       Edit Order
                     </Link>
                   </Button>
