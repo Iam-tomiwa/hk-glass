@@ -102,7 +102,7 @@ export default function OrderDetailsPage() {
     {
       title: "Payment Completed",
       description: "The customer completed payment",
-      date: formatDate(order?.created_at),
+      date: isPendingPayment ? "" : formatDate(order?.created_at),
       completed: !isPendingPayment && currentStatusIndex >= 0,
       active: !isPendingPayment && currentStatusIndex >= 0,
     },
