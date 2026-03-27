@@ -214,26 +214,28 @@ export default function OrderDetailsPage() {
             qrValue={qrValue}
             timeline={timeline}
             footer={
-              <>
-                {nextStatus && (
-                  <Button
-                    onClick={handleUpdateStatus}
-                    disabled={isUpdating}
-                    className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
-                  >
-                    {isUpdating ? "Updating..." : "Update Order Status"}
-                  </Button>
-                )}
-                {!hasDamage && order?.order_status !== "completed" && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setReportOpen(true)}
-                    className="w-full h-11 font-semibold text-sm rounded-lg"
-                  >
-                    Report Item Damage
-                  </Button>
-                )}
-              </>
+              !isPendingPayment ? (
+                <>
+                  {nextStatus && (
+                    <Button
+                      onClick={handleUpdateStatus}
+                      disabled={isUpdating}
+                      className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
+                    >
+                      {isUpdating ? "Updating..." : "Update Order Status"}
+                    </Button>
+                  )}
+                  {!hasDamage && order?.order_status !== "completed" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setReportOpen(true)}
+                      className="w-full h-11 font-semibold text-sm rounded-lg"
+                    >
+                      Report Item Damage
+                    </Button>
+                  )}
+                </>
+              ) : null
             }
           />
         }
