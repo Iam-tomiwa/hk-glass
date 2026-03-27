@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 export type SpecRow = {
   label: string;
   value: React.ReactNode;
-  notBold?: Boolean;
+  notBold?: boolean;
   className?: string;
 };
 

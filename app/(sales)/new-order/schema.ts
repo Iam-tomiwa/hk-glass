@@ -42,10 +42,18 @@ export const orderFormSchema = z
 
     unit: z.enum(["mm", "cm", "m"]),
 
-    // Edging addon (sent via addon_items)
-    edgingAddonId: z.string().optional(),
-    edgingType: z.string().optional(),
-    edgingSides: z.string().optional(),
+    // Per-addon extras for addons that have input_schema
+    // Keys are addon IDs, values hold the relevant inputs
+    addonItemExtras: z
+      .record(
+        z.string(),
+        z.object({
+          type_key: z.string().optional(),
+          sides: z.number().optional(),
+          quantity: z.number().optional(),
+        }),
+      )
+      .optional(),
 
     // Commission
     commissionSelected: z.boolean(),

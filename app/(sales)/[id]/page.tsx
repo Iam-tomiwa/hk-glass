@@ -10,6 +10,7 @@ import {
 } from "@/services/queries/orders";
 import { useInitializePayment } from "@/services/queries/payments";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import OrderStatusBadge from "@/components/order-status-badge";
 import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderLeftCard } from "@/components/order-left-card";
@@ -175,15 +176,24 @@ export default function OrderDetailsPage() {
             ],
           }}
           footer={
-            isPaymentPending ? (
-              <Button
-                onClick={handleMakePayment}
-                disabled={isInitializingPayment}
-                className={"w-full"}
-              >
-                {isInitializingPayment ? "Redirecting..." : "Make Payment"}
-              </Button>
-            ) : undefined
+            <div className="flex gap-2 w-full">
+              {isPaymentPending && (
+                <>
+                  <Button
+                    onClick={handleMakePayment}
+                    disabled={isInitializingPayment}
+                    className={"grow"}
+                  >
+                    {isInitializingPayment ? "Redirecting..." : "Make Payment"}
+                  </Button>
+                  <Button variant="outline" className={"grow"}>
+                    <Link href={`/edit-order/${order.order_reference}`}>
+                      Edit Order
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </div>
           }
         />
       }

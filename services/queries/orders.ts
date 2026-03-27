@@ -18,6 +18,7 @@ import {
   listStaffNotifications,
   markStaffNotificationRead,
   sendReviewEmail,
+  getOrderPricingSettings,
 } from "../api/orders";
 import {
   OrderCreate,
@@ -61,6 +62,14 @@ export function useListAddons() {
   return useQuery<AddonResponse[]>({
     queryKey: [...queryKeys.orders.all, "addons"],
     queryFn: () => listAddons(),
+  });
+}
+
+export function useGetOrderPricingSettings() {
+  return useQuery({
+    queryKey: [...queryKeys.orders.all, "pricing-settings"],
+    queryFn: () => getOrderPricingSettings(),
+    staleTime: Infinity,
   });
 }
 

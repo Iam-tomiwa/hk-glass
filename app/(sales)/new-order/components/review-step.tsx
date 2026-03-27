@@ -1,12 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import { OrderFormValues } from "../schema";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -24,31 +24,37 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useListAddons, useListGlassTypes } from "@/services/queries/orders";
 import { formatNaira } from "@/lib/utils";
 import { OrderReviewResponse } from "@/services/types/openapi";
+import { useGetOrderPricingSettings } from "@/services/queries/orders";
 import { Package, Truck, Pen, Type, Hash, Loader2 } from "lucide-react";
 
 export function ReviewStep({
   form,
   pricing,
   onBack,
-  onProceedToPayment,
+  onSubmitOrder,
+  onRefreshPricing,
   isLoading,
+  isPricingLoading,
   signatureDataUrl,
   onSignatureChange,
+  submitLabel = "Submit Order",
 }: {
   form: UseFormReturn<OrderFormValues>;
   pricing: OrderReviewResponse | null;
   onBack: () => void;
-  onProceedToPayment: () => void;
+  onSubmitOrder: () => void;
+  onRefreshPricing: () => void;
   isLoading?: boolean;
+  isPricingLoading?: boolean;
   signatureDataUrl: string | null;
   onSignatureChange: (url: string | null) => void;
+  submitLabel?: string;
 }) {
   const values = form.getValues();
-  const { data: addonsList } = useListAddons();
-  const { data: glassTypes } = useListGlassTypes();
+
+  const { data: pricingSettings } = useGetOrderPricingSettings();
 
   const deliveryMethod = useWatch({
     control: form.control,
@@ -63,19 +69,11 @@ export function ReviewStep({
     name: "commissionSelected",
   });
 
-  const selectedGlassType = glassTypes?.find(
-    (t) => t.id === values.glassTypeId,
-  );
-
-  const basicAddons = [
-    { key: "drillHoles", label: "Drill Holes" },
-    { key: "addTintFilm", label: "Tint" },
-    { key: "engraving", label: "Engraving" },
-  ].filter((addon) => values[addon.key as keyof OrderFormValues]);
-
-  const dynamicAddons = (values.selectedAddons || [])
-    .map((id) => addonsList?.find((a) => a.id === id))
-    .filter(Boolean);
+  // Re-price whenever insurance, commission, or delivery method changes
+  useEffect(() => {
+    onRefreshPricing();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [insuranceCoverage, commissionSelected, deliveryMethod]);
 
   // Signature modal state
   const [signatureOpen, setSignatureOpen] = useState(false);
@@ -177,172 +175,9 @@ export function ReviewStep({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          {/* Left Column - Order Details */}
-          <div className="sticky top-20 self-start">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Customer Info */}
-                <div>
-                  <h3 className="text-base font-bold text-[#1E202E] mb-4">
-                    Customer Information
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Name:</span>
-                      <span className="font-medium text-neutral-800">
-                        {values.customerName || "-"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Email:</span>
-                      <span className="font-medium text-neutral-800">
-                        {values.email || "-"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Glass Specs */}
-                <div>
-                  <h3 className="text-base font-bold text-[#1E202E] mb-4">
-                    Glass Specifications
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Glass Type:</span>
-                      <span className="font-medium text-neutral-800">
-                        {selectedGlassType?.name || "-"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Dimensions:</span>
-                      <span className="font-medium text-neutral-800">
-                        {values.shape === "curved" ? (
-                          <>
-                            Diameter: {values.curveDiameter || 0}{" "}
-                            {values.unit || "mm"}
-                          </>
-                        ) : (
-                          <>
-                            {values.length || 0} {values.unit || "mm"} x{" "}
-                            {values.width || 0} {values.unit || "mm"}
-                          </>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Area:</span>
-                      <span className="font-medium text-neutral-800">
-                        {pricing ? Number(pricing.area).toFixed(2) : "—"} sq{" "}
-                        {values.unit || "mm"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Sheet Size:</span>
-                      <span className="font-medium text-neutral-800 capitalize">
-                        {values.sheetSize || "Standard"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Thickness:</span>
-                      <span className="font-medium text-neutral-800">
-                        {values.thickness || "1/8"}&quot;
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Add-ons */}
-                <div>
-                  <h3 className="text-base font-bold text-[#1E202E] mb-4">
-                    Add-ons & Services
-                  </h3>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {basicAddons.length > 0 || dynamicAddons.length > 0 ? (
-                      <>
-                        {basicAddons.map((addon) => (
-                          <Badge
-                            key={addon.key}
-                            variant="secondary"
-                            className="bg-neutral-100 text-neutral-700 hover:bg-neutral-200 font-normal shadow-none border-none pb-[2px] capitalize"
-                          >
-                            {addon.label}
-                          </Badge>
-                        ))}
-                        {dynamicAddons.map((addon) => (
-                          <Badge
-                            key={addon?.id}
-                            variant="secondary"
-                            className="bg-neutral-100 text-neutral-700 hover:bg-neutral-200 font-normal shadow-none border-none pb-[2px] capitalize"
-                          >
-                            {addon?.name}
-                          </Badge>
-                        ))}
-                      </>
-                    ) : (
-                      <span className="text-sm text-neutral-500">
-                        No add-ons selected
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-3 text-sm">
-                    {values.drillHoles && (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">
-                            Number of Holes:
-                          </span>
-                          <span className="font-medium text-neutral-800">
-                            {values.numberOfHoles || 0}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-neutral-500">
-                            Hole Diameter:
-                          </span>
-                          <span className="font-medium text-neutral-800">
-                            {values.holeDiameter || 0}&quot;
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    {values.addTintFilm && (
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">Tint Type:</span>
-                        <span className="font-medium text-neutral-800 capitalize">
-                          {values.tintType || "-"}
-                        </span>
-                      </div>
-                    )}
-                    {values.engraving && (
-                      <div className="flex justify-between">
-                        <span className="text-neutral-500">
-                          Engraving Text:
-                        </span>
-                        <span className="font-medium text-neutral-800">
-                          {values.engravingText
-                            ? `"${values.engravingText}"`
-                            : "-"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {/* Left Column — OrderLeftCard from the created order */}
+          <div className="space-y-4 self-start">
             {/* Delivery Method */}
             <Card>
               <CardHeader>
@@ -451,6 +286,10 @@ export function ReviewStep({
                                 className="shadow-none h-11 pl-7 pr-4 placeholder:text-neutral-400 font-medium text-neutral-800"
                                 {...field}
                                 value={field.value || ""}
+                                onBlur={(e) => {
+                                  field.onBlur();
+                                  if (e.target.value) onRefreshPricing();
+                                }}
                               />
                             </div>
                           </FormControl>
@@ -463,6 +302,80 @@ export function ReviewStep({
               </CardContent>
             </Card>
 
+            {/* Insurance Coverage */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Insurance Coverage</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="insuranceCoverage"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="rounded border-neutral-300 mt-0.5"
+                          id="insuranceCoverage"
+                        />
+                      </FormControl>
+                      <div className="space-y-1.5 leading-none">
+                        <Label
+                          htmlFor="insuranceCoverage"
+                          className="font-medium cursor-pointer text-[#1E202E] text-sm"
+                        >
+                          Add Insurance Coverage
+                        </Label>
+                        <p className="text-sm text-neutral-500 leading-relaxed pt-1">
+                          Protect your order against damage during production,
+                          transportation, and installation. This insurance only
+                          covers our inventory.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Commission */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Commission</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormField
+                  control={form.control}
+                  name="commissionSelected"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="rounded border-neutral-300 mt-0.5"
+                          id="commissionSelected"
+                        />
+                      </FormControl>
+                      <div className="space-y-1.5 leading-none">
+                        <Label
+                          htmlFor="commissionSelected"
+                          className="font-medium cursor-pointer text-[#1E202E] text-sm"
+                        >
+                          Apply Commission
+                        </Label>
+                        <p className="text-sm text-neutral-500 leading-relaxed pt-1">
+                          Include a commission deduction for this order. This
+                          will be reflected in the final amount payable.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
             {/* Customer Signature */}
             <Card>
               <CardHeader>
@@ -516,82 +429,10 @@ export function ReviewStep({
                 </Button>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Insurance Coverage */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Insurance Coverage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="insuranceCoverage"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="rounded border-neutral-300 mt-0.5"
-                          id="insuranceCoverage"
-                        />
-                      </FormControl>
-                      <div className="space-y-1.5 leading-none">
-                        <Label
-                          htmlFor="insuranceCoverage"
-                          className="font-medium cursor-pointer text-[#1E202E] text-sm"
-                        >
-                          Add Insurance Coverage (5% of subtotal)
-                        </Label>
-                        <p className="text-sm text-neutral-500 leading-relaxed pt-1">
-                          Protect your order against damage during production,
-                          transportation, and installation. This insurance only
-                          covers our inventory.
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Commission */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Commission</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="commissionSelected"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          className="rounded border-neutral-300 mt-0.5"
-                          id="commissionSelected"
-                        />
-                      </FormControl>
-                      <div className="space-y-1.5 leading-none">
-                        <Label
-                          htmlFor="commissionSelected"
-                          className="font-medium cursor-pointer text-[#1E202E] text-sm"
-                        >
-                          Apply Commission
-                        </Label>
-                        <p className="text-sm text-neutral-500 leading-relaxed pt-1">
-                          Include a commission deduction for this order. This
-                          will be reflected in the final amount payable.
-                        </p>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
+          {/* Right Column */}
+          <div className="space-y-4 sticky top-0">
             {/* Price Breakdown */}
             <Card>
               <CardHeader>
@@ -599,31 +440,80 @@ export function ReviewStep({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3 text-sm">
+                  {pricing?.addon_breakdown &&
+                    pricing.addon_breakdown.length > 0 && (
+                      <>
+                        {pricing.addon_breakdown.map((item) => (
+                          <div
+                            key={item.addon_id}
+                            className="flex justify-between"
+                          >
+                            <span className="text-neutral-500">
+                              {item.name}
+                              {item.quantity && item.quantity > 1
+                                ? ` ×${item.quantity}`
+                                : ""}
+                              :
+                            </span>
+                            <span className="font-medium text-neutral-800">
+                              {formatNaira(item.total_price)}
+                            </span>
+                          </div>
+                        ))}
+                        <Separator />
+                      </>
+                    )}
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Subtotal:</span>
                     <span className="font-medium text-neutral-800">
-                      {formatNaira(pricing?.subtotal_amount)}
+                      {isPricingLoading
+                        ? "..."
+                        : formatNaira(pricing?.subtotal_amount)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-neutral-500">Tax (8%):</span>
+                    <span className="text-neutral-500">
+                      Tax
+                      {pricingSettings?.tax_rate
+                        ? ` (${pricingSettings.tax_rate}%)`
+                        : ""}
+                      :
+                    </span>
                     <span className="font-medium text-neutral-800">
-                      {formatNaira(pricing?.tax_amount)}
+                      {isPricingLoading
+                        ? "..."
+                        : formatNaira(pricing?.tax_amount)}
                     </span>
                   </div>
-                  {insuranceCoverage && pricing?.insurance_amount && (
+                  {insuranceCoverage && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-500">Insurance (5%):</span>
+                      <span className="text-neutral-500">
+                        Insurance
+                        {pricingSettings?.insurance_rate
+                          ? ` (${pricingSettings.insurance_rate}%)`
+                          : ""}
+                        :
+                      </span>
                       <span className="font-medium text-neutral-800">
-                        {formatNaira(pricing.insurance_amount)}
+                        {isPricingLoading
+                          ? "..."
+                          : formatNaira(pricing?.insurance_amount)}
                       </span>
                     </div>
                   )}
-                  {commissionSelected && pricing?.commission_amount && (
+                  {commissionSelected && (
                     <div className="flex justify-between">
-                      <span className="text-neutral-500">Commission:</span>
+                      <span className="text-neutral-500">
+                        Commission
+                        {pricingSettings?.commission_rate
+                          ? ` (${pricingSettings.commission_rate}%)`
+                          : ""}
+                        :
+                      </span>
                       <span className="font-medium text-red-600">
-                        − {formatNaira(pricing.commission_amount)}
+                        {isPricingLoading
+                          ? "..."
+                          : `− ${formatNaira(pricing?.commission_amount)}`}
                       </span>
                     </div>
                   )}
@@ -642,7 +532,9 @@ export function ReviewStep({
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-bold text-[#1E202E]">Total:</span>
                   <span className="font-bold text-base">
-                    {formatNaira(pricing?.total_amount)}
+                    {isPricingLoading
+                      ? "..."
+                      : formatNaira(pricing?.total_amount)}
                   </span>
                 </div>
               </CardContent>
@@ -653,7 +545,7 @@ export function ReviewStep({
         <div className="pt-6 flex items-center gap-3">
           <Button
             type="button"
-            onClick={onProceedToPayment}
+            onClick={onSubmitOrder}
             disabled={isLoading}
             className="bg-[#16a34a] text-white hover:bg-[#15803d] px-8 h-10 rounded-md font-medium min-w-[180px]"
           >
@@ -663,7 +555,7 @@ export function ReviewStep({
                 Processing...
               </span>
             ) : (
-              "Proceed to Payment"
+              submitLabel
             )}
           </Button>
           <Button

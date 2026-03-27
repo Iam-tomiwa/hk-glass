@@ -1,14 +1,15 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useGetOrderByReference, useGetOrderFiles } from "@/services/queries/orders";
-import { useInitializePayment } from "@/services/queries/payments";
+import {
+  useGetOrderByReference,
+  useGetOrderFiles,
+} from "@/services/queries/orders";
 import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderLeftCard } from "@/components/order-left-card";
 import { OrderRightCard } from "@/components/order-right-card";
 import { AmountDisplay } from "@/components/amount-display";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getBadgeVariant } from "@/lib/utils";
 import OrderStatusBadge from "@/components/order-status-badge";
 import SpecTable from "@/components/spec-item";
@@ -17,23 +18,13 @@ export default function OrderReviewPage() {
   const params = useParams();
   const orderReference = params.order_reference as string;
 
-  const { data: order, isLoading, isError, error } = useGetOrderByReference(orderReference);
+  const {
+    data: order,
+    isLoading,
+    isError,
+    error,
+  } = useGetOrderByReference(orderReference);
   const { data: orderFiles } = useGetOrderFiles(order?.id ?? "");
-  const { mutateAsync: initializePayment, isPending: isInitializingPayment } = useInitializePayment();
-
-  const isPaymentPending = order?.payment_status === "pending";
-
-  async function handleProceedToPayment() {
-    if (!order?.id) return;
-    try {
-      const res = await initializePayment({ data: { order_id: order.id } });
-      if (res.authorization_url) {
-        window.location.href = res.authorization_url;
-      }
-    } catch {
-      // error already toasted by the mutation
-    }
-  }
 
   const qrValue =
     typeof window !== "undefined"
@@ -57,7 +48,10 @@ export default function OrderReviewPage() {
             {
               label: "Email",
               value: order?.customer_email ? (
-                <a className="hover:underline" href={`mailto:${order.customer_email}`}>
+                <a
+                  className="hover:underline"
+                  href={`mailto:${order.customer_email}`}
+                >
                   {order.customer_email}
                 </a>
               ) : (
@@ -67,7 +61,10 @@ export default function OrderReviewPage() {
             {
               label: "Phone",
               value: order?.customer_phone ? (
-                <a className="hover:underline" href={`tel:${order.customer_phone}`}>
+                <a
+                  className="hover:underline"
+                  href={`tel:${order.customer_phone}`}
+                >
                   {order.customer_phone}
                 </a>
               ) : (
@@ -84,16 +81,29 @@ export default function OrderReviewPage() {
                 rows={[
                   {
                     label: "Subtotal",
-                    value: <AmountDisplay showFullAmount amount={order?.subtotal_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.subtotal_amount}
+                      />
+                    ),
                   },
                   {
                     label: "Tax",
-                    value: <AmountDisplay showFullAmount amount={order?.tax_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.tax_amount}
+                      />
+                    ),
                   },
                   {
                     label: "Insurance",
                     value: order?.insurance_selected ? (
-                      <AmountDisplay showFullAmount amount={order.insurance_amount} />
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order.insurance_amount}
+                      />
                     ) : (
                       "Not selected"
                     ),
@@ -110,7 +120,12 @@ export default function OrderReviewPage() {
                   },
                   {
                     label: "Total",
-                    value: <AmountDisplay showFullAmount amount={order?.total_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.total_amount}
+                      />
+                    ),
                   },
                 ]}
               />
@@ -127,21 +142,14 @@ export default function OrderReviewPage() {
             extraRows: [
               {
                 label: "Order Status",
-                value: order ? <OrderStatusBadge status={order.order_status} /> : "—",
+                value: order ? (
+                  <OrderStatusBadge status={order.order_status} />
+                ) : (
+                  "—"
+                ),
               },
             ],
           }}
-          footer={
-            isPaymentPending ? (
-              <Button
-                onClick={handleProceedToPayment}
-                disabled={isInitializingPayment}
-                className="w-full bg-[#16a34a] hover:bg-[#15803d]"
-              >
-                {isInitializingPayment ? "Redirecting..." : "Proceed to Payment"}
-              </Button>
-            ) : undefined
-          }
         />
       }
     />

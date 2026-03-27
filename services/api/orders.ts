@@ -28,6 +28,13 @@ export async function listGlassTypes(): Promise<GlassTypeResponse[]> {
   return await get<GlassTypeResponse[]>(`/api/orders/glass-types`);
 }
 
+// Get Pricing Settings
+export async function getOrderPricingSettings() {
+  return await get<{ tax_rate: string; insurance_rate: string; commission_rate: string }>(
+    `/api/orders/pricing-settings`,
+  );
+}
+
 // List Addons
 export async function listAddons(): Promise<AddonResponse[]> {
   return await get<AddonResponse[]>(`/api/orders/addons`);

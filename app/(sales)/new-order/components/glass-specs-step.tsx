@@ -12,16 +12,21 @@ import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
 import { OrderFormValues } from "../schema";
 import { ComboBox } from "@/components/ui/combo-box-2";
-import { useListInventory, useListGlassSheets } from "@/services/queries/inventory";
+import {
+  useListInventory,
+  useListGlassSheets,
+} from "@/services/queries/inventory";
 
 export function GlassSpecsStep({
   form,
   onBack,
   onNext,
+  disableGlassType = false,
 }: {
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
   onNext: () => void;
+  disableGlassType?: boolean;
 }) {
   const { data: glassTypes = [], isLoading: isLoadingGlassTypes } =
     useListInventory("glass", true);
@@ -30,10 +35,12 @@ export function GlassSpecsStep({
   const { data: glassSheets } = useListGlassSheets(glassTypeId || "", false);
 
   // Auto-resolve the first available serial code whenever the selected item changes
+  // Skip when glass type is disabled (edit mode — serial code is already locked)
   useEffect(() => {
+    if (disableGlassType) return;
     const available = glassSheets?.find((s) => s.status === "available");
     form.setValue("glassInventorySerialCode", available?.serial_code ?? "");
-  }, [glassSheets, form]);
+  }, [glassSheets, form, disableGlassType]);
 
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });
@@ -111,6 +118,7 @@ export function GlassSpecsStep({
                   className="w-full"
                   value={field.value}
                   isLoading={isLoadingGlassTypes}
+                  disabled={disableGlassType}
                   options={(glassTypes || [])?.map((type) => ({
                     value: type.id,
                     label: type.material_name,
@@ -288,25 +296,26 @@ export function GlassSpecsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Sheet thickness
                 </FormLabel>
-                <ComboBox
-                  className="w-full"
-                  value={field.value}
-                  options={[
-                    { value: "1/8", label: `1/8" (3mm)` },
-                    { value: "1/4", label: `1/4" (6mm)` },
-                    { value: "3/8", label: `3/8" (10mm)` },
-                    { value: "1/2", label: `1/2" (12mm)` },
-                  ]}
-                  onValueChange={field.onChange}
-                />
+                <div className="relative">
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    className="bg-background shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                    {...field}
+                    value={field.value || ""}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                    {unit}
+                  </span>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
           />
           {area > 0 && (
-            <div className="bg-[#eff6ff] rounded-lg px-4 py-3 flex items-center justify-between border border-blue-100">
+            <div className="bg-[#F3F3F5] rounded-lg px-4 py-3 flex items-center justify-between border border-[#D8E0E9]">
               <span className="text-neutral-600 text-sm">Calculated Area</span>
-              <span className="font-bold text-blue-800 text-lg">
+              <span className="font-bold text-lg">
                 {area.toLocaleString(undefined, { maximumFractionDigits: 2 })}{" "}
                 sq {unit}
               </span>

@@ -78,16 +78,21 @@ export interface CombinedDeviceResponse {
   updated_at: string;
 }
 
-export interface AddonInputField {
-  key: string;
-  label: string;
-  type: "select" | "text" | "number" | "file";
-  unit?: string | null;
-  options?: string[] | null;
+export interface AddonInputSchema {
+  /** Map of type name → price multiplier, e.g. { single: 1, double: 2, triple: 3 } */
+  supported_types?: Record<string, number> | null;
+  /** Whether to show a sides stepper */
+  supports_sides?: boolean | null;
+  /** Whether to show a quantity input */
+  supports_quantity?: boolean | null;
 }
 
-export interface AddonInputSchema {
-  fields: AddonInputField[];
+export interface AddonBreakdownItem {
+  addon_id: string;
+  name: string;
+  quantity?: number | null;
+  unit_price?: string | number | null;
+  total_price?: string | number | null;
 }
 
 export interface DashboardOrderResponse {
@@ -146,6 +151,8 @@ export interface AddonItem {
   quantity?: number | null;
   custom_input?: string | null;
   notes?: string | null;
+  type_key?: string | null;
+  sides?: number | null;
 }
 
 export interface OrderReviewRequest {
@@ -158,6 +165,7 @@ export interface OrderReviewRequest {
   addon_items?: AddonItem[];
   insurance_selected: boolean;
   commission_selected?: boolean;
+  delivery_fee?: number | null;
 }
 
 export interface OrderReviewResponse {
@@ -167,6 +175,7 @@ export interface OrderReviewResponse {
   insurance_amount: string;
   commission_amount?: string | null;
   total_amount: string;
+  addon_breakdown?: AddonBreakdownItem[] | null;
 }
 
 export interface GlassTypeCreate {
@@ -276,11 +285,16 @@ export interface InventoryItemUpdate {
 }
 
 export interface OrderAddonResponse {
-  addon: AddonResponse;
+  addon_id: string;
+  addon: AddonResponse | null;
   calculated_price: string;
   quantity?: number | null;
+  type_key?: string | null;
+  sides?: number | null;
   custom_input?: string | null;
   notes?: string | null;
+  name?: string | null;
+  custom_payload?: Record<string, unknown> | null;
 }
 
 export interface OrderFileUploadResponse {
@@ -370,6 +384,7 @@ export interface OrderResponse {
   specification_files?: string[];
   engraving_image_files?: string[];
   signature_file_path?: string | null;
+  dimension_unit?: string | null;
 }
 
 export interface OrderDamageReport {
@@ -446,9 +461,13 @@ export interface OrderUpdate {
   engraving_text?: string | any | null;
   glass_inventory_item_id?: string | any | null;
   addon_ids?: string[] | any | null;
+  addon_items?: AddonItem[] | null;
   order_status?: string | any | null;
   insurance_selected?: boolean | any | null;
   commission_selected?: boolean | any | null;
+  delivery_method?: string | any | null;
+  delivery_address?: string | any | null;
+  delivery_fee?: number | string | any | null;
 }
 
 export interface PaymentInitResponse {

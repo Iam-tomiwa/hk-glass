@@ -14,7 +14,9 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     { label: "Glass Type", value: order?.glass_type?.name ?? "—" },
     {
       label: "Dimensions",
-      value: order ? `${order.width}" × ${order.length}"` : "—",
+      value: order
+        ? `${order.width}${order.dimension_unit} × ${order.length}${order.dimension_unit}`
+        : "—",
     },
     { label: "Area", value: order ? `${order.area} sqm` : "—" },
     { label: "Sheet Size", value: order?.sheet_size ?? "__" },
@@ -28,8 +30,18 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     { label: "Thickness", value: order?.thickness ?? "—" },
   ];
 
+  // Build sets for quick lookup to avoid duplicating top-level fields
+  const addonCodes = new Set(
+    (order?.addons ?? []).map((a) => a.addon?.code).filter(Boolean),
+  );
+  const addonCategories = new Set(
+    (order?.addons ?? []).map((a) => a.addon?.category).filter(Boolean),
+  );
+
   const addOns: SpecRow[] = [
-    ...(order?.drill_holes_count
+    // Fallback rows — only shown when the corresponding addon is absent from order.addons
+    // (supports legacy orders that didn't store them as proper addon records)
+    ...(order?.drill_holes_count && !addonCodes.has("glass_drilling")
       ? [
           { label: "Drill Holes", value: String(order.drill_holes_count) },
           ...(order.hole_diameter
@@ -37,28 +49,36 @@ export function useOrderDetails(order: OrderResponse | undefined) {
             : []),
         ]
       : []),
-    ...(order?.tint_type
+    ...(order?.tint_type && !addonCategories.has("thermal_film")
       ? [{ label: "Tint Type", value: String(order.tint_type) }]
       : []),
-    ...(order?.engraving_text
+    ...(order?.engraving_text && !addonCodes.has("cnc_glass_engraving")
       ? [{ label: "Engraving", value: String(order.engraving_text) }]
       : []),
+
+    // All addons from the order, with details merged inline
     ...(order?.addons?.map((a: OrderAddonResponse) => {
       const parts: string[] = [];
-      if (a.custom_input) parts.push(a.custom_input);
-      // Show quantity for addons that collect a meaningful count in the form
-      const QUANTITY_ADDON_CODES = ["glass_drilling", "edging"];
-      if (
-        a.quantity != null &&
-        a.quantity > 1 &&
-        QUANTITY_ADDON_CODES.includes(a.addon?.code ?? "")
-      ) {
-        const label = a.addon?.code === "edging" ? "sides" : "holes";
-        parts.push(`${a.quantity} ${label}`);
+
+      if (a.addon?.code === "glass_drilling") {
+        if (order.drill_holes_count)
+          parts.push(`${order.drill_holes_count} holes`);
+        if (order.hole_diameter) parts.push(`⌀${order.hole_diameter}mm`);
+      } else if (a.addon?.code === "cnc_glass_engraving") {
+        if (order.engraving_text) parts.push(order.engraving_text);
+      } else if (a.addon?.category === "thermal_film") {
+        if (order.tint_type) parts.push(String(order.tint_type));
+      } else {
+        if (a.custom_input) parts.push(a.custom_input);
+        if (a.quantity != null && a.quantity > 1) {
+          const label = a.addon?.code === "edging" ? "sides" : "pcs";
+          parts.push(`${a.quantity} ${label}`);
+        }
       }
+
       if (a.notes) parts.push(a.notes);
       return {
-        label: a.addon?.name ?? "Add-on",
+        label: a?.name ?? "Add-on",
         value: parts.length > 0 ? parts.join(", ") : "Yes",
       };
     }) ?? []),

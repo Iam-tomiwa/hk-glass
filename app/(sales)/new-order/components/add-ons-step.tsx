@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import {
   FormControl,
@@ -45,9 +45,6 @@ const CATEGORY_ORDER = [
   "other",
 ];
 
-const EDGING_OPTIONS = ["Single", "Double"];
-const BEVELING_OPTIONS = ["Single", "Double", "Triple"];
-const GLAZING_OPTIONS = ["Single", "Double", "Triple"];
 const TINT_OPTIONS = [
   { value: "dark", label: "Dark Tint" },
   { value: "medium", label: "Medium Tint" },
@@ -69,6 +66,8 @@ export function AddOnsStep({
   onSpecFilesChange,
   engravingImageFile,
   onEngravingImageChange,
+  existingSpecFileUrls = [],
+  existingEngravingImageUrl = null,
 }: {
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
@@ -78,13 +77,28 @@ export function AddOnsStep({
   onSpecFilesChange: (files: File[]) => void;
   engravingImageFile: File | null;
   onEngravingImageChange: (file: File | null) => void;
+  existingSpecFileUrls?: { name: string; url: string }[];
+  existingEngravingImageUrl?: { name: string; url: string } | null;
 }) {
   const { data: addons = [], isLoading: isLoadingAddons } = useListAddons();
   const { data: hardwareItems = [], isLoading: isLoadingHardware } =
     useListInventory("hardware", true);
 
-  const [addonExtras, setAddonExtras] = useState<Record<string, string>>({});
   const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});
+
+  // Pre-fill hardware quantities from addonItemExtras (edit mode)
+  useEffect(() => {
+    if (!hardwareItems.length) return;
+    const extras = form.getValues("addonItemExtras") ?? {};
+    const prefilled: Record<string, string> = {};
+    for (const item of hardwareItems) {
+      const qty = extras[item.id]?.quantity;
+      if (qty != null) prefilled[item.id] = String(qty);
+    }
+    if (Object.keys(prefilled).length > 0) {
+      setHardwareQty((prev) => ({ ...prev, ...prefilled }));
+    }
+  }, [hardwareItems, form]);
 
   const engravingImageRef = useRef<HTMLInputElement>(null);
   const specFilesRef = useRef<HTMLInputElement>(null);
@@ -93,6 +107,32 @@ export function AddOnsStep({
     control: form.control,
     name: "selectedAddons",
   });
+  const addonItemExtras = useWatch({
+    control: form.control,
+    name: "addonItemExtras",
+  });
+  const drillHoles = useWatch({ control: form.control, name: "drillHoles" });
+  const engraving = useWatch({ control: form.control, name: "engraving" });
+  const addTintFilm = useWatch({ control: form.control, name: "addTintFilm" });
+
+  // When form is pre-filled (edit mode), sync boolean fields → selectedAddons
+  useEffect(() => {
+    if (!addons.length) return;
+    const current = form.getValues("selectedAddons") ?? [];
+    const toAdd: string[] = [];
+    for (const addon of addons) {
+      const shouldBeSelected =
+        (addon.code === "glass_drilling" && drillHoles) ||
+        (addon.code === "cnc_glass_engraving" && engraving) ||
+        (addon.category === "thermal_film" && addTintFilm);
+      if (shouldBeSelected && !current.includes(addon.id)) {
+        toAdd.push(addon.id);
+      }
+    }
+    if (toAdd.length > 0) {
+      form.setValue("selectedAddons", [...current, ...toAdd]);
+    }
+  }, [addons, drillHoles, engraving, addTintFilm, form]);
 
   const grouped = useMemo(() => {
     const activeAddons = addons.filter((a) => a.is_active);
@@ -141,27 +181,53 @@ export function AddOnsStep({
       : current.filter((id) => id !== addon.id);
     form.setValue("selectedAddons", next);
 
-    if (addon.code === "glass_drilling") {
-      form.setValue("drillHoles", checked);
-    }
-    if (addon.code === "cnc_glass_engraving") {
+    if (addon.code === "glass_drilling") form.setValue("drillHoles", checked);
+    if (addon.code === "cnc_glass_engraving")
       form.setValue("engraving", checked);
-    }
-    if (addon.category === "thermal_film") {
+    if (addon.category === "thermal_film")
       form.setValue("addTintFilm", checked);
-    }
-    if (addon.code === "edging") {
-      form.setValue("edgingAddonId", checked ? addon.id : "");
-      if (!checked) {
-        form.setValue("edgingType", "");
-        form.setValue("edgingSides", "");
+
+    if (checked && addon.input_schema) {
+      // Auto-initialize numeric defaults so the addon is routed to addon_items
+      const currentExtras = form.getValues("addonItemExtras") ?? {};
+      const existing = currentExtras[addon.id] ?? {};
+      const toInit: { sides?: number; quantity?: number } = {};
+      if (addon.input_schema.supports_sides && existing.sides == null)
+        toInit.sides = 1;
+      if (addon.input_schema.supports_quantity && existing.quantity == null)
+        toInit.quantity = 1;
+      if (Object.keys(toInit).length > 0) {
+        form.setValue("addonItemExtras", {
+          ...currentExtras,
+          [addon.id]: { ...existing, ...toInit },
+        });
       }
     }
+
+    // Clear stored extras when deselecting
+    if (!checked && addon.input_schema) {
+      const currentExtras = form.getValues("addonItemExtras") ?? {};
+      const next = { ...currentExtras };
+      delete next[addon.id];
+      form.setValue("addonItemExtras", next);
+    }
+  };
+
+  const setAddonExtra = (
+    addonId: string,
+    patch: { type_key?: string; sides?: number; quantity?: number },
+  ) => {
+    const current = form.getValues("addonItemExtras") ?? {};
+    form.setValue("addonItemExtras", {
+      ...current,
+      [addonId]: { ...(current[addonId] ?? {}), ...patch },
+    });
   };
 
   const renderAddonExtraFields = (addon: AddonResponse) => {
     if (!isSelected(addon.id)) return null;
 
+    // Glass drilling — custom form fields
     if (addon.code === "glass_drilling") {
       return (
         <div className="space-y-4 pt-3 pl-1">
@@ -191,7 +257,6 @@ export function AddOnsStep({
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="holeDiameter"
@@ -200,12 +265,13 @@ export function AddOnsStep({
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
                   Hole Diameter
                 </FormLabel>
-                <Input
-                  {...field}
-                  value={field.value || ""}
-                  type="number"
-                  endIcon="mm"
-                />
+                <div className="relative">
+                  <Input {...field} value={field.value || ""} type="number" />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
+                    mm
+                  </span>
+                </div>
+
                 <FormMessage />
               </FormItem>
             )}
@@ -214,6 +280,7 @@ export function AddOnsStep({
       );
     }
 
+    // Engraving — custom form fields
     if (addon.code === "cnc_glass_engraving") {
       return (
         <div className="space-y-4 pt-3 pl-1">
@@ -271,6 +338,19 @@ export function AddOnsStep({
               className="hidden"
               onChange={handleEngravingImageChange}
             />
+            {existingEngravingImageUrl && !engravingImageFile && (
+              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background mb-2">
+                <a
+                  href={existingEngravingImageUrl.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 flex-1 truncate hover:underline"
+                >
+                  {existingEngravingImageUrl.name}
+                </a>
+                <span className="text-xs text-neutral-400">(existing)</span>
+              </div>
+            )}
             {engravingImageFile ? (
               <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
                 <span className="text-sm text-neutral-700 flex-1 truncate">
@@ -299,6 +379,7 @@ export function AddOnsStep({
       );
     }
 
+    // Tint film — custom form fields
     if (addon.category === "thermal_film") {
       return (
         <div className="pt-3 pl-1">
@@ -325,108 +406,87 @@ export function AddOnsStep({
       );
     }
 
-    if (addon.code === "edging") {
+    // Generic input_schema-driven fields (edging, beveling, glazing, etc.)
+    if (addon.input_schema) {
+      const schema = addon.input_schema;
+      const extras = addonItemExtras?.[addon.id] ?? {};
+      const typeOptions = schema.supported_types
+        ? Object.keys(schema.supported_types).map((k) => ({
+            value: k,
+            label: k.charAt(0).toUpperCase() + k.slice(1),
+          }))
+        : [];
+
       return (
         <div className="pt-3 pl-1 space-y-3">
-          <FormField
-            control={form.control}
-            name="edgingType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Edging Type
-                </FormLabel>
-                <ComboBox
-                  value={field.value || ""}
-                  onValueChange={field.onChange}
-                  options={EDGING_OPTIONS.map((o) => ({ value: o, label: o }))}
-                  placeholder="Select edging type"
-                  className="w-full"
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="edgingSides"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Number of Sides
-                </FormLabel>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      field.onChange(
-                        String(Math.max(1, Number(field.value || 1) - 1)),
-                      )
-                    }
-                    className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center font-medium text-[#1E202E]">
-                    {field.value || "1"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      field.onChange(
-                        String(Math.min(4, Number(field.value || 1) + 1)),
-                      )
-                    }
-                    className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
-                  >
-                    +
-                  </button>
-                  <span className="text-sm text-neutral-500">
-                    side{Number(field.value || 1) !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      );
-    }
-
-    if (addon.code === "beveling") {
-      return (
-        <div className="pt-3 pl-1 space-y-1.5">
-          <label className="text-[#1E202E] font-medium text-sm">
-            Select Bevelling Type
-          </label>
-          <ComboBox
-            value={addonExtras[`${addon.id}:type`] || ""}
-            onValueChange={(v) =>
-              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
-            }
-            options={BEVELING_OPTIONS.map((o) => ({ value: o, label: o }))}
-            placeholder="Select bevelling type"
-            className="w-full"
-          />
-        </div>
-      );
-    }
-
-    if (addon.code === "glass_glazing") {
-      return (
-        <div className="pt-3 pl-1 space-y-1.5">
-          <label className="text-[#1E202E] font-medium text-sm">
-            Glazing Type
-          </label>
-          <ComboBox
-            value={addonExtras[`${addon.id}:type`] || ""}
-            onValueChange={(v) =>
-              setAddonExtras((prev) => ({ ...prev, [`${addon.id}:type`]: v }))
-            }
-            options={GLAZING_OPTIONS.map((o) => ({ value: o, label: o }))}
-            placeholder="Select glazing type"
-            className="w-full"
-          />
+          {typeOptions.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-[#1E202E] font-medium text-sm">Type</label>
+              <ComboBox
+                value={extras.type_key || ""}
+                onValueChange={(v) => setAddonExtra(addon.id, { type_key: v })}
+                options={typeOptions}
+                placeholder="Select type"
+                className="w-full"
+              />
+            </div>
+          )}
+          {schema.supports_sides && (
+            <div className="space-y-1.5">
+              <label className="text-[#1E202E] font-medium text-sm">
+                Number of Sides
+              </label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAddonExtra(addon.id, {
+                      sides: Math.max(1, (extras.sides ?? 1) - 1),
+                    })
+                  }
+                  className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center font-medium text-[#1E202E]">
+                  {extras.sides ?? 1}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAddonExtra(addon.id, {
+                      sides: Math.min(4, (extras.sides ?? 1) + 1),
+                    })
+                  }
+                  className="w-9 h-9 rounded-md border border-neutral-200 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 font-medium"
+                >
+                  +
+                </button>
+                <span className="text-sm text-neutral-500">
+                  side{(extras.sides ?? 1) !== 1 ? "s" : ""}
+                </span>
+              </div>
+            </div>
+          )}
+          {schema.supports_quantity && (
+            <div className="space-y-1.5">
+              <label className="text-[#1E202E] font-medium text-sm">
+                Quantity
+              </label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="1"
+                value={extras.quantity ?? ""}
+                onChange={(e) =>
+                  setAddonExtra(addon.id, {
+                    quantity: Number(e.target.value) || 1,
+                  })
+                }
+                className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800"
+              />
+            </div>
+          )}
         </div>
       );
     }
@@ -544,6 +604,29 @@ export function AddOnsStep({
                                         ...prev,
                                         [item.id]: checked ? "1" : "",
                                       }));
+                                      const cur =
+                                        form.getValues("selectedAddons") ?? [];
+                                      const curExtras =
+                                        form.getValues("addonItemExtras") ?? {};
+                                      if (checked) {
+                                        if (!cur.includes(item.id))
+                                          form.setValue("selectedAddons", [
+                                            ...cur,
+                                            item.id,
+                                          ]);
+                                        form.setValue("addonItemExtras", {
+                                          ...curExtras,
+                                          [item.id]: { quantity: 1 },
+                                        });
+                                      } else {
+                                        form.setValue(
+                                          "selectedAddons",
+                                          cur.filter((id) => id !== item.id),
+                                        );
+                                        const next = { ...curExtras };
+                                        delete next[item.id];
+                                        form.setValue("addonItemExtras", next);
+                                      }
                                     }}
                                   />
                                 </div>
@@ -558,13 +641,17 @@ export function AddOnsStep({
                                         min="1"
                                         placeholder="1"
                                         value={qty}
-                                        onChange={(e) =>
+                                        className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                                        onChange={(e) => {
+                                          const newQty = e.target.value;
                                           setHardwareQty((prev) => ({
                                             ...prev,
-                                            [item.id]: e.target.value,
-                                          }))
-                                        }
-                                        className="shadow-none h-11 px-4 placeholder:text-neutral-400 font-medium text-neutral-800 pr-16"
+                                            [item.id]: newQty,
+                                          }));
+                                          setAddonExtra(item.id, {
+                                            quantity: Number(newQty) || 1,
+                                          });
+                                        }}
                                       />
                                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">
                                         {item.unit || "units"}
@@ -656,6 +743,28 @@ export function AddOnsStep({
                   className="hidden"
                   onChange={handleSpecFilesChange}
                 />
+                {existingSpecFileUrls.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <p className="text-xs text-neutral-500">
+                      Already uploaded:
+                    </p>
+                    {existingSpecFileUrls.map((f, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 p-2 border border-neutral-200 rounded-lg bg-background"
+                      >
+                        <a
+                          href={f.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-600 flex-1 truncate hover:underline"
+                        >
+                          {f.name}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {specFiles.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {specFiles.map((file, index) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -22,8 +22,7 @@ import {
   useReviewOrder,
   useSendReviewEmail,
 } from "@/services/queries/orders";
-import { useInitializePayment } from "@/services/queries/payments";
-import { OrderReviewResponse } from "@/services/types/openapi";
+import { OrderReviewResponse, OrderResponse } from "@/services/types/openapi";
 import {
   uploadSpecification,
   uploadEngravingImage,
@@ -59,13 +58,15 @@ function NewOrderForm() {
   const [orderReview, setOrderReview] = useState<OrderReviewResponse | null>(
     null,
   );
-  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<OrderResponse | null>(null);
   const [specFiles, setSpecFiles] = useState<File[]>([]);
   const [engravingImageFile, setEngravingImageFile] = useState<File | null>(
     null,
   );
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const filesUploadedForOrderId = useRef<string | null>(null);
+  const emailSentForOrderId = useRef<string | null>(null);
 
   useEffect(() => {
     const reference =
@@ -112,9 +113,7 @@ function NewOrderForm() {
       deliveryAddress: "",
       deliveryFee: "",
       unit: "mm",
-      edgingAddonId: "",
-      edgingType: "",
-      edgingSides: "1",
+      addonItemExtras: {},
       commissionSelected: false,
       glassInventorySerialCode: "",
     },
@@ -136,11 +135,51 @@ function NewOrderForm() {
 
   const { mutateAsync: createOrder, isPending: isCreatingOrder } =
     useCreateOrder();
-  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
-    useInitializePayment();
   const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
     useReviewOrder();
   const { mutateAsync: sendReviewEmail } = useSendReviewEmail();
+
+  /** Shared helper: build the review request from current form values */
+  const buildReviewPayload = (values: OrderFormValues) => {
+    const extras = values.addonItemExtras ?? {};
+    const addonItems = (values.selectedAddons ?? []).map((addon_id) => {
+      const e = extras[addon_id] ?? {};
+      return {
+        addon_id,
+        ...(e.type_key ? { type_key: e.type_key } : {}),
+        ...(e.sides != null ? { sides: e.sides } : {}),
+        ...(e.quantity != null ? { quantity: e.quantity } : {}),
+      };
+    });
+    return {
+      width: `${values.width}${values.unit}`,
+      length: `${values.length}${values.unit}`,
+      glass_inventory_item_id: values.glassTypeId || null,
+      shape_type: values.shape,
+      drill_holes_count: values.drillHoles
+        ? Number(values.numberOfHoles) || 0
+        : 0,
+      addon_items: addonItems.length > 0 ? addonItems : undefined,
+      insurance_selected: values.insuranceCoverage ?? false,
+      commission_selected: values.commissionSelected ?? false,
+      delivery_fee:
+        values.deliveryMethod === "delivery" && values.deliveryFee
+          ? Number(values.deliveryFee)
+          : undefined,
+    };
+  };
+
+  /** Re-price after the user toggles insurance or commission on the review step */
+  const handleRefreshPricing = async () => {
+    try {
+      const result = await reviewOrder({
+        data: buildReviewPayload(form.getValues()),
+      });
+      setOrderReview(result);
+    } catch {
+      // errors already toasted by the hook
+    }
+  };
 
   const handleAddOnsNext = async () => {
     const fields: (keyof OrderFormValues)[] = [
@@ -158,125 +197,8 @@ function NewOrderForm() {
 
     const values = form.getValues();
     try {
-      // Calculate pricing preview
-      // Build addon_items for pricing preview (edging)
-      const previewAddonItems = [];
-      if (values.edgingAddonId && values.edgingType) {
-        previewAddonItems.push({
-          addon_id: values.edgingAddonId,
-          quantity: Number(values.edgingSides || 1),
-          custom_input: values.edgingType,
-        });
-      }
-      const previewAddonIds = (values.selectedAddons ?? []).filter(
-        (id) => id !== values.edgingAddonId,
-      );
-
-      const result = await reviewOrder({
-        data: {
-          width: `${values.width}${values.unit}`,
-          length: `${values.length}${values.unit}`,
-          glass_inventory_item_id: values.glassTypeId || null,
-          shape_type: values.shape,
-          drill_holes_count: values.drillHoles
-            ? Number(values.numberOfHoles) || 0
-            : 0,
-          addon_ids: previewAddonIds,
-          addon_items:
-            previewAddonItems.length > 0 ? previewAddonItems : undefined,
-          insurance_selected: values.insuranceCoverage ?? false,
-          commission_selected: values.commissionSelected ?? false,
-        },
-      });
+      const result = await reviewOrder({ data: buildReviewPayload(values) });
       setOrderReview(result);
-
-      // Build addon_items for addons that require quantity/custom_input
-      const addonItems = [];
-      if (values.edgingAddonId && values.edgingType) {
-        addonItems.push({
-          addon_id: values.edgingAddonId,
-          quantity: Number(values.edgingSides || 1),
-          custom_input: values.edgingType,
-        });
-      }
-
-      // Exclude edging from addon_ids since it's sent via addon_items
-      const addonIds = (values.selectedAddons || []).filter(
-        (id) => id !== values.edgingAddonId,
-      );
-
-      // Create the order
-      const orderRes = await createOrder({
-        data: {
-          customer_name: values.customerName,
-          customer_email: values.email,
-          customer_phone: values.phone || "",
-          width: `${values.width}${values.unit}`,
-          length: `${values.length}${values.unit}`,
-          sheet_size: values.sheetSize,
-          thickness: values.thickness,
-          drill_holes_count: values.drillHoles
-            ? Number(values.numberOfHoles)
-            : 0,
-          hole_diameter: values.drillHoles ? values.holeDiameter : "",
-          tint_type: values.addTintFilm ? values.tintType : "",
-          engraving_text: values.engraving ? values.engravingText : "",
-          glass_inventory_item_id: values.glassTypeId || null,
-          glass_inventory_serial_code: values.glassInventorySerialCode || null,
-          addon_ids: addonIds,
-          addon_items: addonItems.length > 0 ? addonItems : undefined,
-          insurance_selected: values.insuranceCoverage,
-          commission_selected: values.commissionSelected ?? false,
-          shape_type: values.shape,
-          curve_diameter: values.curveDiameter
-            ? Number(values.curveDiameter)
-            : undefined,
-          customer_notes: values.customerNotes,
-          delivery_method: values.deliveryMethod,
-          delivery_address:
-            values.deliveryMethod === "delivery"
-              ? values.deliveryAddress
-              : undefined,
-          delivery_fee:
-            values.deliveryMethod === "delivery" && values.deliveryFee
-              ? Number(values.deliveryFee)
-              : 0,
-        },
-      });
-
-      if (orderRes?.id) {
-        const orderId = orderRes.id;
-        setCreatedOrderId(orderId);
-
-        // Upload spec + engraving files in parallel
-        const uploadPromises: Promise<unknown>[] = [];
-        for (const file of specFiles) {
-          uploadPromises.push(uploadSpecification(orderId, file));
-        }
-        if (engravingImageFile) {
-          uploadPromises.push(
-            uploadEngravingImage(orderId, engravingImageFile),
-          );
-        }
-        if (uploadPromises.length > 0) {
-          setIsUploading(true);
-          try {
-            await Promise.all(uploadPromises);
-          } finally {
-            setIsUploading(false);
-          }
-        }
-
-        // Send pre-payment review email
-        const reviewUrl = orderRes.order_reference
-          ? `${window.location.origin}/orders/review/${orderRes.order_reference}`
-          : `${window.location.origin}/orders/review?order_id=${orderId}`;
-        await sendReviewEmail({
-          order_id: orderId,
-          data: { review_url: reviewUrl },
-        });
-      }
-
       const currentIndex = steps.findIndex((s) => s.id === "add-ons");
       setHighestUnlockedIndex((prev) => Math.max(prev, currentIndex + 1));
       setActiveTab("review");
@@ -285,37 +207,119 @@ function NewOrderForm() {
     }
   };
 
-  const handleProceedToPayment = async () => {
-    const orderId = createdOrderId;
-    if (!orderId) return;
+  const handleReviewOrder = async () => {
+    const values = form.getValues();
     try {
-      // Upload signature if provided
-      if (signatureDataUrl?.startsWith("data:")) {
-        setIsUploading(true);
-        try {
-          const res = await fetch(signatureDataUrl);
-          const blob = await res.blob();
-          const sigFile = new File([blob], "signature.png", {
-            type: "image/png",
-          });
-          await uploadSignature(orderId, sigFile);
-        } finally {
-          setIsUploading(false);
+      // Step 1: create order (skip if already done)
+      let orderRes = createdOrder;
+      if (!orderRes) {
+        const extras = values.addonItemExtras ?? {};
+        const addonItems = (values.selectedAddons || []).map((addon_id) => {
+          const e = extras[addon_id] ?? {};
+          return {
+            addon_id,
+            ...(e.type_key ? { type_key: e.type_key } : {}),
+            ...(e.sides != null ? { sides: e.sides } : {}),
+            ...(e.quantity != null ? { quantity: e.quantity } : {}),
+          };
+        });
+
+        orderRes = await createOrder({
+          data: {
+            customer_name: values.customerName,
+            customer_email: values.email,
+            customer_phone: values.phone || "",
+            width: `${values.width}${values.unit}`,
+            length: `${values.length}${values.unit}`,
+            sheet_size: values.sheetSize,
+            thickness: values.thickness,
+            drill_holes_count: values.drillHoles
+              ? Number(values.numberOfHoles)
+              : 0,
+            hole_diameter: values.drillHoles ? values.holeDiameter : "",
+            tint_type: values.addTintFilm ? values.tintType : "",
+            engraving_text: values.engraving ? values.engravingText : "",
+            glass_inventory_item_id: values.glassTypeId || null,
+            glass_inventory_serial_code:
+              values.glassInventorySerialCode || null,
+            addon_items: addonItems.length > 0 ? addonItems : undefined,
+            insurance_selected: values.insuranceCoverage,
+            commission_selected: values.commissionSelected ?? false,
+            shape_type: values.shape,
+            curve_diameter: values.curveDiameter
+              ? Number(values.curveDiameter)
+              : undefined,
+            customer_notes: values.customerNotes,
+            delivery_method: values.deliveryMethod,
+            delivery_address:
+              values.deliveryMethod === "delivery"
+                ? values.deliveryAddress
+                : undefined,
+            delivery_fee:
+              values.deliveryMethod === "delivery" && values.deliveryFee
+                ? Number(values.deliveryFee)
+                : 0,
+          },
+        });
+        setCreatedOrder(orderRes);
+      }
+
+      if (orderRes?.id) {
+        // Step 2: upload files (skip if already done for this order)
+        if (filesUploadedForOrderId.current !== orderRes.id) {
+          const uploadPromises: Promise<unknown>[] = [];
+          for (const file of specFiles) {
+            uploadPromises.push(uploadSpecification(orderRes.id, file));
+          }
+          if (engravingImageFile) {
+            uploadPromises.push(
+              uploadEngravingImage(orderRes.id, engravingImageFile),
+            );
+          }
+          if (uploadPromises.length > 0) {
+            setIsUploading(true);
+            try {
+              await Promise.all(uploadPromises);
+            } finally {
+              setIsUploading(false);
+            }
+          }
+          filesUploadedForOrderId.current = orderRes.id;
         }
-      }
 
-      const paymentRes = await initializePayment({
-        data: { order_id: orderId },
-      });
+        // Step 3: upload signature if provided
+        if (signatureDataUrl?.startsWith("data:")) {
+          setIsUploading(true);
+          try {
+            const res = await fetch(signatureDataUrl);
+            const blob = await res.blob();
+            const sigFile = new File([blob], "signature.png", {
+              type: "image/png",
+            });
+            await uploadSignature(orderRes.id, sigFile);
+          } finally {
+            setIsUploading(false);
+          }
+        }
 
-      if (paymentRes?.authorization_url) {
-        window.location.href = paymentRes.authorization_url;
-      } else {
-        setHighestUnlockedIndex(steps.length - 1);
-        setActiveTab("confirmation");
+        // Step 4: send review email (skip if already done for this order)
+        if (emailSentForOrderId.current !== orderRes.id) {
+          const reviewUrl = orderRes.order_reference
+            ? `${window.location.origin}/orders/review/${orderRes.order_reference}`
+            : `${window.location.origin}/orders/review?order_id=${orderRes.id}`;
+          await sendReviewEmail({
+            order_id: orderRes.id,
+            data: { review_url: reviewUrl },
+          });
+          emailSentForOrderId.current = orderRes.id;
+        }
+
+        // Navigate to the order detail page
+        const ref = orderRes.order_reference ?? orderRes.id;
+        router.push(`/${ref}`);
       }
-    } catch (e) {
-      console.error("Payment failed", e);
+    } catch {
+      // errors already toasted by the hooks
     }
   };
 
@@ -393,7 +397,7 @@ function NewOrderForm() {
                   form={form}
                   onBack={handleCancel}
                   onNext={handleAddOnsNext}
-                  isLoading={isReviewingOrder || isCreatingOrder || isUploading}
+                  isLoading={isReviewingOrder || isUploading}
                   specFiles={specFiles}
                   onSpecFilesChange={setSpecFiles}
                   engravingImageFile={engravingImageFile}
@@ -403,8 +407,10 @@ function NewOrderForm() {
                   form={form}
                   pricing={orderReview}
                   onBack={() => setActiveTab("add-ons")}
-                  onProceedToPayment={handleProceedToPayment}
-                  isLoading={isUploading || isInitializingPayment}
+                  onSubmitOrder={handleReviewOrder}
+                  onRefreshPricing={handleRefreshPricing}
+                  isPricingLoading={isReviewingOrder}
+                  isLoading={isUploading || isCreatingOrder || isReviewingOrder}
                   signatureDataUrl={signatureDataUrl}
                   onSignatureChange={setSignatureDataUrl}
                 />

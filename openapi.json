@@ -4205,6 +4205,45 @@
         }
       }
     },
+    "/api/inventory/items/{item_id}/glass-sheets": {
+      "get": {
+        "tags": ["inventory"],
+        "summary": "Staff List Glass Sheets",
+        "operationId": "staff_list_glass_sheets_api_inventory_items__item_id__glass_sheets_get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Item Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GlassSheetResponse"
+                  },
+                  "title": "Response Staff List Glass Sheets Api Inventory Items  Item Id  Glass Sheets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setup-device": {
       "get": {
         "tags": ["devices"],
@@ -4316,11 +4355,44 @@
             "type": "boolean",
             "title": "Is Active",
             "default": true
+          },
+          "input_schema": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Input Schema"
           }
         },
         "type": "object",
         "required": ["name", "price_type", "price"],
         "title": "AddonCreate"
+      },
+      "AddonPriceBreakdown": {
+        "properties": {
+          "addon_id": { "type": "string", "title": "Addon Id" },
+          "name": { "type": "string", "title": "Name" },
+          "quantity": { "type": "integer", "title": "Quantity" },
+          "unit_price": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Unit Price"
+          },
+          "total_price": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "addon_id",
+          "name",
+          "quantity",
+          "unit_price",
+          "total_price"
+        ],
+        "title": "AddonPriceBreakdown"
       },
       "AddonPriceType": {
         "type": "string",
@@ -4461,6 +4533,13 @@
           "is_active": {
             "anyOf": [{ "type": "boolean" }, { "type": "null" }],
             "title": "Is Active"
+          },
+          "input_schema": {
+            "anyOf": [
+              { "additionalProperties": true, "type": "object" },
+              { "type": "null" }
+            ],
+            "title": "Input Schema"
           }
         },
         "type": "object",
@@ -4574,6 +4653,7 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Customer Notes"
           },
+          "dimension_unit": { "type": "string", "title": "Dimension Unit" },
           "delivery_method": { "$ref": "#/components/schemas/DeliveryMethod" },
           "delivery_address": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -4707,6 +4787,7 @@
           "tint_type",
           "engraving_text",
           "customer_notes",
+          "dimension_unit",
           "delivery_method",
           "delivery_address",
           "delivery_fee",
@@ -5826,6 +5907,14 @@
             "title": "Quantity",
             "default": 1
           },
+          "type_key": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Type Key"
+          },
+          "sides": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Sides"
+          },
           "custom_input": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Custom Input"
@@ -5969,6 +6058,11 @@
           "customer_notes": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Customer Notes"
+          },
+          "dimension_unit": {
+            "type": "string",
+            "title": "Dimension Unit",
+            "default": "mm"
           },
           "delivery_method": {
             "$ref": "#/components/schemas/DeliveryMethod",
@@ -6175,6 +6269,7 @@
             "type": "array",
             "title": "Damage Files"
           },
+          "dimension_unit": { "type": "string", "title": "Dimension Unit" },
           "delivery_method": { "$ref": "#/components/schemas/DeliveryMethod" },
           "delivery_address": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6316,6 +6411,7 @@
           "damage_reason",
           "damage_notes",
           "damage_files",
+          "dimension_unit",
           "delivery_method",
           "delivery_address",
           "delivery_fee",
@@ -6430,6 +6526,17 @@
             "type": "boolean",
             "title": "Insurance Selected",
             "default": false
+          },
+          "delivery_fee": {
+            "anyOf": [
+              { "type": "number" },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Delivery Fee",
+            "default": "0.00"
           }
         },
         "type": "object",
@@ -6447,6 +6554,12 @@
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Addons Total"
+          },
+          "addon_breakdown": {
+            "items": { "$ref": "#/components/schemas/AddonPriceBreakdown" },
+            "type": "array",
+            "title": "Addon Breakdown",
+            "default": []
           },
           "subtotal_amount": {
             "type": "string",
@@ -6468,6 +6581,11 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Commission Amount"
           },
+          "delivery_fee": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Delivery Fee"
+          },
           "total_amount": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -6482,6 +6600,7 @@
           "tax_amount",
           "insurance_amount",
           "commission_amount",
+          "delivery_fee",
           "total_amount"
         ],
         "title": "OrderPriceReviewResponse"
@@ -6833,6 +6952,7 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Customer Notes"
           },
+          "dimension_unit": { "type": "string", "title": "Dimension Unit" },
           "delivery_method": { "$ref": "#/components/schemas/DeliveryMethod" },
           "delivery_address": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6965,6 +7085,7 @@
           "tint_type",
           "engraving_text",
           "customer_notes",
+          "dimension_unit",
           "delivery_method",
           "delivery_address",
           "delivery_fee",
@@ -7147,6 +7268,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Customer Notes"
           },
+          "dimension_unit": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Dimension Unit"
+          },
           "delivery_method": {
             "anyOf": [
               { "$ref": "#/components/schemas/DeliveryMethod" },
@@ -7324,26 +7449,8 @@
         "title": "PaystackCallback"
       },
       "PricingSettingsResponse": {
-        "properties": {
-          "tax_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Tax Rate"
-          },
-          "insurance_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Insurance Rate"
-          },
-          "commission_rate": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Commission Rate"
-          }
-        },
-        "type": "object",
-        "required": ["tax_rate", "insurance_rate", "commission_rate"],
-        "title": "PricingSettingsResponse"
+        "additionalProperties": true,
+        "type": "object"
       },
       "PricingSettingsUpdate": {
         "properties": {
