@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import RegisterDeviceModal from "./register";
 import { useCurrentDevice } from "@/services/queries/admin";
 import SuspenseContainer from "@/components/custom-suspense";
+import { formatDate } from "./company-devices";
 
 export default function DeviceSetup() {
   const { data: device, isLoading, isError, error } = useCurrentDevice();
@@ -28,8 +29,14 @@ export default function DeviceSetup() {
             <SpecTable
               className="my-4"
               rows={[
-                { label: "Name", value: device?.name },
+                { label: "Email Address", value: device?.email },
                 { label: "Last IP", value: device?.last_ip },
+                {
+                  label: "Last Used At",
+                  value: device?.last_used_at
+                    ? formatDate(device?.last_used_at)
+                    : "Never",
+                },
                 {
                   label: "Status",
                   value: device?.is_active ? "Active" : "Inactive",

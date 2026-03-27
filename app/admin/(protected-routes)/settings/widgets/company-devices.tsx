@@ -33,7 +33,7 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
-function formatDate(dateStr?: string | null) {
+export function formatDate(dateStr?: string | null) {
   if (!dateStr) return "-";
   return new Date(dateStr).toLocaleString("en-US", {
     month: "short",
