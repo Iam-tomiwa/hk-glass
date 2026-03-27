@@ -93,19 +93,20 @@ export default function OrderDetailsPage() {
           {
             title: "Awaiting Payment",
             description: "Waiting for the customer to complete payment",
-            date: "",
+            date: formatDate(order?.created_at),
             completed: true,
             active: true,
           },
         ]
-      : []),
-    {
-      title: "Payment Completed",
-      description: "The customer completed payment",
-      date: isPendingPayment ? "" : formatDate(order?.created_at),
-      completed: !isPendingPayment && currentStatusIndex >= 0,
-      active: !isPendingPayment && currentStatusIndex >= 0,
-    },
+      : [
+          {
+            title: "Payment Completed",
+            description: "The customer completed payment",
+            date: formatDate(order?.created_at),
+            completed: !isPendingPayment && currentStatusIndex >= 0,
+            active: !isPendingPayment && currentStatusIndex >= 0,
+          },
+        ]),
     {
       title: "In Production",
       description: "The order is in production",
