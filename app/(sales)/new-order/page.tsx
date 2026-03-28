@@ -28,7 +28,6 @@ import {
   uploadEngravingImage,
   uploadSignature,
 } from "@/services/api/orders";
-import { Metadata } from "next";
 
 const steps = [
   { id: "customer", label: "Customer" },
@@ -36,11 +35,6 @@ const steps = [
   { id: "add-ons", label: "Add-ons" },
   { id: "review", label: "Review" },
 ];
-
-export const metadata: Metadata = {
-  title: "Glasstronic | New Order",
-  description: "Engineered Glass for Modern Construction.",
-};
 
 export default function NewOrderPage() {
   return (

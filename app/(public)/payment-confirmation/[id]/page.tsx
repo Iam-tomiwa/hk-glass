@@ -10,12 +10,6 @@ import Link from "next/link";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { useGetOrderByReference } from "@/services/queries/orders";
 import { getBadgeVariant } from "@/lib/utils";
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Glasstronic | Payment Confirmation",
-  description: "Engineered Glass for Modern Construction.",
-};
 
 function PaymentConfirmationContent() {
   const { id } = useParams<{ id: string }>();
