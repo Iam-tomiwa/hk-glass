@@ -33,7 +33,7 @@ const steps = [
   { id: "customer", label: "Customer" },
   { id: "glass-specs", label: "Glass Specs" },
   { id: "add-ons", label: "Add-ons" },
-  { id: "review", label: "Review" },
+  { id: "review", label: "Logistics & Pricing" },
 ];
 
 export default function NewOrderPage() {

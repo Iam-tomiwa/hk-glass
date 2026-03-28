@@ -168,10 +168,10 @@ export function ReviewStep({
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-[#1E202E] tracking-tight">
-            Order Review
+            Logistics and Pricing
           </h2>
           <p className="text-neutral-500 mt-2 text-sm">
-            Review your order details below.
+            Confirm your logistics and pricing details below.
           </p>
         </div>
 
