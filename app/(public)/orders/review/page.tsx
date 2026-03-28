@@ -13,6 +13,12 @@ import { Button } from "@/components/ui/button";
 import { getBadgeVariant } from "@/lib/utils";
 import OrderStatusBadge from "@/components/order-status-badge";
 import SpecTable from "@/components/spec-item";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Glasstronic | Order Review",
+  description: "Engineered Glass for Modern Construction.",
+};
 
 function OrderReviewByIdContent() {
   const searchParams = useSearchParams();
@@ -20,7 +26,8 @@ function OrderReviewByIdContent() {
 
   const { data: order, isLoading, isError, error } = useGetOrderById(orderId);
   const { data: orderFiles } = useGetOrderFiles(order?.id ?? "");
-  const { mutateAsync: initializePayment, isPending: isInitializingPayment } = useInitializePayment();
+  const { mutateAsync: initializePayment, isPending: isInitializingPayment } =
+    useInitializePayment();
 
   const isPaymentPending = order?.payment_status === "pending";
 
@@ -58,7 +65,10 @@ function OrderReviewByIdContent() {
             {
               label: "Email",
               value: order?.customer_email ? (
-                <a className="hover:underline" href={`mailto:${order.customer_email}`}>
+                <a
+                  className="hover:underline"
+                  href={`mailto:${order.customer_email}`}
+                >
                   {order.customer_email}
                 </a>
               ) : (
@@ -68,7 +78,10 @@ function OrderReviewByIdContent() {
             {
               label: "Phone",
               value: order?.customer_phone ? (
-                <a className="hover:underline" href={`tel:${order.customer_phone}`}>
+                <a
+                  className="hover:underline"
+                  href={`tel:${order.customer_phone}`}
+                >
                   {order.customer_phone}
                 </a>
               ) : (
@@ -85,16 +98,29 @@ function OrderReviewByIdContent() {
                 rows={[
                   {
                     label: "Subtotal",
-                    value: <AmountDisplay showFullAmount amount={order?.subtotal_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.subtotal_amount}
+                      />
+                    ),
                   },
                   {
                     label: "Tax",
-                    value: <AmountDisplay showFullAmount amount={order?.tax_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.tax_amount}
+                      />
+                    ),
                   },
                   {
                     label: "Insurance",
                     value: order?.insurance_selected ? (
-                      <AmountDisplay showFullAmount amount={order.insurance_amount} />
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order.insurance_amount}
+                      />
                     ) : (
                       "Not selected"
                     ),
@@ -111,7 +137,12 @@ function OrderReviewByIdContent() {
                   },
                   {
                     label: "Total",
-                    value: <AmountDisplay showFullAmount amount={order?.total_amount} />,
+                    value: (
+                      <AmountDisplay
+                        showFullAmount
+                        amount={order?.total_amount}
+                      />
+                    ),
                   },
                 ]}
               />
@@ -128,7 +159,11 @@ function OrderReviewByIdContent() {
             extraRows: [
               {
                 label: "Order Status",
-                value: order ? <OrderStatusBadge status={order.order_status} /> : "—",
+                value: order ? (
+                  <OrderStatusBadge status={order.order_status} />
+                ) : (
+                  "—"
+                ),
               },
             ],
           }}
@@ -139,7 +174,9 @@ function OrderReviewByIdContent() {
                 disabled={isInitializingPayment}
                 className="w-full bg-[#16a34a] hover:bg-[#15803d]"
               >
-                {isInitializingPayment ? "Redirecting..." : "Proceed to Payment"}
+                {isInitializingPayment
+                  ? "Redirecting..."
+                  : "Proceed to Payment"}
               </Button>
             ) : undefined
           }
@@ -151,7 +188,13 @@ function OrderReviewByIdContent() {
 
 export default function OrderReviewPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
       <OrderReviewByIdContent />
     </Suspense>
   );

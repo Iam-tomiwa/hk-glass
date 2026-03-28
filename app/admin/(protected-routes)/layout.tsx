@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import AdminShell from "../components/admin-shell";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard",
-  description: "Admin area for hk-glass",
+  title: "Glasstronic | Admin Dashboard",
+  description: "Admin area for Glasstronic",
 };
 
 export default function AdminLayout({

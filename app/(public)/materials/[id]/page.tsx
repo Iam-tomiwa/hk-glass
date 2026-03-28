@@ -9,6 +9,12 @@ import { MirrorRectangular } from "lucide-react";
 import { useScanBySerialCode } from "@/services/queries/inventory";
 import SuspenseContainer from "@/components/custom-suspense";
 import { Header } from "@/components/header";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Glasstronic | Material Details",
+  description: "Engineered Glass for Modern Construction.",
+};
 
 const SHEET_STATUS_CONFIG: Record<
   string,
