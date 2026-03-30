@@ -23,7 +23,7 @@ const ORDER_STATUSES = [
   "collected",
 ];
 
-function formatDate(date: string | null | undefined): string {
+export function formatDate(date: string | null | undefined): string {
   if (!date) return "";
   return format(parseISO(date), "MMM d, yyyy 'at' h:mma");
 }

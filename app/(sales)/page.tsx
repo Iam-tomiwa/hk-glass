@@ -13,6 +13,7 @@ import { Header } from "@/components/header";
 import { useSearchOrders } from "@/services/queries/orders";
 import { OrderResponse } from "@/services/types/openapi";
 import OrderStatusBadge from "@/components/order-status-badge";
+import { formatDate } from "../admin/(protected-routes)/orders/[id]/page";
 
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
@@ -97,6 +98,11 @@ export default function OrdersPage() {
           {formatNaira(row.total_amount)}
         </span>
       ),
+    },
+    {
+      field: "created_at",
+      headerName: "Created At",
+      valueGetter: (row: OrderResponse) => formatDate(row.created_at),
     },
     {
       field: "order_status",

@@ -69,10 +69,14 @@ export function ReviewStep({
     name: "commissionSelected",
   });
 
-  // Re-price whenever insurance, commission, or delivery method changes
+  // Re-price whenever insurance, commission, or delivery method changes (skip initial mount)
+  const isMounted = useRef(false);
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
     onRefreshPricing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [insuranceCoverage, commissionSelected, deliveryMethod]);
 
   // Signature modal state

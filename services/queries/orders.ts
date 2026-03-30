@@ -160,11 +160,6 @@ export function useDeleteOrder() {
 export function useReviewOrder() {
   return useMutation<OrderReviewResponse, Error, { data: OrderReviewRequest }>({
     mutationFn: ({ data }) => reviewOrder(data),
-    onError: (error) => {
-      toast.error(
-        getErrorMessage(error, "Failed to calculate price. Please try again."),
-      );
-    },
   });
 }
 
