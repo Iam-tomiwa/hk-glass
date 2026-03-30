@@ -18,7 +18,7 @@ import { ComboBox } from "@/components/ui/combo-box-2";
 import { OrderFormValues } from "../schema";
 import { useListAddons } from "@/services/queries/orders";
 import { useListInventory } from "@/services/queries/inventory";
-import { AddonResponse } from "@/services/types/openapi";
+import { AddonResponse, OrderAddonResponse } from "@/services/types/openapi";
 import { Loader2, Upload, X } from "lucide-react";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -68,6 +68,7 @@ export function AddOnsStep({
   onEngravingImageChange,
   existingSpecFileUrls = [],
   existingEngravingImageUrl = null,
+  existingAddons = [],
 }: {
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
@@ -79,6 +80,7 @@ export function AddOnsStep({
   onEngravingImageChange: (file: File | null) => void;
   existingSpecFileUrls?: { name: string; url: string }[];
   existingEngravingImageUrl?: { name: string; url: string } | null;
+  existingAddons?: OrderAddonResponse[];
 }) {
   const { data: addons = [], isLoading: isLoadingAddons } = useListAddons();
   const { data: hardwareItems = [], isLoading: isLoadingHardware } =
@@ -86,19 +88,16 @@ export function AddOnsStep({
 
   const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});
 
-  // Pre-fill hardware quantities from addonItemExtras (edit mode)
-  useEffect(() => {
-    if (!hardwareItems.length) return;
-    const extras = form.getValues("addonItemExtras") ?? {};
-    const prefilled: Record<string, string> = {};
+  // Derive prefilled quantities from existingAddons (edit mode) — avoids timing issues with form.reset()
+  const prefillQty = useMemo(() => {
+    if (!hardwareItems.length || !existingAddons.length) return {};
+    const result: Record<string, string> = {};
     for (const item of hardwareItems) {
-      const qty = extras[item.id]?.quantity;
-      if (qty != null) prefilled[item.id] = String(qty);
+      const match = existingAddons.find((a) => a.addon_id === item.id && a.addon === null);
+      if (match?.quantity != null) result[item.id] = String(match.quantity);
     }
-    if (Object.keys(prefilled).length > 0) {
-      setHardwareQty((prev) => ({ ...prev, ...prefilled }));
-    }
-  }, [hardwareItems, form]);
+    return result;
+  }, [hardwareItems, existingAddons]);
 
   const engravingImageRef = useRef<HTMLInputElement>(null);
   const specFilesRef = useRef<HTMLInputElement>(null);
@@ -113,6 +112,7 @@ export function AddOnsStep({
   });
   const drillHoles = useWatch({ control: form.control, name: "drillHoles" });
   const engraving = useWatch({ control: form.control, name: "engraving" });
+  const engravingType = useWatch({ control: form.control, name: "engravingType" });
   const addTintFilm = useWatch({ control: form.control, name: "addTintFilm" });
 
   // When form is pre-filled (edit mode), sync boolean fields → selectedAddons
@@ -303,77 +303,79 @@ export function AddOnsStep({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="engravingText"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Engraving Text
-                </FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Enter text to engrave"
-                    className="shadow-none px-4 placeholder:text-neutral-400 font-medium text-neutral-800 resize-none min-h-[80px]"
-                    maxLength={100}
-                    {...field}
-                    value={field.value || ""}
-                  />
-                </FormControl>
-                <p className="text-xs text-neutral-500 mt-1.5">
-                  {(field.value || "").length}/100 characters
-                </p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div>
+          <div className={engravingType === "text" || engravingType === "both" ? "" : "hidden"}>
+            <FormField
+              control={form.control}
+              name="engravingText"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#1E202E] font-medium text-sm">
+                    Engraving Text
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Enter text to engrave"
+                      className="shadow-none px-4 placeholder:text-neutral-400 font-medium text-neutral-800 resize-none min-h-[80px]"
+                      maxLength={100}
+                      {...field}
+                      value={field.value || ""}
+                    />
+                  </FormControl>
+                  <p className="text-xs text-neutral-500 mt-1.5">
+                    {(field.value || "").length}/100 characters
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className={engravingType === "image" || engravingType === "both" ? "" : "hidden"}>
             <p className="text-[#1E202E] font-medium text-sm mb-2">
               Engraving Image
             </p>
-            <input
-              ref={engravingImageRef}
-              type="file"
-              accept="image/png,image/jpeg"
-              className="hidden"
-              onChange={handleEngravingImageChange}
-            />
-            {existingEngravingImageUrl && !engravingImageFile && (
-              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background mb-2">
-                <a
-                  href={existingEngravingImageUrl.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 flex-1 truncate hover:underline"
+              <input
+                ref={engravingImageRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={handleEngravingImageChange}
+              />
+              {existingEngravingImageUrl && !engravingImageFile && (
+                <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background mb-2">
+                  <a
+                    href={existingEngravingImageUrl.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 flex-1 truncate hover:underline"
+                  >
+                    {existingEngravingImageUrl.name}
+                  </a>
+                  <span className="text-xs text-neutral-400">(existing)</span>
+                </div>
+              )}
+              {engravingImageFile ? (
+                <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
+                  <span className="text-sm text-neutral-700 flex-1 truncate">
+                    {engravingImageFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onEngravingImageChange(null)}
+                    className="text-neutral-400 hover:text-neutral-600"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => engravingImageRef.current?.click()}
+                  className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
                 >
-                  {existingEngravingImageUrl.name}
-                </a>
-                <span className="text-xs text-neutral-400">(existing)</span>
-              </div>
-            )}
-            {engravingImageFile ? (
-              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
-                <span className="text-sm text-neutral-700 flex-1 truncate">
-                  {engravingImageFile.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onEngravingImageChange(null)}
-                  className="text-neutral-400 hover:text-neutral-600"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            ) : (
-              <div
-                onClick={() => engravingImageRef.current?.click()}
-                className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
-              >
-                <Upload className="size-5 text-neutral-400" />
-                <p className="text-sm text-neutral-500">Click to upload</p>
-                <p className="text-xs text-neutral-400">PNG or JPG</p>
-              </div>
-            )}
+                  <Upload className="size-5 text-neutral-400" />
+                  <p className="text-sm text-neutral-500">Click to upload</p>
+                  <p className="text-xs text-neutral-400">PNG or JPG</p>
+                </div>
+              )}
           </div>
         </div>
       );
@@ -582,7 +584,7 @@ export function AddOnsStep({
                       ) : (
                         <div className="space-y-3">
                           {hardwareItems.map((item) => {
-                            const qty = hardwareQty[item.id] || "";
+                            const qty = hardwareQty[item.id] ?? prefillQty[item.id] ?? "";
                             const enabled = !!qty && qty !== "0";
                             return (
                               <div key={item.id}>

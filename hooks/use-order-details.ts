@@ -22,14 +22,23 @@ export function useOrderDetails(order: OrderResponse | undefined) {
     { label: "Sheet Size", value: order?.sheet_size ?? "__" },
     { label: "Shape", value: order?.shape_type ?? "__" },
     ...(order?.curve_diameter
-      ? [{ label: "Curve Diameter", value: order.curve_diameter }]
+      ? [
+          {
+            label: "Curve Diameter",
+            value: order.curve_diameter
+              ? `${order.curve_diameter}${order?.dimension_unit}`
+              : "Nill",
+          },
+        ]
       : []),
     ...(order?.custom_shape_spec
       ? [{ label: "Custom Shape", value: order.custom_shape_spec }]
       : []),
     {
       label: "Thickness",
-      value: `${order?.thickness}${order?.dimension_unit}`,
+      value: order?.thickness
+        ? `${order?.thickness}${order?.dimension_unit}`
+        : "Nill",
     },
   ];
 

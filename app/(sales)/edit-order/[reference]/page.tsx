@@ -126,7 +126,7 @@ function EditOrderForm() {
 
   // Pre-fill form once order data is loaded
   useEffect(() => {
-    if (!order) return;
+    if (!order || isFormInitialized.current) return;
 
     // The API stores dimensions in meters; dimension_unit is the original display unit
     const raw = order as unknown as Record<string, unknown>;
@@ -181,7 +181,7 @@ function EditOrderForm() {
       addTintFilm: !!order.tint_type,
       tintType: order.tint_type ?? "",
       engraving: !!order.engraving_text,
-      engravingType: "",
+      engravingType: order.engraving_text ? "text" : "",
       engravingText: order.engraving_text ?? "",
       customerNotes: order.customer_notes ?? "",
       insuranceCoverage: order.insurance_selected ?? false,
@@ -197,6 +197,15 @@ function EditOrderForm() {
 
     isFormInitialized.current = true;
   }, [order, form]);
+
+  // Upgrade engravingType once orderFiles loads (image-only or both)
+  useEffect(() => {
+    if (!isFormInitialized.current) return;
+    const hasImage = (orderFiles?.engraving_image_files?.length ?? 0) > 0;
+    if (!hasImage) return;
+    const current = form.getValues("engravingType");
+    form.setValue("engravingType", current === "text" ? "both" : "image");
+  }, [orderFiles, form]);
 
   const { mutateAsync: updateOrder, isPending: isUpdatingOrder } =
     useUpdateOrder();
@@ -327,11 +336,9 @@ function EditOrderForm() {
       if (newTintType !== (order.tint_type ?? ""))
         payload.tint_type = newTintType;
 
-      const newEngravingText = values.engraving
+      payload.engraving_text = values.engraving
         ? (values.engravingText ?? "")
         : "";
-      if (newEngravingText !== (order.engraving_text ?? ""))
-        payload.engraving_text = newEngravingText;
 
 
       // Addons: compare full ID sets and extras content
@@ -551,6 +558,7 @@ function EditOrderForm() {
                         }
                       : null
                   }
+                  existingAddons={order?.addons ?? []}
                 />
                 <ReviewStep
                   form={form}
