@@ -167,8 +167,8 @@ function EditOrderForm() {
       unit,
       shape: (order.shape_type as "rectangular" | "curved") ?? "rectangular",
       curveDiameter: order.curve_diameter ?? "",
-      sheetSize: order.sheet_size ?? "",
-      customSheetSize: "",
+      sheetSize: ["standard", "large"].includes(order.sheet_size ?? "") ? (order.sheet_size ?? "") : order.sheet_size ? "custom" : "",
+      customSheetSize: ["standard", "large"].includes(order.sheet_size ?? "") ? "" : (order.sheet_size ?? ""),
       thickness: order.thickness ?? "",
       selectedAddons,
       addonItemExtras,
@@ -315,8 +315,9 @@ function EditOrderForm() {
       if (newWidth !== order.width) payload.width = newWidth;
       if (newLength !== order.length) payload.length = newLength;
 
-      if ((values.sheetSize ?? "") !== (order.sheet_size ?? ""))
-        payload.sheet_size = values.sheetSize;
+      const effectiveSheetSize = values.sheetSize === "custom" ? (values.customSheetSize ?? "") : (values.sheetSize ?? "");
+      if (effectiveSheetSize !== (order.sheet_size ?? ""))
+        payload.sheet_size = effectiveSheetSize;
       if ((values.thickness ?? "") !== (order.thickness ?? ""))
         payload.thickness = values.thickness;
 

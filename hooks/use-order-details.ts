@@ -19,7 +19,15 @@ export function useOrderDetails(order: OrderResponse | undefined) {
         : "—",
     },
     { label: "Area", value: order ? `${order.area} sqm` : "—" },
-    { label: "Sheet Size", value: order?.sheet_size ?? "__" },
+    {
+      label: "Sheet Size",
+      value:
+        order?.sheet_size &&
+        order?.sheet_size !== "standard" &&
+        order?.sheet_size !== "large"
+          ? `${order.sheet_size}${order?.dimension_unit}`
+          : order?.sheet_size,
+    },
     { label: "Shape", value: order?.shape_type ?? "__" },
     ...(order?.curve_diameter
       ? [

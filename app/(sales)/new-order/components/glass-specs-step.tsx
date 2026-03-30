@@ -265,8 +265,7 @@ export function GlassSpecsStep({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-[#1E202E] font-medium text-sm">
-                    Input Custom Sheet Size{" "}
-                    <span className="text-red-500">*</span>
+                    Input Custom Sheet Size
                   </FormLabel>
                   <FormControl>
                     <div className="relative">

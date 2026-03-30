@@ -231,7 +231,7 @@ function NewOrderForm() {
             customer_phone: values.phone || "",
             width: `${values.width}${values.unit}`,
             length: `${values.length}${values.unit}`,
-            sheet_size: values.sheetSize,
+            sheet_size: values.sheetSize === "custom" ? values.customSheetSize : values.sheetSize,
             thickness: values.thickness,
             drill_holes_count: values.drillHoles
               ? Number(values.numberOfHoles)
