@@ -29,6 +29,7 @@ import {
   uploadEngravingImage,
   uploadSignature,
 } from "@/services/api/orders";
+import { buildReviewPayload } from "../../new-order/page";
 
 const steps = [
   { id: "customer", label: "Customer" },
@@ -42,10 +43,7 @@ const steps = [
  * display unit the user originally entered. Returns a plain numeric string
  * suitable for the form input.
  */
-function convertFromMeters(
-  meters: number,
-  unit: "mm" | "cm" | "m",
-): string {
+function convertFromMeters(meters: number, unit: "mm" | "cm" | "m"): string {
   if (unit === "mm") return String(meters * 1000);
   if (unit === "cm") return String(meters * 100);
   return String(meters);
@@ -96,6 +94,7 @@ function EditOrderForm() {
       email: "",
       phone: "",
       glassTypeId: "",
+      quantity: "",
       length: "",
       width: "",
       shape: "rectangular",
@@ -144,7 +143,8 @@ function EditOrderForm() {
       const schema = a.addon?.input_schema;
       // Hardware items (addon === null) — store their quantity
       if (!a.addon) {
-        if (a.quantity != null) addonItemExtras[a.addon_id] = { quantity: a.quantity };
+        if (a.quantity != null)
+          addonItemExtras[a.addon_id] = { quantity: a.quantity };
         continue;
       }
       if (!schema) continue;
@@ -152,8 +152,10 @@ function EditOrderForm() {
         {};
       if (a.type_key) extra.type_key = a.type_key;
       if (a.sides != null) extra.sides = a.sides;
-      else if (schema.supports_sides && a.quantity != null) extra.sides = a.quantity;
-      if (schema.supports_quantity && a.quantity != null) extra.quantity = a.quantity;
+      else if (schema.supports_sides && a.quantity != null)
+        extra.sides = a.quantity;
+      if (schema.supports_quantity && a.quantity != null)
+        extra.quantity = a.quantity;
       addonItemExtras[a.addon_id] = extra;
     }
 
@@ -162,13 +164,20 @@ function EditOrderForm() {
       email: order.customer_email ?? "",
       phone: order.customer_phone ?? "",
       glassTypeId: order.glass_type?.id ?? "",
+      quantity: order.quantity != null ? String(order.quantity) : "",
       length: lengthValue,
       width: widthValue,
       unit,
       shape: (order.shape_type as "rectangular" | "curved") ?? "rectangular",
       curveDiameter: order.curve_diameter ?? "",
-      sheetSize: ["standard", "large"].includes(order.sheet_size ?? "") ? (order.sheet_size ?? "") : order.sheet_size ? "custom" : "",
-      customSheetSize: ["standard", "large"].includes(order.sheet_size ?? "") ? "" : (order.sheet_size ?? ""),
+      sheetSize: ["standard", "large"].includes(order.sheet_size ?? "")
+        ? (order.sheet_size ?? "")
+        : order.sheet_size
+          ? "custom"
+          : "",
+      customSheetSize: ["standard", "large"].includes(order.sheet_size ?? "")
+        ? ""
+        : (order.sheet_size ?? ""),
       thickness: order.thickness ?? "",
       selectedAddons,
       addonItemExtras,
@@ -189,8 +198,7 @@ function EditOrderForm() {
       deliveryMethod:
         (order.delivery_method as "pickup" | "delivery") ?? "pickup",
       deliveryAddress: order.delivery_address ?? "",
-      deliveryFee:
-        order.delivery_fee != null ? String(order.delivery_fee) : "",
+      deliveryFee: order.delivery_fee != null ? String(order.delivery_fee) : "",
       glassInventorySerialCode:
         (raw.glass_inventory_serial_code as string) ?? "",
     });
@@ -211,35 +219,6 @@ function EditOrderForm() {
     useUpdateOrder();
   const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
     useReviewOrder();
-
-  const buildReviewPayload = (values: OrderFormValues) => {
-    const extras = values.addonItemExtras ?? {};
-    const addonItems = (values.selectedAddons ?? []).map((addon_id) => {
-      const e = extras[addon_id] ?? {};
-      return {
-        addon_id,
-        ...(e.type_key ? { type_key: e.type_key } : {}),
-        ...(e.sides != null ? { sides: e.sides } : {}),
-        ...(e.quantity != null ? { quantity: e.quantity } : {}),
-      };
-    });
-    return {
-      width: `${values.width}${values.unit}`,
-      length: `${values.length}${values.unit}`,
-      glass_inventory_item_id: values.glassTypeId || null,
-      shape_type: values.shape,
-      drill_holes_count: values.drillHoles
-        ? Number(values.numberOfHoles) || 0
-        : 0,
-      addon_items: addonItems.length > 0 ? addonItems : undefined,
-      insurance_selected: values.insuranceCoverage ?? false,
-      commission_selected: values.commissionSelected ?? false,
-      delivery_fee:
-        values.deliveryMethod === "delivery" && values.deliveryFee
-          ? Number(values.deliveryFee)
-          : undefined,
-    };
-  };
 
   const handleRefreshPricing = async () => {
     if (!isFormInitialized.current) return;
@@ -305,6 +284,8 @@ function EditOrderForm() {
 
       if (values.customerName !== order.customer_name)
         payload.customer_name = values.customerName;
+      if (Number(values.quantity) !== order.quantity)
+        payload.quantity = Number(values.quantity);
       if (values.email !== order.customer_email)
         payload.customer_email = values.email;
       if (values.phone !== order.customer_phone)
@@ -315,7 +296,10 @@ function EditOrderForm() {
       if (newWidth !== order.width) payload.width = newWidth;
       if (newLength !== order.length) payload.length = newLength;
 
-      const effectiveSheetSize = values.sheetSize === "custom" ? (values.customSheetSize ?? "") : (values.sheetSize ?? "");
+      const effectiveSheetSize =
+        values.sheetSize === "custom"
+          ? (values.customSheetSize ?? "")
+          : (values.sheetSize ?? "");
       if (effectiveSheetSize !== (order.sheet_size ?? ""))
         payload.sheet_size = effectiveSheetSize;
       if ((values.thickness ?? "") !== (order.thickness ?? ""))
@@ -341,7 +325,6 @@ function EditOrderForm() {
         ? (values.engravingText ?? "")
         : "";
 
-
       // Addons: compare full ID sets and extras content
       const extras = values.addonItemExtras ?? {};
       const addonItems = (values.selectedAddons || []).map((addon_id) => {
@@ -354,7 +337,9 @@ function EditOrderForm() {
         };
       });
 
-      const originalAddonIds = (order.addons ?? []).map((a) => a.addon_id).sort();
+      const originalAddonIds = (order.addons ?? [])
+        .map((a) => a.addon_id)
+        .sort();
       const currentAllAddonIds = (values.selectedAddons || []).slice().sort();
 
       // Reconstruct original extras for comparison
@@ -374,15 +359,18 @@ function EditOrderForm() {
               );
               if (key) entry.type_key = key;
             }
-            if (schema.supports_sides && a.quantity != null) entry.sides = a.quantity;
-            else if (schema.supports_quantity && a.quantity != null) entry.quantity = a.quantity;
+            if (schema.supports_sides && a.quantity != null)
+              entry.sides = a.quantity;
+            else if (schema.supports_quantity && a.quantity != null)
+              entry.quantity = a.quantity;
           }
         }
         originalExtras[a.addon_id] = entry;
       }
 
       const addonsChanged =
-        JSON.stringify(currentAllAddonIds) !== JSON.stringify(originalAddonIds) ||
+        JSON.stringify(currentAllAddonIds) !==
+          JSON.stringify(originalAddonIds) ||
         JSON.stringify(extras) !== JSON.stringify(originalExtras);
 
       if (addonsChanged) {
@@ -445,7 +433,9 @@ function EditOrderForm() {
         try {
           const res = await fetch(signatureDataUrl);
           const blob = await res.blob();
-          const sigFile = new File([blob], "signature.png", { type: "image/png" });
+          const sigFile = new File([blob], "signature.png", {
+            type: "image/png",
+          });
           await uploadSignature(order.id, sigFile);
         } finally {
           setIsUploading(false);
@@ -468,7 +458,11 @@ function EditOrderForm() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header title="Edit Order" className="border-b">
+      <Header
+        title="Edit Order"
+        description="Complete the steps to edit, review, and finalize the order."
+        className="border-b"
+      >
         <Link href={`/${reference}`}>
           <Button
             variant="ghost"
@@ -499,7 +493,9 @@ function EditOrderForm() {
                     disabled={isLocked}
                     className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
                   >
-                    <span className="flex items-center gap-2">{step.label}</span>
+                    <span className="flex items-center gap-2">
+                      {step.label}
+                    </span>
                   </TabsTrigger>
                 );
               })}

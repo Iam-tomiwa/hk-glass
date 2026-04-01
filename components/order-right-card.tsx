@@ -64,7 +64,7 @@ export function OrderRightCard({
     <Card className="border border-gray-200 h-max rounded-2xl flex flex-col divide divide-y px-6 bg-white">
       {/* QR Code — always present */}
       <CardContent className="px-0">
-        <OrderQRSection value={qrValue} />
+        <OrderQRSection value={qrValue} orderId={orderInfo?.orderId} />
       </CardContent>
 
       {/* Order Information — hidden when orderInfo is null/undefined */}

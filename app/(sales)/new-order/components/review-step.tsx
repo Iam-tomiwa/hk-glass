@@ -77,7 +77,7 @@ export function ReviewStep({
       return;
     }
     onRefreshPricing();
-  }, [insuranceCoverage, commissionSelected, deliveryMethod]);
+  }, [insuranceCoverage, commissionSelected, deliveryMethod, onRefreshPricing]);
 
   // Signature modal state
   const [signatureOpen, setSignatureOpen] = useState(false);
@@ -443,104 +443,142 @@ export function ReviewStep({
                 <CardTitle>Price Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-3 text-sm">
-                  {pricing?.addon_breakdown &&
-                    pricing.addon_breakdown.length > 0 && (
-                      <>
-                        {pricing.addon_breakdown.map((item) => (
-                          <div
-                            key={item.addon_id}
-                            className="flex justify-between"
-                          >
+                {(() => {
+                  const qty = pricing?.quantity ?? 1;
+                  const multiUnit = qty > 1;
+                  return (
+                    <div className="space-y-3 text-sm">
+                      {pricing?.addon_breakdown &&
+                        pricing.addon_breakdown.length > 0 && (
+                          <>
+                            {pricing.addon_breakdown.map((item) => (
+                              <div
+                                key={item.addon_id}
+                                className="flex justify-between"
+                              >
+                                <span className="text-neutral-500">
+                                  {item.name}
+                                  {item.quantity && item.quantity > 1
+                                    ? ` ×${item.quantity}`
+                                    : ""}
+                                  :
+                                </span>
+                                <span className="font-medium text-neutral-800">
+                                  {formatNaira(item.total_price)}
+                                </span>
+                              </div>
+                            ))}
+                            <Separator />
+                          </>
+                        )}
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">
+                          {multiUnit ? `Unit subtotal:` : "Subtotal:"}
+                        </span>
+                        <span className="font-medium text-neutral-800">
+                          {isPricingLoading
+                            ? "..."
+                            : formatNaira(
+                                multiUnit
+                                  ? pricing?.unit_subtotal_amount
+                                  : pricing?.subtotal_amount,
+                              )}
+                        </span>
+                      </div>
+                      {multiUnit && (
+                        <>
+                          <div className="flex justify-between">
                             <span className="text-neutral-500">
-                              {item.name}
-                              {item.quantity && item.quantity > 1
-                                ? ` ×${item.quantity}`
-                                : ""}
-                              :
+                              × {qty} orders
                             </span>
                             <span className="font-medium text-neutral-800">
-                              {formatNaira(item.total_price)}
+                              {isPricingLoading
+                                ? "..."
+                                : formatNaira(pricing?.subtotal_amount)}
                             </span>
                           </div>
-                        ))}
-                        <Separator />
-                      </>
-                    )}
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">Subtotal:</span>
-                    <span className="font-medium text-neutral-800">
-                      {isPricingLoading
-                        ? "..."
-                        : formatNaira(pricing?.subtotal_amount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">
-                      Tax
-                      {pricingSettings?.tax_rate
-                        ? ` (${pricingSettings.tax_rate}%)`
-                        : ""}
-                      :
-                    </span>
-                    <span className="font-medium text-neutral-800">
-                      {isPricingLoading
-                        ? "..."
-                        : formatNaira(pricing?.tax_amount)}
-                    </span>
-                  </div>
-                  {insuranceCoverage && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">
-                        Insurance
-                        {pricingSettings?.insurance_rate
-                          ? ` (${pricingSettings.insurance_rate}%)`
-                          : ""}
-                        :
-                      </span>
-                      <span className="font-medium text-neutral-800">
-                        {isPricingLoading
-                          ? "..."
-                          : formatNaira(pricing?.insurance_amount)}
-                      </span>
-                    </div>
-                  )}
-                  {commissionSelected && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">
-                        Commission
-                        {pricingSettings?.commission_rate
-                          ? ` (${pricingSettings.commission_rate}%)`
-                          : ""}
-                        :
-                      </span>
-                      <span className="font-medium text-red-600">
-                        {isPricingLoading
-                          ? "..."
-                          : `− ${formatNaira(pricing?.commission_amount)}`}
-                      </span>
-                    </div>
-                  )}
-                  {deliveryMethod === "delivery" && values.deliveryFee && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Delivery Fee:</span>
-                      <span className="font-medium text-neutral-800">
-                        {formatNaira(values.deliveryFee)}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                        </>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">
+                          Tax
+                          {pricingSettings?.tax_rate
+                            ? ` (${pricingSettings.tax_rate}%)`
+                            : ""}
+                          :
+                        </span>
+                        <span className="font-medium text-neutral-800">
+                          {isPricingLoading
+                            ? "..."
+                            : formatNaira(pricing?.tax_amount)}
+                        </span>
+                      </div>
+                      {insuranceCoverage && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">
+                            Insurance
+                            {pricingSettings?.insurance_rate
+                              ? ` (${pricingSettings.insurance_rate}%)`
+                              : ""}
+                            :
+                          </span>
+                          <span className="font-medium text-neutral-800">
+                            {isPricingLoading
+                              ? "..."
+                              : formatNaira(pricing?.insurance_amount)}
+                          </span>
+                        </div>
+                      )}
+                      {commissionSelected && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">
+                            Commission
+                            {pricingSettings?.commission_rate
+                              ? ` (${pricingSettings.commission_rate}%)`
+                              : ""}
+                            :
+                          </span>
+                          <span className="font-medium text-red-600">
+                            {isPricingLoading
+                              ? "..."
+                              : `− ${formatNaira(pricing?.commission_amount)}`}
+                          </span>
+                        </div>
+                      )}
+                      {deliveryMethod === "delivery" && values.deliveryFee && (
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">
+                            Delivery Fee:
+                          </span>
+                          <span className="font-medium text-neutral-800">
+                            {formatNaira(values.deliveryFee)}
+                          </span>
+                        </div>
+                      )}
 
-                <Separator />
+                      <Separator />
 
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-bold text-[#1E202E]">Total:</span>
-                  <span className="font-bold text-base">
-                    {isPricingLoading
-                      ? "..."
-                      : formatNaira(pricing?.total_amount)}
-                  </span>
-                </div>
+                      {multiUnit && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-neutral-500">Unit total:</span>
+                          <span className="font-medium text-neutral-800">
+                            {isPricingLoading
+                              ? "..."
+                              : formatNaira(pricing?.unit_total_amount)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-bold text-[#1E202E]">Total:</span>
+                        <span className="font-bold text-base">
+                          {isPricingLoading
+                            ? "..."
+                            : formatNaira(pricing?.total_amount)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

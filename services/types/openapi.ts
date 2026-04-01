@@ -158,6 +158,7 @@ export interface AddonItem {
 export interface OrderReviewRequest {
   width: number | string;
   length: number | string;
+  quantity?: number | null;
   glass_inventory_item_id?: string | null;
   shape_type?: string | null;
   drill_holes_count?: number | null;
@@ -169,12 +170,22 @@ export interface OrderReviewRequest {
 }
 
 export interface OrderReviewResponse {
-  area: string;
-  subtotal_amount: string;
-  tax_amount: string;
-  insurance_amount: string;
-  commission_amount?: string | null;
-  total_amount: string;
+  quantity?: number | null;
+  area: string | number;
+  addons_total?: number | string | null;
+  unit_addons_total?: number | string | null;
+  unit_subtotal_amount?: number | string | null;
+  subtotal_amount: string | number;
+  tax_amount: string | number;
+  unit_insurance_amount?: number | string | null;
+  insurance_amount: string | number;
+  unit_commission_amount?: number | string | null;
+  commission_amount?: string | number | null;
+  delivery_fee?: number | string | null;
+  unit_total_before_commission?: number | string | null;
+  total_before_commission?: number | string | null;
+  unit_total_amount?: number | string | null;
+  total_amount: string | number;
   addon_breakdown?: AddonBreakdownItem[] | null;
 }
 
@@ -337,6 +348,7 @@ export interface OrderCreate {
   specification_files?: string[];
   engraving_image_files?: string[];
   signature_file_path?: string | null;
+  quantity?: number | null;
 }
 
 export interface OrderResponse {
@@ -347,6 +359,7 @@ export interface OrderResponse {
   customer_phone: string;
   width: string;
   length: string;
+  quantity: number;
   area: string;
   sheet_size?: string | any | null;
   thickness?: string | any | null;
@@ -451,6 +464,7 @@ export interface OrderUpdate {
   customer_name?: string | any | null;
   customer_email?: string | any | null;
   customer_phone?: string | any | null;
+  quantity?: number | null;
   width?: number | string | any | null;
   length?: number | string | any | null;
   sheet_size?: string | any | null;

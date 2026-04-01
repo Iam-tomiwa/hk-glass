@@ -7,8 +7,9 @@ export const orderFormSchema = z
     phone: z.string().min(1, "Phone number is required"),
 
     glassTypeId: z.string().optional(),
-    length: z.string().min(1, "Length/Height is required"),
-    width: z.string().min(1, "Width is required"),
+    quantity: z.string().optional(),
+    length: z.string().optional(),
+    width: z.string().optional(),
     shape: z.enum(["rectangular", "curved"]),
     curveDiameter: z.string().optional(),
     sheetSize: z.string().optional(),
@@ -70,20 +71,45 @@ export const orderFormSchema = z
       return num;
     };
 
+    if (data.glassTypeId) {
+      if (!data.length) {
+        ctx.addIssue({ code: "custom", message: "Length is required", path: ["length"] });
+      }
+      if (!data.width) {
+        ctx.addIssue({ code: "custom", message: "Width is required", path: ["width"] });
+      }
+    }
+
     const lengthMm = toMm(data.length);
     const widthMm = toMm(data.width);
 
     if (lengthMm > 0 && lengthMm < 200) {
-      ctx.addIssue({ code: "custom", message: "Minimum length is 200mm", path: ["length"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Minimum length is 200mm",
+        path: ["length"],
+      });
     }
     if (lengthMm > 6000) {
-      ctx.addIssue({ code: "custom", message: "Maximum length is 6m (6000mm)", path: ["length"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Maximum length is 6m (6000mm)",
+        path: ["length"],
+      });
     }
     if (widthMm > 0 && widthMm < 200) {
-      ctx.addIssue({ code: "custom", message: "Minimum width is 200mm", path: ["width"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Minimum width is 200mm",
+        path: ["width"],
+      });
     }
     if (widthMm > 3000) {
-      ctx.addIssue({ code: "custom", message: "Maximum width is 3m (3000mm)", path: ["width"] });
+      ctx.addIssue({
+        code: "custom",
+        message: "Maximum width is 3m (3000mm)",
+        path: ["width"],
+      });
     }
   });
 

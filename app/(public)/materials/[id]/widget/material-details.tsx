@@ -17,7 +17,7 @@ import {
 import {
   useGetInventoryItem,
   useDeleteInventoryItem,
-  useListGlassSheets,
+  useListInventoryUnits,
 } from "@/services/queries/inventory";
 import {
   GlassSheetResponse,
@@ -186,8 +186,9 @@ export default function MaterialDetailsPage({
   const { openConfirmModal } = useConfirmations();
 
   const { data: item, isLoading, isError } = useGetInventoryItem(itemId);
-  const { data: sheets = [], isLoading: sheetsLoading } = useListGlassSheets(
-    item?.item_type === "glass" ? itemId : "",
+  const { data: sheets = [], isLoading: sheetsLoading } = useListInventoryUnits(
+    item?.item_type === "glass" || item?.item_type === "hardware" ? itemId : "",
+    item?.item_type ?? "glass",
   );
   const { mutate: deleteItem } = useDeleteInventoryItem();
 
@@ -342,7 +343,7 @@ export default function MaterialDetailsPage({
         </div>
 
         {/* Glass Sheets Grid — glass items only */}
-        {item.item_type === "glass" && (
+        {(item.item_type === "glass" || item.item_type === "hardware") && (
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 space-y-4">
             {/* Header row */}
             <div className="flex items-center justify-between">

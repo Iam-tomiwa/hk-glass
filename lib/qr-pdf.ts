@@ -93,3 +93,44 @@ export async function downloadQRCodesPDF(
 
   doc.save(filename);
 }
+
+/**
+ * Generates and downloads a single-page PDF containing one QR code for an order.
+ */
+export async function downloadOrderQRPDF(qrValue: string, orderId: string) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const QR_SIZE = 80;
+  const qrX = (PAGE_W - QR_SIZE) / 2;
+  const qrY = (PAGE_H - QR_SIZE) / 2 - 10;
+
+  const qrDataUrl = await QRCode.toDataURL(qrValue, {
+    width: 600,
+    margin: 1,
+    errorCorrectionLevel: "M",
+  });
+
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(qrX - 6, qrY - 6, QR_SIZE + 12, QR_SIZE + 24, 3, 3, "S");
+
+  doc.addImage(qrDataUrl, "PNG", qrX, qrY, QR_SIZE, QR_SIZE);
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(30, 32, 46);
+  const label = "Order ID: ";
+  const lw = doc.getTextWidth(label);
+  doc.setFont("helvetica", "normal");
+  const vw = doc.getTextWidth(orderId);
+  const startX = (PAGE_W - lw - vw) / 2;
+  const textY = qrY + QR_SIZE + 10;
+  doc.setFont("helvetica", "bold");
+  doc.text(label, startX, textY);
+  doc.setFont("helvetica", "normal");
+  doc.text(orderId, startX + lw, textY);
+
+  doc.save(`order-${orderId}-qr.pdf`);
+}

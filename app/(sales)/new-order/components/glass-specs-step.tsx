@@ -14,7 +14,7 @@ import { OrderFormValues } from "../schema";
 import { ComboBox } from "@/components/ui/combo-box-2";
 import {
   useListInventory,
-  useListGlassSheets,
+  useListInventoryUnits,
 } from "@/services/queries/inventory";
 
 export function GlassSpecsStep({
@@ -32,7 +32,7 @@ export function GlassSpecsStep({
     useListInventory("glass", true);
 
   const glassTypeId = useWatch({ control: form.control, name: "glassTypeId" });
-  const { data: glassSheets } = useListGlassSheets(glassTypeId || "", false);
+  const { data: glassSheets } = useListInventoryUnits(glassTypeId || "", "glass", false);
 
   // Auto-resolve the first available serial code whenever the selected item changes
   // Skip when glass type is disabled (edit mode — serial code is already locked)
@@ -119,7 +119,11 @@ export function GlassSpecsStep({
                   value={field.value}
                   isLoading={isLoadingGlassTypes}
                   disabled={disableGlassType}
-                  options={(glassTypes || [])?.map((type) => ({
+                  placeholder="Select Glass Type"
+                  options={[
+                    { id: "", material_name: "Select Glass Type" },
+                    ...glassTypes,
+                  ]?.map((type) => ({
                     value: type.id,
                     label: type.material_name,
                   }))}
@@ -132,11 +136,33 @@ export function GlassSpecsStep({
 
           <FormField
             control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[#1E202E] font-medium text-sm">
+                  Quantity
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    {...field}
+                    className="bg-background"
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="length"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Length <span className="text-red-500">*</span>
+                  Length{" "}
+                  {glassTypeId && <span className="text-red-500">*</span>}
                 </FormLabel>
                 <FormControl>
                   <div className="relative">
@@ -163,7 +189,7 @@ export function GlassSpecsStep({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[#1E202E] font-medium text-sm">
-                  Width <span className="text-red-500">*</span>
+                  Width {glassTypeId && <span className="text-red-500">*</span>}
                 </FormLabel>
                 <FormControl>
                   <div className="relative">

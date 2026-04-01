@@ -87,6 +87,7 @@ export function AddOnsStep({
     useListInventory("hardware", true);
 
   const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});
+  const [hardwareEnabled, setHardwareEnabled] = useState<Record<string, boolean>>({});
 
   // Derive prefilled quantities from existingAddons (edit mode) — avoids timing issues with form.reset()
   const prefillQty = useMemo(() => {
@@ -585,7 +586,7 @@ export function AddOnsStep({
                         <div className="space-y-3">
                           {hardwareItems.map((item) => {
                             const qty = hardwareQty[item.id] ?? prefillQty[item.id] ?? "";
-                            const enabled = !!qty && qty !== "0";
+                            const enabled = hardwareEnabled[item.id] ?? (prefillQty[item.id] != null && prefillQty[item.id] !== "0");
                             return (
                               <div key={item.id}>
                                 <div className="flex flex-row items-center justify-between py-2">
@@ -602,9 +603,10 @@ export function AddOnsStep({
                                   <Switch
                                     checked={enabled}
                                     onCheckedChange={(checked) => {
+                                      setHardwareEnabled((prev) => ({ ...prev, [item.id]: checked }));
                                       setHardwareQty((prev) => ({
                                         ...prev,
-                                        [item.id]: checked ? "1" : "",
+                                        [item.id]: checked ? (prev[item.id] || prefillQty[item.id] || "1") : "",
                                       }));
                                       const cur =
                                         form.getValues("selectedAddons") ?? [];

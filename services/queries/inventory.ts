@@ -12,7 +12,7 @@ import {
   adjustInventoryItem,
   getInventoryItem,
   updateInventoryItemPrice,
-  listGlassSheets,
+  listInventoryUnits,
   scanBySerialCode,
   InventoryItemPriceUpdate,
 } from "../api/inventory";
@@ -41,10 +41,19 @@ export function useGetInventoryItem(item_id: string) {
   });
 }
 
-export function useListGlassSheets(item_id: string, isAdmin = true) {
+export function useListInventoryUnits(
+  item_id: string,
+  item_type: InventoryItemType,
+  isAdmin = true,
+) {
   return useQuery<GlassSheetResponse[]>({
-    queryKey: [...queryKeys.inventory.detail(item_id), "glass-sheets", isAdmin],
-    queryFn: () => listGlassSheets(item_id, isAdmin),
+    queryKey: [
+      ...queryKeys.inventory.detail(item_id),
+      "units",
+      item_type,
+      isAdmin,
+    ],
+    queryFn: () => listInventoryUnits(item_id, item_type, isAdmin),
     enabled: !!item_id,
   });
 }

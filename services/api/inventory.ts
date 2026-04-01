@@ -90,15 +90,23 @@ export async function scanBySerialCode(
   );
 }
 
-// List Glass Sheets for an inventory item
-// Admin: GET /api/admin/inventory/{item_id}/glass-sheets
+// List inventory units (glass sheets or hardware units) for an inventory item
+// Glass admin: GET /api/admin/inventory/{item_id}/glass-sheets
+// Hardware admin: GET /api/admin/inventory/{item_id}/hardware-units
 // Staff: GET /api/inventory/items/{item_id}/sheets
-export async function listGlassSheets(
+export async function listInventoryUnits(
   item_id: string,
+  item_type: InventoryItemType,
   isAdmin = true,
 ): Promise<GlassSheetResponse[]> {
-  const url = isAdmin
-    ? `/api/admin/inventory/${item_id}/glass-sheets`
-    : `/api/inventory/items/${item_id}/glass-sheets`;
+  let url: string;
+  if (isAdmin) {
+    url =
+      item_type === "hardware"
+        ? `/api/admin/inventory/${item_id}/hardware-units`
+        : `/api/admin/inventory/${item_id}/glass-sheets`;
+  } else {
+    url = `/api/inventory/items/${item_id}/sheets`;
+  }
   return await get<GlassSheetResponse[]>(url);
 }

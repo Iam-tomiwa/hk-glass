@@ -129,7 +129,7 @@ export default function MaterialDetailsPageContent() {
               value={
                 scan?.linked_order_reference ? (
                   <a
-                    href={`${typeof window !== "undefined" ? window.location.origin : ""}/order/review/${scan.linked_order_reference}`}
+                    href={`${typeof window !== "undefined" ? window.location.origin : ""}/orders/review/${scan.linked_order_reference}`}
                     className="underline text-blue-600"
                   >
                     {scan.linked_order_reference}

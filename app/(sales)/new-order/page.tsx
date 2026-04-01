@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -35,6 +35,37 @@ const steps = [
   { id: "add-ons", label: "Add-ons" },
   { id: "review", label: "Logistics & Pricing" },
 ];
+
+/** Shared helper: build the review request from current form values */
+export const buildReviewPayload = (values: OrderFormValues) => {
+  const extras = values.addonItemExtras ?? {};
+  const addonItems = (values.selectedAddons ?? []).map((addon_id) => {
+    const e = extras[addon_id] ?? {};
+    return {
+      addon_id,
+      ...(e.type_key ? { type_key: e.type_key } : {}),
+      ...(e.sides != null ? { sides: e.sides } : {}),
+      ...(e.quantity != null ? { quantity: e.quantity } : {}),
+    };
+  });
+  return {
+    width: `${values.width}${values.unit}`,
+    length: `${values.length}${values.unit}`,
+    quantity: Number(values.quantity),
+    glass_inventory_item_id: values.glassTypeId || null,
+    shape_type: values.shape,
+    drill_holes_count: values.drillHoles
+      ? Number(values.numberOfHoles) || 0
+      : 0,
+    addon_items: addonItems.length > 0 ? addonItems : undefined,
+    insurance_selected: values.insuranceCoverage ?? false,
+    commission_selected: values.commissionSelected ?? false,
+    delivery_fee:
+      values.deliveryMethod === "delivery" && values.deliveryFee
+        ? Number(values.deliveryFee)
+        : undefined,
+  };
+};
 
 export default function NewOrderPage() {
   return (
@@ -90,6 +121,7 @@ function NewOrderForm() {
       customerName: "",
       email: "",
       phone: "",
+      quantity: "",
       glassTypeId: "",
       length: "",
       width: "",
@@ -139,38 +171,8 @@ function NewOrderForm() {
     useReviewOrder();
   const { mutateAsync: sendReviewEmail } = useSendReviewEmail();
 
-  /** Shared helper: build the review request from current form values */
-  const buildReviewPayload = (values: OrderFormValues) => {
-    const extras = values.addonItemExtras ?? {};
-    const addonItems = (values.selectedAddons ?? []).map((addon_id) => {
-      const e = extras[addon_id] ?? {};
-      return {
-        addon_id,
-        ...(e.type_key ? { type_key: e.type_key } : {}),
-        ...(e.sides != null ? { sides: e.sides } : {}),
-        ...(e.quantity != null ? { quantity: e.quantity } : {}),
-      };
-    });
-    return {
-      width: `${values.width}${values.unit}`,
-      length: `${values.length}${values.unit}`,
-      glass_inventory_item_id: values.glassTypeId || null,
-      shape_type: values.shape,
-      drill_holes_count: values.drillHoles
-        ? Number(values.numberOfHoles) || 0
-        : 0,
-      addon_items: addonItems.length > 0 ? addonItems : undefined,
-      insurance_selected: values.insuranceCoverage ?? false,
-      commission_selected: values.commissionSelected ?? false,
-      delivery_fee:
-        values.deliveryMethod === "delivery" && values.deliveryFee
-          ? Number(values.deliveryFee)
-          : undefined,
-    };
-  };
-
   /** Re-price after the user toggles insurance or commission on the review step */
-  const handleRefreshPricing = async () => {
+  const handleRefreshPricing = useCallback(async () => {
     try {
       const result = await reviewOrder({
         data: buildReviewPayload(form.getValues()),
@@ -179,7 +181,7 @@ function NewOrderForm() {
     } catch {
       // errors already toasted by the hook
     }
-  };
+  }, [reviewOrder, form]);
 
   const handleAddOnsNext = async () => {
     const fields: (keyof OrderFormValues)[] = [
@@ -231,7 +233,10 @@ function NewOrderForm() {
             customer_phone: values.phone || "",
             width: `${values.width}${values.unit}`,
             length: `${values.length}${values.unit}`,
-            sheet_size: values.sheetSize === "custom" ? values.customSheetSize : values.sheetSize,
+            sheet_size:
+              values.sheetSize === "custom"
+                ? values.customSheetSize
+                : values.sheetSize,
             thickness: values.thickness,
             drill_holes_count: values.drillHoles
               ? Number(values.numberOfHoles)
@@ -250,6 +255,7 @@ function NewOrderForm() {
               ? Number(values.curveDiameter)
               : undefined,
             customer_notes: values.customerNotes,
+            quantity: Number(values.quantity),
             delivery_method: values.deliveryMethod,
             delivery_address:
               values.deliveryMethod === "delivery"
@@ -327,7 +333,11 @@ function NewOrderForm() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header title="New Order Placement" className="border-b">
+      <Header
+        title="New Order Placement"
+        description="Complete the steps to create, review, and finalize the order."
+        className="border-b"
+      >
         <Link href="/">
           <Button
             variant="ghost"
