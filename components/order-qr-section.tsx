@@ -33,7 +33,7 @@ export function OrderQRSection({
         {orderId && (
           <button
             onClick={() => downloadOrderQRPDF(value, orderId)}
-            className="absolute bottom-2 right-2 p-1 rounded bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors"
+            className="absolute bottom-2 right-2 p-1 rounded bg-white border text-black transition-colors"
             title="Download QR as PDF"
           >
             <Download size={16} />
