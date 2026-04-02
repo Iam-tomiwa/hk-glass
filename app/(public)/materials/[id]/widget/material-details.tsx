@@ -347,7 +347,9 @@ export default function MaterialDetailsPage({
           <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 space-y-4">
             {/* Header row */}
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-[#1E202E]">Glass Sheets</h3>
+              <h3 className="font-bold text-[#1E202E]">
+                {item.item_type === "hardware" ? "Hardware" : "Glass Sheets"}
+              </h3>
               {sheets.length > 0 && (
                 <Button
                   variant="outline"
