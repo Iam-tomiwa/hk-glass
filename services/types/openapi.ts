@@ -335,7 +335,7 @@ export interface OrderCreate {
   glass_inventory_item_id?: string | null;
   addon_ids?: string[];
   addon_items?: AddonItem[];
-  glass_inventory_serial_code?: string[] | null;
+  glass_inventory_serial_codes?: string[] | null;
   insurance_selected?: boolean;
   commission_selected?: boolean;
   shape_type?: string | null;

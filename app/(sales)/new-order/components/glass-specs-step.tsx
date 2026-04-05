@@ -45,7 +45,7 @@ export function GlassSpecsStep({
       .filter((s) => s.status === "available")
       .slice(0, qty)
       .map((s) => s.serial_code);
-    form.setValue("glassInventorySerialCode", codes);
+    form.setValue("glassInventorySerialCodes", codes);
   }, [glassSheets, quantity, form, disableGlassType]);
 
   const length = useWatch({ control: form.control, name: "length" });
