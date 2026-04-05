@@ -75,124 +75,131 @@ export default function PricingTable({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden flex flex-col">
+      <div className="flex flex-wrap gap-2 items-center justify-between px-6 py-4 border-b border-neutral-100">
         <h2 className="text-[15px] font-semibold text-[#1E202E]">{title}</h2>
         <SearchInput
-          containerClass="min-w-64"
+          containerClass="min-w-64 w-full md:w-auto"
           placeholder="Search by name"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-neutral-100 bg-neutral-50/60">
-            <th className="text-left text-[13px] font-semibold px-6 py-3 w-1/3">
-              {nameHeader}
-            </th>
-            {showUnit && (
-              <th className="text-left text-[13px] font-semibold px-4 py-3 w-1/4">
-                Unit
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-neutral-100 bg-neutral-50/60">
+              <th className="text-left text-[13px] font-semibold px-6 py-3 min-w-[200px]">
+                {nameHeader}
               </th>
-            )}
-            <th className="text-left text-[13px] font-semibold px-4 py-3">
-              {variableName}
-            </th>
-            <th className="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colSpan={4}>
-              <SuspenseContainer
-                isLoading={isLoading}
-                isError={isError}
-                error={error}
-                isEmpty={!isLoading && rows.length === 0}
-                emptyStateProps={{
-                  title: "No items found",
-                  icon: <Blocks />,
-                  subTitle: "Click 'Add New Product' button to add a new item",
-                }}
-              >
-                <></>
-              </SuspenseContainer>
-            </td>
-          </tr>
-          {!isLoading &&
-            !isError &&
-            filtered.map((row, i) => {
-              const isEditing = editingId === row.id;
-              const isSaving = pendingSaveId === row.id;
-
-              return (
-                <tr
-                  key={row.id}
-                  className={
-                    i < filtered.length - 1 ? "border-b border-neutral-100" : ""
-                  }
+              {showUnit && (
+                <th className="text-left text-[13px] font-semibold px-4 py-3 min-w-[120px]">
+                  Unit
+                </th>
+              )}
+              <th className="text-left text-[13px] font-semibold px-4 py-3 min-w-[150px]">
+                {variableName}
+              </th>
+              <th className="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={4}>
+                <SuspenseContainer
+                  isLoading={isLoading}
+                  isError={isError}
+                  error={error}
+                  isEmpty={!isLoading && rows.length === 0}
+                  emptyStateProps={{
+                    title: "No items found",
+                    icon: <Blocks />,
+                    subTitle:
+                      "Click 'Add New Product' button to add a new item",
+                  }}
                 >
-                  <td className="px-6 capitalize py-4 text-sm font-medium text-[#1E202E]">
-                    {row.name}
-                  </td>
-                  {showUnit && (
-                    <td className="px-4 py-4 text-sm text-neutral-500">
-                      {row.unit}
+                  <></>
+                </SuspenseContainer>
+              </td>
+            </tr>
+            {!isLoading &&
+              !isError &&
+              filtered.map((row, i) => {
+                const isEditing = editingId === row.id;
+                const isSaving = pendingSaveId === row.id;
+
+                return (
+                  <tr
+                    key={row.id}
+                    className={
+                      i < filtered.length - 1
+                        ? "border-b border-neutral-100"
+                        : ""
+                    }
+                  >
+                    <td className="px-6 capitalize py-4 text-sm font-medium text-[#1E202E] whitespace-nowrap">
+                      {row.name}
                     </td>
-                  )}
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      {isEditing ? (
-                        <Input
-                          type="number"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          className="h-9 w-[160px] text-sm border-neutral-200 bg-white focus-visible:ring-[#00AE4D]"
-                          autoFocus
-                        />
-                      ) : (
-                        <div className="h-9 w-[160px] flex items-center px-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm text-neutral-500 select-none">
-                          {row.price ? Number(row.price).toLocaleString() : "—"}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          isEditing
-                            ? handleSavePrice(row.id, editValue)
-                            : handleEditClick(row)
-                        }
-                        disabled={isSaving}
-                      >
-                        {isSaving
-                          ? "Saving..."
-                          : isEditing
-                            ? `Save ${variableName.split(" ")[0]}`
-                            : `Edit ${variableName.split(" ")[0]}`}
-                      </Button>
-                      {deleteType && (
-                        <DeleteEntityButton
-                          type={deleteType}
-                          id={row.id}
-                          name={row.name}
-                          btnProps={{ size: "sm" }}
+                    {showUnit && (
+                      <td className="px-4 py-4 text-sm text-neutral-500 whitespace-nowrap">
+                        {row.unit}
+                      </td>
+                    )}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="h-9 w-[160px] text-sm border-neutral-200 bg-white focus-visible:ring-[#00AE4D]"
+                            autoFocus
+                          />
+                        ) : (
+                          <div className="h-9 w-[160px] flex items-center px-3 rounded-md border border-neutral-200 bg-neutral-50 text-sm text-neutral-500 select-none">
+                            {row.price
+                              ? Number(row.price).toLocaleString()
+                              : "—"}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2 justify-center whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            isEditing
+                              ? handleSavePrice(row.id, editValue)
+                              : handleEditClick(row)
+                          }
+                          disabled={isSaving}
                         >
-                          Delete Item
-                        </DeleteEntityButton>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-        </tbody>
-      </table>
+                          {isSaving
+                            ? "Saving..."
+                            : isEditing
+                              ? `Save ${variableName.split(" ")[0]}`
+                              : `Edit ${variableName.split(" ")[0]}`}
+                        </Button>
+                        {deleteType && (
+                          <DeleteEntityButton
+                            type={deleteType}
+                            id={row.id}
+                            name={row.name}
+                            btnProps={{ size: "sm" }}
+                          >
+                            Delete Item
+                          </DeleteEntityButton>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

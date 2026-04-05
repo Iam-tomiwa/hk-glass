@@ -261,15 +261,25 @@ export default function MaterialDetailsPage({
           className: "bg-[#B8FAB2] text-[#327C3F]",
           dotClass: "bg-[#327C3F]",
         }
-      : {
-          label: item.status.split("_").join(" "),
-          className: "bg-[#FAEEB2] text-[#7C6632]",
-          dotClass: "bg-[#7C6632]",
-        };
+      : item.status === "out_of_stock"
+        ? {
+            label: "Out of Stock",
+            className: "bg-[#FAB2B2] text-[#7C3232]",
+            dotClass: "bg-[#7C3232]",
+          }
+        : {
+            label: item.status.split("_").join(" "),
+            className: "bg-[#FAEEB2] text-[#7C6632]",
+            dotClass: "bg-[#7C6632]",
+          };
 
   return (
     <div className="bg-[#F8F9FA] flex flex-col min-h-screen">
-      <Header title="Material Details" description={`Material ID: ${itemId}`}>
+      <Header
+        className="mb-0"
+        title="Material Details"
+        description={`Material ID: ${itemId}`}
+      >
         <Button
           variant="ghost"
           size="icon"

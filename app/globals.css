@@ -132,3 +132,13 @@
 button {
   cursor: pointer;
 }
+
+.header > div > button.btn-default {
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .header > div > button.btn-default {
+    width: auto;
+  }
+}

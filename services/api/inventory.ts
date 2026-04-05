@@ -106,7 +106,10 @@ export async function listInventoryUnits(
         ? `/api/admin/inventory/${item_id}/hardware-units`
         : `/api/admin/inventory/${item_id}/glass-sheets`;
   } else {
-    url = `/api/inventory/items/${item_id}/sheets`;
+    url =
+      item_type === "hardware"
+        ? `/api/inventory/items/${item_id}/hardware-units`
+        : `/api/inventory/items/${item_id}/glass-sheets`;
   }
   return await get<GlassSheetResponse[]>(url);
 }

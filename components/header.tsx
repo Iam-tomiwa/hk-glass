@@ -12,8 +12,8 @@ export const Header = ({
   className?: string;
 }) => {
   return (
-    <div className={cn("bg-background border-b", className)}>
-      <div className="px-6 flex items-center justify-between py-6">
+    <div className={cn("bg-background header border-b", className)}>
+      <div className="px-6 flex items-center [&:has(.btn-default)]:flex-wrap gap-4 justify-between py-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1E202E] tracking-tight">
             {title}

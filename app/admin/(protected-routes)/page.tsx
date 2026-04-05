@@ -15,7 +15,7 @@ import { ColumnDef } from "@/components/data-table/types";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import SearchInput from "@/components/search-input";
-import { Inbox, Info, SlidersHorizontal } from "lucide-react";
+import { Inbox, Info } from "lucide-react";
 import Link from "next/link";
 import { cn, formatNaira } from "@/lib/utils";
 import { AmountDisplay } from "@/components/amount-display";
@@ -23,11 +23,6 @@ import SuspenseContainer from "@/components/custom-suspense";
 import { useGetSummary, useListRecentOrders } from "@/services/queries/admin";
 import DateTag from "@/components/date-tag";
 import OrderStatusBadge from "@/components/order-status-badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ComboBox } from "@/components/ui/combo-box-2";
 
 // ─── Table columns ────────────────────────────────────────────────────────────
@@ -268,10 +263,10 @@ export default function AdminDashboardPage() {
             tableHeader={
               <div className="flex w-full items-center py-4 justify-between gap-4 flex-wrap">
                 <h2 className="font-bold text-[#1E202E]">Recent Orders</h2>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <SearchInput
                     placeholder="Search by name or reference"
-                    containerClass="w-[280px]"
+                    containerClass="w-full sm:w-[280px]"
                   />
                   <ComboBox
                     value={statusFilter}
@@ -287,7 +282,7 @@ export default function AdminDashboardPage() {
                       { value: "completed", label: "Completed" },
                     ]}
                     placeholder="All statuses"
-                    className="w-[160px]"
+                    className="w-full sm:w-[160px]"
                   />
                 </div>
               </div>

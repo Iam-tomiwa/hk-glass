@@ -129,7 +129,9 @@ export default function InventoryPage() {
             "capitalize",
             row.status === "in_stock"
               ? "bg-[#B8FAB2] text-[#327C3F]"
-              : "bg-[#FAEEB2] text-[#7C3232]",
+              : row.status === "out_of_stock"
+                ? "bg-[#FAB2B2] text-[#7C3232]"
+                : "bg-[#FAEEB2] text-[#7C3232]",
           )}
         >
           {row.status.split("_").join(" ")}
@@ -180,10 +182,10 @@ export default function InventoryPage() {
             tableHeader={
               <div className="flex w-full items-center py-4 justify-between gap-4 flex-wrap">
                 <h2 className="font-bold text-[#1E202E]">Inventory</h2>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <SearchInput
                     placeholder="Search by ID, name or type"
-                    containerClass="w-[280px]"
+                    containerClass="w-full sm:w-[280px]"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -196,7 +198,7 @@ export default function InventoryPage() {
                       { value: "low_stock", label: "Low Stock" },
                     ]}
                     placeholder="All statuses"
-                    className="w-[150px]"
+                    className="w-full sm:w-[150px]"
                   />
                 </div>
               </div>

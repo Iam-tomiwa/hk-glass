@@ -151,21 +151,22 @@ export default function PricingPage() {
           Add new Add-ons and Services
         </Button>
       </Header>
-
-      <div className="flex px-6 bg-background items-center border-b border-neutral-200 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab.key
-                ? "border-[#1E202E] text-[#1E202E]"
-                : "border-transparent text-neutral-500 hover:text-[#1E202E]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="w-max flex px-6 bg-background items-center border-b border-neutral-200 mb-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                activeTab === tab.key
+                  ? "border-[#1E202E] text-[#1E202E]"
+                  : "border-transparent text-neutral-500 hover:text-[#1E202E]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="container pb-10">
