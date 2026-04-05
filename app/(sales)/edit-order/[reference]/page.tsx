@@ -119,7 +119,7 @@ function EditOrderForm() {
       unit: "mm",
       addonItemExtras: {},
       commissionSelected: false,
-      glassInventorySerialCode: "",
+      glassInventorySerialCode: [],
     },
   });
 
@@ -199,8 +199,11 @@ function EditOrderForm() {
         (order.delivery_method as "pickup" | "delivery") ?? "pickup",
       deliveryAddress: order.delivery_address ?? "",
       deliveryFee: order.delivery_fee != null ? String(order.delivery_fee) : "",
-      glassInventorySerialCode:
-        (raw.glass_inventory_serial_code as string) ?? "",
+      glassInventorySerialCode: Array.isArray(raw.glass_inventory_serial_code)
+        ? (raw.glass_inventory_serial_code as string[])
+        : raw.glass_inventory_serial_code
+          ? [(raw.glass_inventory_serial_code as string)]
+          : [],
     });
 
     isFormInitialized.current = true;

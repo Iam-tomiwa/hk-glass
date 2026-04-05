@@ -147,7 +147,7 @@ function NewOrderForm() {
       unit: "mm",
       addonItemExtras: {},
       commissionSelected: false,
-      glassInventorySerialCode: "",
+      glassInventorySerialCode: [],
     },
   });
 
@@ -246,7 +246,9 @@ function NewOrderForm() {
             engraving_text: values.engraving ? values.engravingText : "",
             glass_inventory_item_id: values.glassTypeId || null,
             glass_inventory_serial_code:
-              values.glassInventorySerialCode || null,
+              values.glassInventorySerialCode?.length
+                ? values.glassInventorySerialCode
+                : null,
             addon_items: addonItems.length > 0 ? addonItems : undefined,
             insurance_selected: values.insuranceCoverage,
             commission_selected: values.commissionSelected ?? false,

@@ -59,8 +59,8 @@ export const orderFormSchema = z
     // Commission
     commissionSelected: z.boolean(),
 
-    // Auto-resolved by sheets lookup (hidden)
-    glassInventorySerialCode: z.string().optional(),
+    // Auto-resolved by sheets lookup (hidden) — one code per unit of quantity
+    glassInventorySerialCode: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
     const toMm = (val: string | undefined) => {

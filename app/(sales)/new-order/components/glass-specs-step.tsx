@@ -34,13 +34,19 @@ export function GlassSpecsStep({
   const glassTypeId = useWatch({ control: form.control, name: "glassTypeId" });
   const { data: glassSheets } = useListInventoryUnits(glassTypeId || "", "glass", false);
 
-  // Auto-resolve the first available serial code whenever the selected item changes
-  // Skip when glass type is disabled (edit mode — serial code is already locked)
+  const quantity = useWatch({ control: form.control, name: "quantity" });
+
+  // Auto-resolve available serial codes based on quantity whenever sheets or quantity changes
+  // Skip when glass type is disabled (edit mode — serial codes are already locked)
   useEffect(() => {
     if (disableGlassType) return;
-    const available = glassSheets?.find((s) => s.status === "available");
-    form.setValue("glassInventorySerialCode", available?.serial_code ?? "");
-  }, [glassSheets, form, disableGlassType]);
+    const qty = Math.max(1, parseInt(quantity || "1", 10) || 1);
+    const codes = (glassSheets ?? [])
+      .filter((s) => s.status === "available")
+      .slice(0, qty)
+      .map((s) => s.serial_code);
+    form.setValue("glassInventorySerialCode", codes);
+  }, [glassSheets, quantity, form, disableGlassType]);
 
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });
