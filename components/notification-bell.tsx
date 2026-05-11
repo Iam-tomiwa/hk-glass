@@ -194,6 +194,11 @@ export function AdminNotificationBell() {
   const { mutate: markRead } = useMarkAdminNotificationRead();
 
   function getHref(n: NotificationResponse): string | null {
+    const t = n.event_type.toLowerCase();
+    if (t.includes("inventory")) {
+      const itemId = n.payload?.item_id as string | undefined;
+      return itemId ? `/admin/inventory/${itemId}` : null;
+    }
     const ref = getOrderReference(n);
     return ref ? `/admin/${ref}` : null;
   }

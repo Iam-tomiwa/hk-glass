@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -223,7 +223,7 @@ function EditOrderForm() {
   const { mutateAsync: reviewOrder, isPending: isReviewingOrder } =
     useReviewOrder();
 
-  const handleRefreshPricing = async () => {
+  const handleRefreshPricing = useCallback(async () => {
     if (!isFormInitialized.current) return;
     try {
       const result = await reviewOrder({
@@ -233,7 +233,7 @@ function EditOrderForm() {
     } catch {
       // errors already toasted
     }
-  };
+  }, [reviewOrder, form]);
 
   const handleNextTab = async (
     fieldsToValidate?: (keyof OrderFormValues)[],
