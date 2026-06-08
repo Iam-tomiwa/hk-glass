@@ -63,13 +63,13 @@ export const orderFormSchema = z
     glassInventorySerialCodes: z.array(z.string()).optional(),
   })
   .superRefine((data, ctx) => {
-    const toMm = (val: string | undefined) => {
-      const num = Number.parseFloat(val || "0");
-      if (!num) return 0;
-      if (data.unit === "cm") return num * 10;
-      if (data.unit === "m") return num * 1000;
-      return num;
-    };
+    // const toMm = (val: string | undefined) => {
+    //   const num = Number.parseFloat(val || "0");
+    //   if (!num) return 0;
+    //   if (data.unit === "cm") return num * 10;
+    //   if (data.unit === "m") return num * 1000;
+    //   return num;
+    // };
 
     if (data.glassTypeId) {
       if (!data.length) {
@@ -88,23 +88,23 @@ export const orderFormSchema = z
       }
     }
 
-    const lengthMm = toMm(data.length);
-    const widthMm = toMm(data.width);
+    // const lengthMm = toMm(data.length);
+    // const widthMm = toMm(data.width);
 
-    if (lengthMm > 0 && lengthMm < 200) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Minimum length is 200mm",
-        path: ["length"],
-      });
-    }
-    if (lengthMm > 6000) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Maximum length is 6m (6000mm)",
-        path: ["length"],
-      });
-    }
+    // if (lengthMm > 0 && lengthMm < 200) {
+    //   ctx.addIssue({
+    //     code: "custom",
+    //     message: "Minimum length is 200mm",
+    //     path: ["length"],
+    //   });
+    // }
+    // if (lengthMm > 6000) {
+    //   ctx.addIssue({
+    //     code: "custom",
+    //     message: "Maximum length is 6m (6000mm)",
+    //     path: ["length"],
+    //   });
+    // }
     // if (widthMm > 0 && widthMm < 200) {
     //   ctx.addIssue({
     //     code: "custom",
