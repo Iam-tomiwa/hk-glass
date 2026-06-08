@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import Cookies from "js-cookie";
 
 export const axiosInstance = axios.create({
-  baseURL: "https://hk.planetal.app/api/",
+  baseURL: "https://backend.glasstronictech.org",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
