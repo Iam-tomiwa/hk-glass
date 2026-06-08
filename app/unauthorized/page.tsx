@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { setupDevice } from "@/services/api/admin";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/error-handler";
-import Cookies from "js-cookie";
+import { setCookie } from "@/lib/utils";
 
 function UnauthorizedContent() {
   const searchParams = useSearchParams();
@@ -32,7 +32,7 @@ function UnauthorizedContent() {
       // Set a SameSite=Lax mirror cookie so the middleware can detect an
       // authenticated session even on cross-site navigations (e.g. returning
       // from Paystack), where SameSite=Strict cookies are not sent.
-      Cookies.set("device_auth", "1", { sameSite: "lax", expires: 365 });
+      setCookie("device_auth", "1", { sameSite: "lax", expires: 365 });
       window.location.href = redirectTo;
     } catch (error) {
       toast.error(getErrorMessage(error, "Invalid code. Please try again."));

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Cookies from "js-cookie";
+import { setCookie } from "@/lib/utils";
 import { Navbar } from "@/components/navbar";
 
 export default function FactoryLayout({
@@ -11,7 +12,7 @@ export default function FactoryLayout({
 }) {
   useEffect(() => {
     if (Cookies.get("device_token") && !Cookies.get("device_auth")) {
-      Cookies.set("device_auth", "1", { sameSite: "lax", expires: 365 });
+      setCookie("device_auth", "1", { sameSite: "lax", expires: 365 });
     }
   }, []);
 

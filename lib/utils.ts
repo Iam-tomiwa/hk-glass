@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { APIErrorTypeWrapper } from "./types";
+import Cookies from "js-cookie";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -48,7 +48,7 @@ export function formatNaira(
   amount: number | string | null | undefined,
 ): string {
   const num = Number(amount ?? 0);
-  if (isNaN(num)) return "₦0.00";
+  if (Number.isNaN(num)) return "₦0.00";
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
@@ -70,7 +70,7 @@ export function formatCompactNaira(
   amount: number | string | null | undefined,
 ): string {
   const num = Number(amount ?? 0);
-  if (isNaN(num)) return "₦0";
+  if (Number.isNaN(num)) return "₦0";
 
   const abs = Math.abs(num);
   const sign = num < 0 ? "-" : "";
@@ -106,14 +106,14 @@ export async function downloadFile(url: string, filename: string) {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
+    const blobUrl = globalThis.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = blobUrl;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(blobUrl);
-    document.body.removeChild(a);
+    globalThis.URL.revokeObjectURL(blobUrl);
+    a.remove();
   } catch (error) {
     console.error("Download failed:", error);
     // Fallback: try opening in a new tab
@@ -123,6 +123,43 @@ export async function downloadFile(url: string, filename: string) {
     a.download = filename;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    a.remove();
   }
 }
+
+export const getCookieDomain = () => {
+  if (globalThis.window === undefined) return undefined;
+  const hostname = globalThis.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return undefined;
+  }
+  if (hostname.endsWith("glasstronictech.org")) {
+    return ".glasstronictech.org";
+  }
+  return undefined;
+};
+
+export const setCookie = (
+  name: string,
+  value: string,
+  options?: Cookies.CookieAttributes,
+) => {
+  if (globalThis.window === undefined) return;
+  const domain = getCookieDomain();
+  Cookies.set(name, value, {
+    ...options,
+    ...(domain ? { domain } : {}),
+  });
+};
+
+export const removeCookie = (
+  name: string,
+  options?: Cookies.CookieAttributes,
+) => {
+  if (globalThis.window === undefined) return;
+  const domain = getCookieDomain();
+  Cookies.remove(name, {
+    ...options,
+    ...(domain ? { domain } : {}),
+  });
+};

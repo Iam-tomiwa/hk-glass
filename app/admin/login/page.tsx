@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { OtpInput } from "@/components/ui/otp-input";
 import { useLogin, useRecoverDevice } from "@/services/queries/auth";
 import { getErrorMessage } from "@/lib/error-handler";
-import Cookies from "js-cookie";
+import { setCookie } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -62,7 +63,7 @@ function LoginContent() {
 
     try {
       const response = await loginMutation({ data });
-      Cookies.set("access_token", response.access_token);
+      setCookie("access_token", response.access_token);
       router.push(redirectTo);
     } catch (loginError: any) {
       const status = loginError.response?.status;
@@ -79,10 +80,15 @@ function LoginContent() {
           msgLower.includes("setup required")
         ) {
           try {
-            await recoverMutation({ data });
+            const recoverResponse = await recoverMutation({ data });
+            if (recoverResponse?.access_token) {
+              setCookie("admin_device_token", recoverResponse.access_token, {
+                expires: 365,
+              });
+            }
             // Retry login; cookies will now be sent automatically (withCredentials)
             const response = await loginMutation({ data });
-            Cookies.set("access_token", response.access_token);
+            setCookie("access_token", response.access_token);
             router.push(redirectTo);
           } catch (recoverError: any) {
             const recoverStatus = recoverError.response?.status;

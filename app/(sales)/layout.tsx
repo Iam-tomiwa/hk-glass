@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { setCookie } from "@/lib/utils";
 import Cookies from "js-cookie";
 import { Navbar } from "@/components/navbar";
 
@@ -15,7 +16,7 @@ export default function SalesLayout({
   // SameSite=Strict cookies are not included in the request.
   useEffect(() => {
     if (Cookies.get("device_token") && !Cookies.get("device_auth")) {
-      Cookies.set("device_auth", "1", { sameSite: "lax", expires: 365 });
+      setCookie("device_auth", "1", { sameSite: "lax", expires: 365 });
     }
   }, []);
 

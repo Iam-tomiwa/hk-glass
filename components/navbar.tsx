@@ -1,9 +1,8 @@
 "use client";
 
 import useConfirmations from "@/providers/confirmations-provider/use-confirmations";
-import { cn } from "@/lib/utils";
+import { cn, removeCookie } from "@/lib/utils";
 import { LogOut, Menu } from "lucide-react";
-import Cookies from "js-cookie";
 import {
   StaffNotificationBell,
   FactoryNotificationBell,
@@ -23,10 +22,10 @@ export const Navbar = ({
   const { openConfirmModal } = useConfirmations();
 
   const handleLogout = () => {
-    Cookies.remove("access_token");
-    Cookies.remove("admin_device_token");
-    Cookies.remove("device_token");
-    Cookies.remove("device_auth");
+    removeCookie("access_token");
+    removeCookie("admin_device_token");
+    removeCookie("device_token");
+    removeCookie("device_auth");
     if (window.location.pathname.includes("admin")) {
       window.location.href = "/admin/login";
     } else {

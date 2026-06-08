@@ -10,9 +10,14 @@ interface AxiosRequestConfig extends _AxiosRequestConfig {
 }
 import { toast } from "sonner";
 import Cookies from "js-cookie";
+import { removeCookie } from "@/lib/utils";
+
+const isDev = process.env.NODE_ENV === "development";
 
 export const axiosInstance = axios.create({
-  baseURL: "https://backend.glasstronictech.org",
+  baseURL:
+    process.env.NEXT_PUBLIC_API_URL ||
+    (isDev ? "/" : "https://backend.glasstronictech.org"),
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -70,10 +75,10 @@ axiosInstance.interceptors.response.use(
 
         if (!isAuthPage) {
           const from = pathname + window.location.search;
-          Cookies.remove("access_token");
-          Cookies.remove("admin_device_token");
-          Cookies.remove("device_token");
-          Cookies.remove("device_auth");
+          removeCookie("access_token");
+          removeCookie("admin_device_token");
+          removeCookie("device_token");
+          removeCookie("device_auth");
           localStorage.setItem("session_expired", "1");
           if (pathname.startsWith("/admin")) {
             window.location.href = `/admin/login?redirectTo=${encodeURIComponent(from)}`;
