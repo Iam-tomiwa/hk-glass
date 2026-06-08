@@ -1,4 +1,7 @@
-import axios, { AxiosError, AxiosRequestConfig as _AxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosRequestConfig as _AxiosRequestConfig,
+} from "axios";
 
 // Extend AxiosRequestConfig to support skipping the global auth redirect for
 // background / polling requests (e.g. notification bell).
@@ -9,7 +12,7 @@ import { toast } from "sonner";
 import Cookies from "js-cookie";
 
 export const axiosInstance = axios.create({
-  baseURL: "/",
+  baseURL: "https://hk.planetal.app/api/",
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
@@ -43,17 +46,27 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       // Background/polling requests (e.g. notification bell) opt out of the
       // global redirect so a single failed poll doesn't terminate the session.
-      const skipRedirect = (error.config as AxiosRequestConfig)?._skipAuthRedirect;
+      const skipRedirect = (error.config as AxiosRequestConfig)
+        ?._skipAuthRedirect;
 
       if (!skipRedirect && typeof window !== "undefined") {
         const { pathname } = window.location;
 
         const segments = pathname.split("/").filter(Boolean);
-        const isPublicOrderPage = segments.length === 1 && !["new-order", "unauthorized", "payment-confirmation", "factory"].includes(segments[0]);
+        const isPublicOrderPage =
+          segments.length === 1 &&
+          ![
+            "new-order",
+            "unauthorized",
+            "payment-confirmation",
+            "factory",
+          ].includes(segments[0]);
 
         // Let the login / unauthorized / public pages handle their own 401s
         const isAuthPage =
-          pathname === "/admin/login" || pathname === "/unauthorized" || isPublicOrderPage;
+          pathname === "/admin/login" ||
+          pathname === "/unauthorized" ||
+          isPublicOrderPage;
 
         if (!isAuthPage) {
           const from = pathname + window.location.search;
@@ -80,7 +93,10 @@ export async function get<T>(
   url: string,
   config?: AxiosRequestConfig,
 ): Promise<T> {
-  const response = await axiosInstance.get<T>(url, config as _AxiosRequestConfig);
+  const response = await axiosInstance.get<T>(
+    url,
+    config as _AxiosRequestConfig,
+  );
   return response.data;
 }
 
