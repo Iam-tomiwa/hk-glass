@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -33,7 +34,7 @@ function UnauthorizedContent() {
       // authenticated session even on cross-site navigations (e.g. returning
       // from Paystack), where SameSite=Strict cookies are not sent.
       setCookie("device_auth", "1", { sameSite: "lax", expires: 365 });
-      window.location.href = redirectTo;
+      globalThis.location.href = redirectTo;
     } catch (error) {
       toast.error(getErrorMessage(error, "Invalid code. Please try again."));
     } finally {

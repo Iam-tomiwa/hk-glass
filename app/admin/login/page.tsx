@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -152,7 +153,29 @@ function LoginContent() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {!showOtp ? (
+          {showOtp ? (
+            <div className="space-y-4 mt-6 flex flex-col items-center">
+              <Label htmlFor="otp">Enter 2FA Code</Label>
+              <OtpInput
+                value={otpValue}
+                onChange={setOtpValue}
+                onComplete={handleOtpComplete}
+                disabled={isLoading}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                onClick={() => {
+                  setShowOtp(false);
+                  setOtpValue(["", "", "", "", "", ""]);
+                }}
+                disabled={isLoading}
+              >
+                Back to login
+              </Button>
+            </div>
+          ) : (
             <>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -177,28 +200,6 @@ function LoginContent() {
                 />
               </div>
             </>
-          ) : (
-            <div className="space-y-4 mt-6 flex flex-col items-center">
-              <Label htmlFor="otp">Enter 2FA Code</Label>
-              <OtpInput
-                value={otpValue}
-                onChange={setOtpValue}
-                onComplete={handleOtpComplete}
-                disabled={isLoading}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                onClick={() => {
-                  setShowOtp(false);
-                  setOtpValue(["", "", "", "", "", ""]);
-                }}
-                disabled={isLoading}
-              >
-                Back to login
-              </Button>
-            </div>
           )}
 
           <Button
