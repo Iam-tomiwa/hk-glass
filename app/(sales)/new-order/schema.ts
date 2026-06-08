@@ -64,7 +64,7 @@ export const orderFormSchema = z
   })
   .superRefine((data, ctx) => {
     const toMm = (val: string | undefined) => {
-      const num = parseFloat(val || "0");
+      const num = Number.parseFloat(val || "0");
       if (!num) return 0;
       if (data.unit === "cm") return num * 10;
       if (data.unit === "m") return num * 1000;
@@ -73,10 +73,18 @@ export const orderFormSchema = z
 
     if (data.glassTypeId) {
       if (!data.length) {
-        ctx.addIssue({ code: "custom", message: "Length is required", path: ["length"] });
+        ctx.addIssue({
+          code: "custom",
+          message: "Length is required",
+          path: ["length"],
+        });
       }
       if (!data.width) {
-        ctx.addIssue({ code: "custom", message: "Width is required", path: ["width"] });
+        ctx.addIssue({
+          code: "custom",
+          message: "Width is required",
+          path: ["width"],
+        });
       }
     }
 
@@ -97,20 +105,20 @@ export const orderFormSchema = z
         path: ["length"],
       });
     }
-    if (widthMm > 0 && widthMm < 200) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Minimum width is 200mm",
-        path: ["width"],
-      });
-    }
-    if (widthMm > 3000) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Maximum width is 3m (3000mm)",
-        path: ["width"],
-      });
-    }
+    // if (widthMm > 0 && widthMm < 200) {
+    //   ctx.addIssue({
+    //     code: "custom",
+    //     message: "Minimum width is 200mm",
+    //     path: ["width"],
+    //   });
+    // }
+    // if (widthMm > 3000) {
+    //   ctx.addIssue({
+    //     code: "custom",
+    //     message: "Maximum width is 3m (3000mm)",
+    //     path: ["width"],
+    //   });
+    // }
   });
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;
