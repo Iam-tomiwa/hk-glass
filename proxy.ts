@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_ROUTES = [
   "/unauthorized",
@@ -10,7 +9,9 @@ const PUBLIC_ROUTES = [
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host") || "";
 
+  // 1. Bypass static routes, Next.js system files, and API routes
   const isApiRoute = pathname.startsWith("/api");
   const isStaticRoute = pathname.startsWith("/_next") || pathname.includes(".");
 
@@ -18,16 +19,38 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAdminPath = pathname.startsWith("/admin");
-  const isLoginPage = pathname === "/admin/login";
+  // 2. Extract subdomain
+  let subdomain = "";
+  if (host.includes("localhost")) {
+    const parts = host.split(".");
+    if (parts.length > 1 && parts[0] !== "localhost" && parts[0] !== "www") {
+      subdomain = parts[0];
+    }
+  } else {
+    const parts = host.split(".");
+    if (parts.length > 2 && parts[0] !== "www") {
+      subdomain = parts[0];
+    }
+  }
 
-  // Public order details page (/ORD-123)
+  // 3. Check authentication status
+  const accessToken = request.cookies.get("access_token")?.value;
+  const adminDeviceToken = request.cookies.get("admin_device_token")?.value;
+  const deviceToken = request.cookies.get("device_token")?.value;
+  const deviceAuth = request.cookies.get("device_auth")?.value;
+
+  const isAdminAuthenticated = !!accessToken && !!adminDeviceToken;
+  const isDeviceAuthenticated = !!deviceToken || !!deviceAuth;
+
+  // 4. Identify if it's a public page (bypasses auth requirements)
   const segments = pathname.split("/").filter(Boolean);
   const isPublicOrderPage =
     segments.length === 1 &&
     ![
       "new-order",
       "factory",
+      "admin",
+      "login",
       ...PUBLIC_ROUTES.map((r) => r.substring(1)),
     ].includes(segments[0]);
 
@@ -35,40 +58,72 @@ export function proxy(request: NextRequest) {
     PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) ||
     isPublicOrderPage;
 
-  // Check for authentication tokens in cookies
-  const accessToken = request.cookies.get("access_token")?.value;
-  const adminDeviceToken = request.cookies.get("admin_device_token")?.value;
-  const deviceToken = request.cookies.get("device_token")?.value;
-  // device_auth is a SameSite=Lax mirror of device_token. SameSite=Strict
-  // cookies are stripped on cross-site top-level GET navigations (e.g. the
-  // browser returning from Paystack), but Lax cookies are included, so the
-  // middleware can correctly identify an authenticated session in that case.
-  const deviceAuth = request.cookies.get("device_auth")?.value;
-
-  const isAdminAuthenticated = !!accessToken && !!adminDeviceToken;
-  const isDeviceAuthenticated = !!deviceToken || !!deviceAuth;
-
-  // Protect Admin specific routes
-  if (isAdminPath) {
-    if (isLoginPage && isAdminAuthenticated) {
-      // Redirect authenticated admin from login to dashboard
-      const targetUrl = new URL("/admin", request.url);
-      return NextResponse.redirect(targetUrl);
+  // 5. Handle routing and auth checks based on subdomain
+  if (subdomain === "admin") {
+    // Prevent admin subdomain from accessing factory internal pages
+    if (pathname.startsWith("/factory")) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
-    if (!isLoginPage && !isAdminAuthenticated) {
-      // Redirect unauthenticated admin to login
-      const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
+    const isLoginPage = pathname === "/admin/login" || pathname === "/login";
+
+    if (isLoginPage) {
+      if (isAdminAuthenticated) {
+        // Redirect already logged-in admin to root (which rewrites to /admin)
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+      // Rewrite root-level "/login" to "/admin/login"
+      if (pathname === "/login") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin/login";
+        return NextResponse.rewrite(url);
+      }
+      return NextResponse.next();
     }
 
-    return NextResponse.next();
-  }
+    // Protect all other admin routes
+    if (!isAdminAuthenticated && !isPublicPage) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
 
-  // Protect Sales and Factory generic routes (all remaining app routes except public pages)
-  if (!isPublicPage && !isDeviceAuthenticated) {
-    const unauthUrl = new URL("/unauthorized", request.url);
-    return NextResponse.redirect(unauthUrl);
+    // Rewrite path internally to /admin/... (if it doesn't already start with it)
+    if (!pathname.startsWith("/admin") && !isPublicPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/admin${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  } 
+  
+  else if (subdomain === "factory") {
+    // Prevent factory subdomain from accessing admin internal pages
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
+
+    // Protect factory routes
+    if (!isDeviceAuthenticated && !isPublicPage) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
+
+    // Rewrite path internally to /factory/... (if it doesn't already start with it)
+    if (!pathname.startsWith("/factory") && !isPublicPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/factory${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  } 
+  
+  else {
+    // subdomain === 'sales' or subdomain === '' (default root / development backup)
+    // Prevent sales subdomain from accessing admin or factory pages directly
+    if (pathname.startsWith("/admin") || pathname.startsWith("/factory")) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
+
+    // Protect sales pages
+    if (!isDeviceAuthenticated && !isPublicPage) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
+    }
   }
 
   return NextResponse.next();
