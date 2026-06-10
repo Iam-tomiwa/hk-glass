@@ -81,7 +81,7 @@ function PaymentConfirmationContent() {
                 <QRCodeSVG
                   value={
                     typeof window !== "undefined"
-                      ? `${window.location.origin}/${qrValue}`
+                      ? `${window.location.origin}/orders/review/${order?.order_reference ?? id ?? qrValue}`
                       : qrValue
                   }
                   size={250}
@@ -120,7 +120,7 @@ function PaymentConfirmationContent() {
 
           <div className="flex items-center gap-3">
             {(order?.id || id) && (
-              <Link href={`/${order?.order_reference ?? id}`} passHref>
+              <Link href={`/orders/review/${order?.order_reference ?? id}`} passHref>
                 <Button>View Order Details</Button>
               </Link>
             )}

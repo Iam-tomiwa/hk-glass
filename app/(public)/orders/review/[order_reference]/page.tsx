@@ -5,6 +5,7 @@ import {
   useGetOrderByReference,
   useGetOrderFiles,
 } from "@/services/queries/orders";
+import Cookies from "js-cookie";
 import { OrderDetailShell } from "@/components/order-detail-shell";
 import { OrderLeftCard } from "@/components/order-left-card";
 import { OrderRightCard } from "@/components/order-right-card";
@@ -28,7 +29,7 @@ export default function OrderReviewPage() {
 
   const qrValue =
     typeof window !== "undefined"
-      ? `${window.location.origin}/${orderReference}`
+      ? `${window.location.origin}/orders/review/${orderReference}`
       : orderReference;
 
   return (
@@ -42,36 +43,44 @@ export default function OrderReviewPage() {
         <OrderLeftCard
           order={order}
           orderFiles={orderFiles}
-          showSignatureRow
-          customerRows={[
-            { label: "Full Name", value: order?.customer_name ?? "—" },
-            {
-              label: "Email",
-              value: order?.customer_email ? (
-                <a
-                  className="hover:underline"
-                  href={`mailto:${order.customer_email}`}
-                >
-                  {order.customer_email}
-                </a>
-              ) : (
-                "—"
-              ),
-            },
-            {
-              label: "Phone",
-              value: order?.customer_phone ? (
-                <a
-                  className="hover:underline"
-                  href={`tel:${order.customer_phone}`}
-                >
-                  {order.customer_phone}
-                </a>
-              ) : (
-                "—"
-              ),
-            },
-          ]}
+          showSignatureRow={
+            typeof window !== "undefined" &&
+            (!!Cookies.get("access_token") || !!Cookies.get("device_token"))
+          }
+          customerRows={
+            typeof window !== "undefined" &&
+            (!!Cookies.get("access_token") || !!Cookies.get("device_token"))
+              ? [
+                  { label: "Full Name", value: order?.customer_name ?? "—" },
+                  {
+                    label: "Email",
+                    value: order?.customer_email ? (
+                      <a
+                        className="hover:underline"
+                        href={`mailto:${order.customer_email}`}
+                      >
+                        {order.customer_email}
+                      </a>
+                    ) : (
+                      "—"
+                    ),
+                  },
+                  {
+                    label: "Phone",
+                    value: order?.customer_phone ? (
+                      <a
+                        className="hover:underline"
+                        href={`tel:${order.customer_phone}`}
+                      >
+                        {order.customer_phone}
+                      </a>
+                    ) : (
+                      "—"
+                    ),
+                  },
+                ]
+              : null
+          }
           bottomSlot={
             <>
               <h3 className="text-base font-bold text-gray-900 mb-2">

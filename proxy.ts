@@ -51,6 +51,7 @@ export function proxy(request: NextRequest) {
       "factory",
       "admin",
       "login",
+      "sales",
       ...PUBLIC_ROUTES.map((r) => r.substring(1)),
     ].includes(segments[0]);
 
@@ -59,9 +60,20 @@ export function proxy(request: NextRequest) {
     isPublicOrderPage;
 
   // 5. Handle routing and auth checks based on subdomain
+  
+  // Rule: Public pages are allowed on ANY domain/subdomain without login
+  if (isPublicPage) {
+    return NextResponse.next();
+  }
+
+  // Rule: Root domain (no subdomain) ONLY allows public pages (handled above)
+  if (subdomain === "") {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
   if (subdomain === "admin") {
-    // Prevent admin subdomain from accessing factory internal pages
-    if (pathname.startsWith("/factory")) {
+    // Prevent admin subdomain from accessing factory/sales internal pages
+    if (pathname.startsWith("/factory") || pathname.startsWith("/sales")) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
@@ -82,12 +94,12 @@ export function proxy(request: NextRequest) {
     }
 
     // Protect all other admin routes
-    if (!isAdminAuthenticated && !isPublicPage) {
+    if (!isAdminAuthenticated) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
     // Rewrite path internally to /admin/... (if it doesn't already start with it)
-    if (!pathname.startsWith("/admin") && !isPublicPage) {
+    if (!pathname.startsWith("/admin")) {
       const url = request.nextUrl.clone();
       url.pathname = `/admin${pathname === "/" ? "" : pathname}`;
       return NextResponse.rewrite(url);
@@ -95,35 +107,46 @@ export function proxy(request: NextRequest) {
   } 
   
   else if (subdomain === "factory") {
-    // Prevent factory subdomain from accessing admin internal pages
-    if (pathname.startsWith("/admin")) {
+    // Prevent factory subdomain from accessing admin/sales internal pages
+    if (pathname.startsWith("/admin") || pathname.startsWith("/sales")) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
     // Protect factory routes
-    if (!isDeviceAuthenticated && !isPublicPage) {
+    if (!isDeviceAuthenticated) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
     // Rewrite path internally to /factory/... (if it doesn't already start with it)
-    if (!pathname.startsWith("/factory") && !isPublicPage) {
+    if (!pathname.startsWith("/factory")) {
       const url = request.nextUrl.clone();
       url.pathname = `/factory${pathname === "/" ? "" : pathname}`;
       return NextResponse.rewrite(url);
     }
   } 
   
-  else {
-    // subdomain === 'sales' or subdomain === '' (default root / development backup)
-    // Prevent sales subdomain from accessing admin or factory pages directly
+  else if (subdomain === "sales") {
+    // Prevent sales subdomain from accessing admin/factory internal pages
     if (pathname.startsWith("/admin") || pathname.startsWith("/factory")) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
-    // Protect sales pages
-    if (!isDeviceAuthenticated && !isPublicPage) {
+    // Protect sales routes
+    if (!isDeviceAuthenticated) {
       return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
+
+    // Rewrite path internally to /sales/... (if it doesn't already start with it)
+    if (!pathname.startsWith("/sales")) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/sales${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  } 
+  
+  else {
+    // Unknown subdomain -> redirect to unauthorized
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
   return NextResponse.next();

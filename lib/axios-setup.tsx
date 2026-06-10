@@ -65,13 +65,25 @@ axiosInstance.interceptors.response.use(
             "unauthorized",
             "payment-confirmation",
             "factory",
+            "admin",
+            "sales",
           ].includes(segments[0]);
+
+        const PUBLIC_ROUTES = [
+          "/unauthorized",
+          "/payment-confirmation",
+          "/materials",
+          "/orders/review",
+        ];
+
+        const isPublicPage =
+          PUBLIC_ROUTES.some((route) => pathname.startsWith(route)) ||
+          isPublicOrderPage;
 
         // Let the login / unauthorized / public pages handle their own 401s
         const isAuthPage =
           pathname === "/admin/login" ||
-          pathname === "/unauthorized" ||
-          isPublicOrderPage;
+          isPublicPage;
 
         if (!isAuthPage) {
           const from = pathname + window.location.search;

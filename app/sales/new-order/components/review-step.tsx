@@ -486,18 +486,16 @@ export function ReviewStep({
                         </span>
                       </div>
                       {multiUnit && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-neutral-500">
-                              × {qty} orders
-                            </span>
-                            <span className="font-medium text-neutral-800">
-                              {isPricingLoading
-                                ? "..."
-                                : formatNaira(pricing?.subtotal_amount)}
-                            </span>
-                          </div>
-                        </>
+                        <div className="flex justify-between">
+                          <span className="text-neutral-500">
+                            × {qty} orders
+                          </span>
+                          <span className="font-medium text-neutral-800">
+                            {isPricingLoading
+                              ? "..."
+                              : formatNaira(pricing?.subtotal_amount)}
+                          </span>
+                        </div>
                       )}
                       <div className="flex justify-between">
                         <span className="text-neutral-500">

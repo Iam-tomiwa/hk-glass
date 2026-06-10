@@ -147,7 +147,7 @@ export default function OrderDetailsPage() {
 
   const qrValue =
     typeof window !== "undefined"
-      ? `${window.location.origin}/${order?.order_reference}`
+      ? `${window.location.origin}/orders/review/${order?.order_reference}`
       : order?.order_reference;
 
   function handleUpdateStatus() {
