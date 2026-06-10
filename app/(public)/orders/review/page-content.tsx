@@ -53,35 +53,35 @@ export default function OrderReviewByIdContent() {
           order={order}
           orderFiles={orderFiles}
           showSignatureRow
-          customerRows={[
-            { label: "Full Name", value: order?.customer_name ?? "—" },
-            {
-              label: "Email",
-              value: order?.customer_email ? (
-                <a
-                  className="hover:underline"
-                  href={`mailto:${order.customer_email}`}
-                >
-                  {order.customer_email}
-                </a>
-              ) : (
-                "—"
-              ),
-            },
-            {
-              label: "Phone",
-              value: order?.customer_phone ? (
-                <a
-                  className="hover:underline"
-                  href={`tel:${order.customer_phone}`}
-                >
-                  {order.customer_phone}
-                </a>
-              ) : (
-                "—"
-              ),
-            },
-          ]}
+          // customerRows={[
+          //   { label: "Full Name", value: order?.customer_name ?? "—" },
+          //   {
+          //     label: "Email",
+          //     value: order?.customer_email ? (
+          //       <a
+          //         className="hover:underline"
+          //         href={`mailto:${order.customer_email}`}
+          //       >
+          //         {order.customer_email}
+          //       </a>
+          //     ) : (
+          //       "—"
+          //     ),
+          //   },
+          //   {
+          //     label: "Phone",
+          //     value: order?.customer_phone ? (
+          //       <a
+          //         className="hover:underline"
+          //         href={`tel:${order.customer_phone}`}
+          //       >
+          //         {order.customer_phone}
+          //       </a>
+          //     ) : (
+          //       "—"
+          //     ),
+          //   },
+          // ]}
           bottomSlot={
             <>
               <h3 className="text-base font-bold text-gray-900 mb-2">
@@ -99,7 +99,7 @@ export default function OrderReviewByIdContent() {
                     ),
                   },
                   {
-                    label: "Tax",
+                    label: "VAT",
                     value: (
                       <AmountDisplay
                         showFullAmount

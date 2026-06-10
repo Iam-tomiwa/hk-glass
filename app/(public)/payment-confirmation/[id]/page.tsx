@@ -43,9 +43,7 @@ function PaymentConfirmationContent() {
         </p>
         <div className="flex gap-3 mt-2">
           <Link href="/new-order">
-            <Button className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] rounded-md h-10 px-6">
-              Try Again
-            </Button>
+            <Button className="rounded-md h-10 px-6">Try Again</Button>
           </Link>
           <Link href="/">
             <Button

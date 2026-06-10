@@ -6,16 +6,20 @@ import { Navbar } from "@/components/navbar";
 
 export default function AdminShell({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen w-full bg-white text-gray-900 relative">
       {/* Sidebar - Desktop and Mobile */}
 
-      <Navbar fullWidth persona="admin" onMenuClick={() => setIsSidebarOpen(true)} />
+      <Navbar
+        fullWidth
+        persona="admin"
+        onMenuClick={() => setIsSidebarOpen(true)}
+      />
       {/* Main Content Area */}
       <div className="flex w-full flex-1 min-w-0">
         {/* Overlay for mobile */}

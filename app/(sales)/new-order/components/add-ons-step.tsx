@@ -87,14 +87,18 @@ export function AddOnsStep({
     useListInventory("hardware", true);
 
   const [hardwareQty, setHardwareQty] = useState<Record<string, string>>({});
-  const [hardwareEnabled, setHardwareEnabled] = useState<Record<string, boolean>>({});
+  const [hardwareEnabled, setHardwareEnabled] = useState<
+    Record<string, boolean>
+  >({});
 
   // Derive prefilled quantities from existingAddons (edit mode) — avoids timing issues with form.reset()
   const prefillQty = useMemo(() => {
     if (!hardwareItems.length || !existingAddons.length) return {};
     const result: Record<string, string> = {};
     for (const item of hardwareItems) {
-      const match = existingAddons.find((a) => a.addon_id === item.id && a.addon === null);
+      const match = existingAddons.find(
+        (a) => a.addon_id === item.id && a.addon === null,
+      );
       if (match?.quantity != null) result[item.id] = String(match.quantity);
     }
     return result;
@@ -113,7 +117,10 @@ export function AddOnsStep({
   });
   const drillHoles = useWatch({ control: form.control, name: "drillHoles" });
   const engraving = useWatch({ control: form.control, name: "engraving" });
-  const engravingType = useWatch({ control: form.control, name: "engravingType" });
+  const engravingType = useWatch({
+    control: form.control,
+    name: "engravingType",
+  });
   const addTintFilm = useWatch({ control: form.control, name: "addTintFilm" });
 
   // When form is pre-filled (edit mode), sync boolean fields → selectedAddons
@@ -304,7 +311,13 @@ export function AddOnsStep({
               </FormItem>
             )}
           />
-          <div className={engravingType === "text" || engravingType === "both" ? "" : "hidden"}>
+          <div
+            className={
+              engravingType === "text" || engravingType === "both"
+                ? ""
+                : "hidden"
+            }
+          >
             <FormField
               control={form.control}
               name="engravingText"
@@ -330,53 +343,59 @@ export function AddOnsStep({
               )}
             />
           </div>
-          <div className={engravingType === "image" || engravingType === "both" ? "" : "hidden"}>
+          <div
+            className={
+              engravingType === "image" || engravingType === "both"
+                ? ""
+                : "hidden"
+            }
+          >
             <p className="text-[#1E202E] font-medium text-sm mb-2">
               Engraving Image
             </p>
-              <input
-                ref={engravingImageRef}
-                type="file"
-                accept="image/png,image/jpeg"
-                className="hidden"
-                onChange={handleEngravingImageChange}
-              />
-              {existingEngravingImageUrl && !engravingImageFile && (
-                <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background mb-2">
-                  <a
-                    href={existingEngravingImageUrl.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 flex-1 truncate hover:underline"
-                  >
-                    {existingEngravingImageUrl.name}
-                  </a>
-                  <span className="text-xs text-neutral-400">(existing)</span>
-                </div>
-              )}
-              {engravingImageFile ? (
-                <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
-                  <span className="text-sm text-neutral-700 flex-1 truncate">
-                    {engravingImageFile.name}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onEngravingImageChange(null)}
-                    className="text-neutral-400 hover:text-neutral-600"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => engravingImageRef.current?.click()}
-                  className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
+            <input
+              ref={engravingImageRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={handleEngravingImageChange}
+            />
+            {existingEngravingImageUrl && !engravingImageFile && (
+              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background mb-2">
+                <a
+                  href={existingEngravingImageUrl.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 flex-1 truncate hover:underline"
                 >
-                  <Upload className="size-5 text-neutral-400" />
-                  <p className="text-sm text-neutral-500">Click to upload</p>
-                  <p className="text-xs text-neutral-400">PNG or JPG</p>
-                </div>
-              )}
+                  {existingEngravingImageUrl.name}
+                </a>
+                <span className="text-xs text-neutral-400">(existing)</span>
+              </div>
+            )}
+            {engravingImageFile ? (
+              <div className="flex items-center gap-2 p-3 border border-neutral-200 rounded-lg bg-background">
+                <span className="text-sm text-neutral-700 flex-1 truncate">
+                  {engravingImageFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onEngravingImageChange(null)}
+                  className="text-neutral-400 hover:text-neutral-600"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ) : (
+              <div
+                onClick={() => engravingImageRef.current?.click()}
+                className="border-2 border-dashed border-neutral-200 rounded-lg p-6 flex flex-col items-center gap-2 cursor-pointer hover:border-neutral-300 transition-colors"
+              >
+                <Upload className="size-5 text-neutral-400" />
+                <p className="text-sm text-neutral-500">Click to upload</p>
+                <p className="text-xs text-neutral-400">PNG or JPG</p>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -585,8 +604,12 @@ export function AddOnsStep({
                       ) : (
                         <div className="space-y-3">
                           {hardwareItems.map((item) => {
-                            const qty = hardwareQty[item.id] ?? prefillQty[item.id] ?? "";
-                            const enabled = hardwareEnabled[item.id] ?? (prefillQty[item.id] != null && prefillQty[item.id] !== "0");
+                            const qty =
+                              hardwareQty[item.id] ?? prefillQty[item.id] ?? "";
+                            const enabled =
+                              hardwareEnabled[item.id] ??
+                              (prefillQty[item.id] != null &&
+                                prefillQty[item.id] !== "0");
                             return (
                               <div key={item.id}>
                                 <div className="flex flex-row items-center justify-between py-2">
@@ -603,10 +626,17 @@ export function AddOnsStep({
                                   <Switch
                                     checked={enabled}
                                     onCheckedChange={(checked) => {
-                                      setHardwareEnabled((prev) => ({ ...prev, [item.id]: checked }));
+                                      setHardwareEnabled((prev) => ({
+                                        ...prev,
+                                        [item.id]: checked,
+                                      }));
                                       setHardwareQty((prev) => ({
                                         ...prev,
-                                        [item.id]: checked ? (prev[item.id] || prefillQty[item.id] || "1") : "",
+                                        [item.id]: checked
+                                          ? prev[item.id] ||
+                                            prefillQty[item.id] ||
+                                            "1"
+                                          : "",
                                       }));
                                       const cur =
                                         form.getValues("selectedAddons") ?? [];
@@ -810,7 +840,7 @@ export function AddOnsStep({
             type="button"
             onClick={onNext}
             disabled={isLoading}
-            className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] px-8 h-10 rounded-md font-medium"
+            className="px-8 h-10 rounded-md font-medium"
           >
             {isLoading ? (
               <>

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useRegisterStaffDevice } from "@/services/queries/admin";
+import { toast } from "sonner";
 
 export default function RegisterDeviceModal({
   children,
@@ -115,7 +116,7 @@ export default function RegisterDeviceModal({
 
             <div className="flex gap-2 pt-2">
               <Button
-                className="bg-[#00B412] hover:bg-[#00B412]/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
                 onClick={handleGenerate}
                 disabled={!deviceName || !deviceEmail || isLoading}
               >
@@ -145,9 +146,10 @@ export default function RegisterDeviceModal({
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() =>
-                  navigator.clipboard.writeText(setupCode.join(""))
-                }
+                onClick={() => {
+                  navigator.clipboard.writeText(setupCode.join(""));
+                  toast.success("Setup code copied to clipboard");
+                }}
               >
                 <Copy className="size-4" />
               </Button>

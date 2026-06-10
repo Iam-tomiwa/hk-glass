@@ -102,7 +102,7 @@ export function CustomerStep({
           <Button
             type="button"
             onClick={onNext}
-            className="bg-[#0A0D1E] text-white hover:bg-[#1E202E] px-8 h-10 rounded-md font-medium"
+            className="px-8 h-10 rounded-md font-medium"
           >
             Next
           </Button>

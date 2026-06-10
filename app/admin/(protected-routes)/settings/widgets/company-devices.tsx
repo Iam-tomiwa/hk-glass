@@ -244,7 +244,7 @@ export default function CompanyDevices() {
               </Button>
             </div>
             <Button
-              className="w-full mt-2 bg-[#00B412] hover:bg-[#00B412]/90 text-white"
+              className="w-full mt-2 bg-primary hover:bg-primary/90 text-white"
               onClick={() => setReactivateCode(null)}
             >
               Done

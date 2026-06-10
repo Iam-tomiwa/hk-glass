@@ -153,8 +153,8 @@ export default function OrdersPage() {
                       { value: "all", label: "All Statuses" },
                       { value: "pending", label: "Pending" },
                       { value: "in_production", label: "In Production" },
-                      { value: "ready_pickup", label: "Ready for Pickup" },
                       { value: "completed", label: "Completed" },
+                      { value: "ready_pickup", label: "Ready for Pickup" },
                     ]}
                     placeholder="All Statuses"
                     className="w-[150px]"

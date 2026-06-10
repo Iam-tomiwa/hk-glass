@@ -31,8 +31,8 @@ import { OrderStatus } from "@/services/types/openapi";
 const ORDER_STATUSES = [
   "pending",
   "in_production",
-  "ready_pickup",
   "completed",
+  "ready_pickup",
 ];
 
 const STATUS_CONFIRM_MESSAGE: Record<string, string> = {
@@ -130,16 +130,16 @@ export default function OrderDetailsPage() {
         ]
       : []),
     {
-      title: "Ready For Pickup",
-      description: "The item is ready for pickup",
-      date: formatDate(order?.ready_pickup_at),
+      title: "Production Completed",
+      description: "Order has been completed",
+      date: formatDate(order?.completed_at),
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex >= 2,
     },
     {
-      title: "Production Completed",
-      description: "Order has been completed",
-      date: formatDate(order?.completed_at),
+      title: "Ready For Pickup",
+      description: "The item is ready for pickup",
+      date: formatDate(order?.ready_pickup_at),
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex >= 3,
     },
@@ -221,12 +221,12 @@ export default function OrderDetailsPage() {
                     <Button
                       onClick={handleUpdateStatus}
                       disabled={isUpdating}
-                      className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-sm rounded-lg"
+                      className="w-full h-11 font-semibold text-sm rounded-lg"
                     >
                       {isUpdating ? "Updating..." : "Update Order Status"}
                     </Button>
                   )}
-                  {!hasDamage && order?.order_status !== "completed" && (
+                  {!hasDamage && order?.order_status !== "ready_pickup" && (
                     <Button
                       variant="outline"
                       onClick={() => setReportOpen(true)}

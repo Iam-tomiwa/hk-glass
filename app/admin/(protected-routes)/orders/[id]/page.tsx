@@ -18,8 +18,8 @@ import { OrderResponse } from "@/services/types/openapi";
 const ORDER_STATUSES = [
   "pending",
   "in_production",
-  "ready_pickup",
   "completed",
+  "ready_pickup",
   "collected",
 ];
 
@@ -85,16 +85,16 @@ export default function OrderDetailsPage() {
         ]
       : []),
     {
-      title: "Ready For Pickup",
-      description: "The item is ready for pickup",
-      date: formatDate(order?.ready_pickup_at),
+      title: "Production Completed",
+      description: "Order has been completed",
+      date: formatDate(order?.completed_at),
       completed: currentStatusIndex >= 2,
       active: currentStatusIndex >= 2,
     },
     {
-      title: "Production Completed",
-      description: "Order has been completed",
-      date: formatDate(order?.completed_at),
+      title: "Ready For Pickup",
+      description: "The item is ready for pickup",
+      date: formatDate(order?.ready_pickup_at),
       completed: currentStatusIndex >= 3,
       active: currentStatusIndex >= 3,
     },
@@ -163,7 +163,7 @@ export default function OrderDetailsPage() {
                       label: "Subtotal",
                       value: formatNaira(order?.subtotal_amount),
                     },
-                    { label: "Tax", value: formatNaira(order?.tax_amount) },
+                    { label: "VAT", value: formatNaira(order?.tax_amount) },
                     {
                       label: "Insurance",
                       value: order?.insurance_selected

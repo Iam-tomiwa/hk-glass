@@ -113,7 +113,7 @@ export default function OrderDetailsPage() {
                     ),
                   },
                   {
-                    label: "Tax",
+                    label: "VAT",
                     value: (
                       <AmountDisplay
                         showFullAmount

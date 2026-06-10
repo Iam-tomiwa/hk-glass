@@ -34,6 +34,7 @@ export function ImageModal({
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setIndex(0);
   }, [open]);
 
@@ -98,10 +99,7 @@ export function ImageModal({
         </div>
 
         <div className="flex gap-2">
-          <Button
-            onClick={handleDownload}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
+          <Button onClick={handleDownload}>
             <Download className="size-4" /> Download Image
           </Button>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

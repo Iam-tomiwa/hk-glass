@@ -67,7 +67,7 @@ function UnauthorizedContent() {
         disabled={isLoading}
       />
       <Button
-        className="w-[300px] bg-[#00B412] hover:bg-[#00B412]/90 text-white"
+        className="w-[300px] bg-primary hover:bg-primary/90 text-white"
         onClick={handleSubmit}
         disabled={isLoading || !code.trim()}
       >

@@ -44,8 +44,8 @@ export const buildReviewPayload = (values: OrderFormValues) => {
     return {
       addon_id,
       ...(e.type_key ? { type_key: e.type_key } : {}),
-      ...(e.sides != null ? { sides: e.sides } : {}),
-      ...(e.quantity != null ? { quantity: e.quantity } : {}),
+      ...(e.sides == null ? {} : { sides: e.sides }),
+      ...(e.quantity == null ? {} : { quantity: e.quantity }),
     };
   });
   return {
@@ -221,8 +221,8 @@ function NewOrderForm() {
           return {
             addon_id,
             ...(e.type_key ? { type_key: e.type_key } : {}),
-            ...(e.sides != null ? { sides: e.sides } : {}),
-            ...(e.quantity != null ? { quantity: e.quantity } : {}),
+            ...(e.sides == null ? {} : { sides: e.sides }),
+            ...(e.quantity == null ? {} : { quantity: e.quantity }),
           };
         });
 
@@ -368,7 +368,7 @@ function NewOrderForm() {
                     key={step.id}
                     value={step.id}
                     disabled={isLocked}
-                    className="data-[state=active]:text-blue-600 data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-blue-600 md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-blue-600 md:data-[state=active]:bg-[#eff6ff] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
+                    className="data-[state=active]:text-primary data-[state=active]:shadow-none text-neutral-600 font-medium justify-center md:justify-start px-2 md:px-6 py-3 w-auto md:w-full text-left whitespace-nowrap rounded-none border-b-[3px] border-transparent data-[state=active]:border-primary md:border-b-0 md:border-l-[3px] md:data-[state=active]:border-primary md:data-[state=active]:bg-[#F3F3F5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-auto"
                   >
                     <span className="flex items-center gap-2">
                       {step.label}

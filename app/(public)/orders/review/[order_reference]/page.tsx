@@ -89,7 +89,7 @@ export default function OrderReviewPage() {
                     ),
                   },
                   {
-                    label: "Tax",
+                    label: "VAT",
                     value: (
                       <AmountDisplay
                         showFullAmount

@@ -133,14 +133,14 @@ export const getCookieDomain = () => {
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return undefined;
   }
-  
+
   const backendUrl =
     process.env.NEXT_PUBLIC_API_URL || "https://backend.glasstronictech.org";
-    
+
   try {
     const backendHost = new URL(backendUrl).hostname;
     const backendParts = backendHost.split(".");
-    
+
     if (backendParts.length >= 2) {
       const baseDomain = backendParts.slice(-2).join(".");
       if (hostname.endsWith(baseDomain)) {
@@ -150,7 +150,7 @@ export const getCookieDomain = () => {
   } catch (e) {
     console.error("Failed to parse backend URL for cookie domain:", e);
   }
-  
+
   return undefined;
 };
 

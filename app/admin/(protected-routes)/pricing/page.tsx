@@ -84,7 +84,7 @@ export default function PricingPage() {
     },
     {
       id: "tax_rate",
-      name: "Tax Rate",
+      name: "VAT Rate",
       unit: "% of total",
       price: pricingSettings?.tax_rate ?? "",
     },

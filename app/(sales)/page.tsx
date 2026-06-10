@@ -139,7 +139,7 @@ export default function OrdersPage() {
           description="Manage and track all glass manufacturing orders"
         >
           <Link href="/new-order" passHref>
-            <Button className="gap-2 bg-[#00AE4D] text-white hover:bg-[#009b44] rounded-md h-10 px-4 border-none">
+            <Button className="gap-2 text-white rounded-md h-10 px-4 border-none">
               <Plus className="size-4" />
               New Order
             </Button>
