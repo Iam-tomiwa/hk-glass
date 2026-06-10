@@ -22,17 +22,21 @@ export function GlassSpecsStep({
   onBack,
   onNext,
   disableGlassType = false,
-}: {
+}: Readonly<{
   form: UseFormReturn<OrderFormValues>;
   onBack: () => void;
   onNext: () => void;
   disableGlassType?: boolean;
-}) {
+}>) {
   const { data: glassTypes = [], isLoading: isLoadingGlassTypes } =
     useListInventory("glass", true);
 
   const glassTypeId = useWatch({ control: form.control, name: "glassTypeId" });
-  const { data: glassSheets } = useListInventoryUnits(glassTypeId || "", "glass", false);
+  const { data: glassSheets } = useListInventoryUnits(
+    glassTypeId || "",
+    "glass",
+    false,
+  );
 
   const quantity = useWatch({ control: form.control, name: "quantity" });
 
@@ -51,7 +55,7 @@ export function GlassSpecsStep({
   const length = useWatch({ control: form.control, name: "length" });
   const width = useWatch({ control: form.control, name: "width" });
   const shape = useWatch({ control: form.control, name: "shape" });
-  const sheetSize = useWatch({ control: form.control, name: "sheetSize" });
+  // const sheetSize = useWatch({ control: form.control, name: "sheetSize" });
 
   const unit = useWatch({ control: form.control, name: "unit" }) || "mm";
   const curveDiameter = useWatch({
@@ -267,7 +271,7 @@ export function GlassSpecsStep({
             />
           )}
 
-          <FormField
+          {/* <FormField
             control={form.control}
             name="sheetSize"
             render={({ field }) => (
@@ -288,9 +292,9 @@ export function GlassSpecsStep({
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
 
-          {sheetSize === "custom" && (
+          {/* {sheetSize === "custom" && (
             <FormField
               control={form.control}
               name="customSheetSize"
@@ -317,7 +321,7 @@ export function GlassSpecsStep({
                 </FormItem>
               )}
             />
-          )}
+          )} */}
 
           <FormField
             control={form.control}

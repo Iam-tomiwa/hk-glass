@@ -81,7 +81,11 @@ function PaymentConfirmationContent() {
             <CardContent className="flex flex-col gap-4">
               <div className="w-full aspect-square flex items-center justify-center">
                 <QRCodeSVG
-                  value={qrValue}
+                  value={
+                    typeof window !== "undefined"
+                      ? `${window.location.origin}/${qrValue}`
+                      : qrValue
+                  }
                   size={250}
                   level="M"
                   className="w-full h-auto"
