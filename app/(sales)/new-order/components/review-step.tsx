@@ -589,7 +589,7 @@ export function ReviewStep({
             type="button"
             onClick={onSubmitOrder}
             disabled={isLoading}
-            className="bg-[#16a34a] text-white hover:bg-[#15803d] px-8 h-10 rounded-md font-medium min-w-[180px]"
+            className="px-8 h-10 rounded-md font-medium min-w-[180px]"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">

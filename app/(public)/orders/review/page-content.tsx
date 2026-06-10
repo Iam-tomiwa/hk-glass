@@ -165,7 +165,7 @@ export default function OrderReviewByIdContent() {
               <Button
                 onClick={handleProceedToPayment}
                 disabled={isInitializingPayment}
-                className="w-full bg-[#16a34a] hover:bg-[#15803d]"
+                className="w-full"
               >
                 {isInitializingPayment
                   ? "Redirecting..."

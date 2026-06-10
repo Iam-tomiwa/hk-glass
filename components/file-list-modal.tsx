@@ -27,7 +27,7 @@ export function FileListModal({
   open,
   onOpenChange,
   title = "Uploaded Files",
-}: FileListModalProps) {
+}: Readonly<FileListModalProps>) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -38,7 +38,7 @@ export function FileListModal({
         <div className="space-y-1">
           {files.map((file, i) => (
             <div
-              key={i}
+              key={`${file.name}-${i}`}
               className="flex items-center gap-3 p-3 border border-neutral-200 rounded-lg bg-white"
             >
               <div className="size-10 flex items-center justify-center bg-neutral-100 rounded-lg shrink-0">
@@ -46,7 +46,7 @@ export function FileListModal({
               </div>
               <div className="flex-1 min-w-0">
                 <p
-                  style={{ textWrap: "wrap" }}
+                  style={{ textWrap: "wrap", overflowWrap: "anywhere" }}
                   className="text-sm font-semibold text-neutral-900"
                 >
                   {file.name}
