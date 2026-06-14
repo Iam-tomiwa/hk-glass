@@ -9,7 +9,10 @@ const PUBLIC_ROUTES = [
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const host = request.headers.get("host") || "";
+  let host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
+  if (host.includes(",")) {
+    host = host.split(",")[0].trim();
+  }
 
   // 1. Bypass static routes, Next.js system files, and API routes
   const isApiRoute = pathname.startsWith("/api");
@@ -32,6 +35,9 @@ export function proxy(request: NextRequest) {
       subdomain = parts[0];
     }
   }
+
+  console.log(`[Proxy Middleware] Host: "${host}" | Parsed Subdomain: "${subdomain}" | Pathname: "${pathname}"`);
+
 
   // 3. Check authentication status
   const accessToken = request.cookies.get("access_token")?.value;
