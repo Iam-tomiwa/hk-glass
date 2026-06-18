@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "./openapi-keys";
 import { getErrorMessage } from "@/lib/error-handler";
@@ -24,6 +24,7 @@ import {
   InventoryItemType,
   GlassSheetResponse,
   InventorySerialScanResponse,
+  PaginatedResponse,
 } from "../types/openapi";
 
 export function useListInventory(type?: InventoryItemType, isSales?: boolean) {
@@ -53,7 +54,53 @@ export function useListInventoryUnits(
       item_type,
       isAdmin,
     ],
-    queryFn: () => listInventoryUnits(item_id, item_type, isAdmin),
+    queryFn: async () => {
+      const response = await listInventoryUnits(item_id, item_type, isAdmin);
+      if (response && typeof response === "object" && "items" in response) {
+        return response.items;
+      }
+      return response;
+    },
+    enabled: !!item_id,
+  });
+}
+
+export function useListInventoryUnitsInfinite(
+  item_id: string,
+  item_type: InventoryItemType,
+  isAdmin = true,
+  search?: string,
+  status?: string,
+) {
+  return useInfiniteQuery<PaginatedResponse<GlassSheetResponse>, Error>({
+    queryKey: [
+      ...queryKeys.inventory.detail(item_id),
+      "units",
+      "infinite",
+      item_type,
+      isAdmin,
+      search,
+      status,
+    ],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await listInventoryUnits(
+        item_id,
+        item_type,
+        isAdmin,
+        pageParam as number,
+        20,
+        search,
+        status,
+      );
+      return response as PaginatedResponse<GlassSheetResponse>;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || typeof lastPage !== "object") return undefined;
+      const page = lastPage.page;
+      const totalPages = lastPage.total_pages;
+      return page < totalPages ? page + 1 : undefined;
+    },
     enabled: !!item_id,
   });
 }

@@ -8,6 +8,10 @@ const PUBLIC_ROUTES = [
 ];
 
 export function proxy(request: NextRequest) {
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
+
   const { pathname } = request.nextUrl;
   let host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
   if (host.includes(",")) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { get, post, patch, del } from "@/lib/axios-setup";
 import {
   InventoryItemResponse,
@@ -5,8 +6,9 @@ import {
   InventoryItemUpdate,
   InventoryAdjustRequest,
   InventoryItemType,
-  GlassSheetResponse,
   InventorySerialScanResponse,
+  GlassSheetResponse,
+  PaginatedResponse,
 } from "../types/openapi";
 
 export interface InventoryItemPriceUpdate {
@@ -98,7 +100,11 @@ export async function listInventoryUnits(
   item_id: string,
   item_type: InventoryItemType,
   isAdmin = true,
-): Promise<GlassSheetResponse[]> {
+  page?: number,
+  page_size?: number,
+  search?: string,
+  status?: string,
+): Promise<PaginatedResponse<GlassSheetResponse> | GlassSheetResponse[]> {
   let url: string;
   if (isAdmin) {
     url =
@@ -111,5 +117,12 @@ export async function listInventoryUnits(
         ? `/api/inventory/items/${item_id}/hardware-units`
         : `/api/inventory/items/${item_id}/glass-sheets`;
   }
-  return await get<GlassSheetResponse[]>(url);
+
+  const params: any = {};
+  if (page !== undefined) params.page = page;
+  if (page_size !== undefined) params.page_size = page_size;
+  if (search !== undefined) params.search = search;
+  if (status !== undefined) params.status = status;
+
+  return await get<PaginatedResponse<GlassSheetResponse> | GlassSheetResponse[]>(url, { params });
 }

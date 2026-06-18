@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import {
 import {
   useGetInventoryItem,
   useDeleteInventoryItem,
-  useListInventoryUnits,
+  useListInventoryUnitsInfinite,
 } from "@/services/queries/inventory";
 import {
   GlassSheetResponse,
@@ -145,7 +145,7 @@ function SheetCard({
   onViewQR: (sheet: GlassSheetResponse) => void;
 }) {
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3">
+    <div className="rounded-xl border border-[#E5E7EB] bg-white p-4 space-y-3 h-[148px]">
       <p className="font-semibold text-sm text-[#1E202E]">
         {sheet.serial_code}
       </p>
@@ -186,10 +186,6 @@ export default function MaterialDetailsPage({
   const { openConfirmModal } = useConfirmations();
 
   const { data: item, isLoading, isError } = useGetInventoryItem(itemId);
-  const { data: sheets = [], isLoading: sheetsLoading } = useListInventoryUnits(
-    item?.item_type === "glass" || item?.item_type === "hardware" ? itemId : "",
-    item?.item_type ?? "glass",
-  );
   const { mutate: deleteItem } = useDeleteInventoryItem();
 
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -197,6 +193,39 @@ export default function MaterialDetailsPage({
   const [sheetSearch, setSheetSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [pdfLoading, setPdfLoading] = useState(false);
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [scrollTop, setScrollTop] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(sheetSearch), 400);
+    return () => clearTimeout(timer);
+  }, [sheetSearch]);
+
+  // Reset scroll to top when filters change
+  useEffect(() => {
+    setScrollTop(0);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [debouncedSearch, statusFilter]);
+
+  const {
+    data,
+    isLoading: sheetsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useListInventoryUnitsInfinite(
+    item?.item_type === "glass" || item?.item_type === "hardware" ? itemId : "",
+    item?.item_type ?? "glass",
+    isAdmin,
+    debouncedSearch || undefined,
+    statusFilter !== "all" ? statusFilter : undefined,
+  );
+
+  const sheets = data?.pages.flatMap((page) => page.items ?? []) ?? [];
 
   const handleDownloadAllQR = async () => {
     if (!item || sheets.length === 0) return;
@@ -246,13 +275,37 @@ export default function MaterialDetailsPage({
     );
   };
 
-  const filteredSheets = sheets.filter((s) => {
-    const matchesSearch = s.serial_code
-      .toLowerCase()
-      .includes(sheetSearch.toLowerCase());
-    const matchesStatus = statusFilter === "all" || s.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredSheets = sheets;
+
+  const totalRows = Math.ceil(filteredSheets.length / 2);
+  const rowHeight = 164;
+  const containerHeight = 500;
+  const overscan = 3;
+
+  const startRow = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
+  const endRow = Math.min(
+    totalRows,
+    Math.ceil((scrollTop + containerHeight) / rowHeight) + overscan,
+  );
+
+  const visibleSheets = filteredSheets.slice(startRow * 2, endRow * 2);
+
+  const paddingTop = startRow * rowHeight;
+  const paddingBottom = Math.max(0, (totalRows - endRow) * rowHeight);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    setScrollTop(target.scrollTop);
+
+    // Trigger next page when scrolled close to bottom
+    if (
+      target.scrollHeight - target.scrollTop - target.clientHeight < 200 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
+    }
+  };
 
   const itemStatusCfg =
     item.status === "in_stock"
@@ -399,7 +452,7 @@ export default function MaterialDetailsPage({
               />
             </div>
 
-            {sheetsLoading ? (
+            {sheetsLoading && sheets.length === 0 ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="size-6 animate-spin text-neutral-400" />
               </div>
@@ -408,14 +461,33 @@ export default function MaterialDetailsPage({
                 No sheets found
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {filteredSheets.map((sheet) => (
-                  <SheetCard
-                    key={sheet.sheet_id}
-                    sheet={sheet}
-                    onViewQR={setQrSheet}
-                  />
-                ))}
+              <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="overflow-y-auto pr-1 border border-neutral-100 rounded-lg p-2"
+                style={{ height: `${containerHeight}px` }}
+              >
+                <div
+                  style={{
+                    paddingTop: `${paddingTop}px`,
+                    paddingBottom: `${paddingBottom}px`,
+                  }}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {visibleSheets.map((sheet) => (
+                      <SheetCard
+                        key={sheet.sheet_id}
+                        sheet={sheet}
+                        onViewQR={setQrSheet}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {isFetchingNextPage && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="size-6 animate-spin text-neutral-400" />
+                  </div>
+                )}
               </div>
             )}
           </div>
